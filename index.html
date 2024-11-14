@@ -30,7 +30,7 @@
             max-width: 800px;
             margin: 0 auto;
             padding: 1rem;
-            padding-bottom: 7rem; /* Увеличили отступ для новой панели */
+            padding-bottom: 7rem;
         }
 
         .nav {
@@ -63,7 +63,7 @@
             border: none;
             background: none;
             color: var(--tg-theme-text-color);
-            font-size: 12px; /* Увеличенный размер шрифта */
+            font-size: 12px;
         }
 
         .nav-button.active {
@@ -140,14 +140,14 @@
         }
 
         .price-button {
-            width: 80px; /* Фиксированная ширина для кнопок цен */
+            width: 80px;
             text-align: center;
             padding: 0.25rem 0.5rem;
             border-radius: 4px;
             border: none;
             font-size: 7px;
             cursor: pointer;
-            font-family: monospace; /* Моноширинный шрифт для лучшего выравнивания цифр */
+            font-family: monospace;
         }
 
         .bid {
@@ -220,6 +220,32 @@
             font-size: 7px;
             cursor: pointer;
         }
+
+        .equation-name {
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+            outline: none;
+            padding: 0.25rem;
+            border-radius: 4px;
+        }
+
+        .equation-name:focus {
+            background: var(--tg-theme-secondary-bg-color);
+        }
+
+        .equation-text {
+            margin-bottom: 0.25rem;
+            color: var(--tg-theme-hint-color);
+        }
+
+        .result {
+            font-family: monospace;
+            font-size: 8px;
+        }
+
+        .error {
+            color: #ef4444;
+        }
     </style>
 </head>
 <body>
@@ -255,30 +281,236 @@
     </div>
 
     <script>
+        // Менеджер уравнений
+        class EquationManager {
+            constructor() {
+                this.equations = {};
+                this.evalCache = {};
+            }
+
+            extractVariables(equation) {
+                const variables = new Set();
+                const parts = equation.split(/([+\-*/()])/g).map(part => part.trim()).filter(Boolean);
+                
+                for (const part of parts) {
+                    if ((part.includes('_bid') || part.includes('_ask')) && !part.includes('_result')) {
+                        try {
+                            const [symbol, exchange, priceType] = part.split('_');
+                            if (priceType === 'bid' || priceType === 'ask') {
+                                variables.add(part);
+                            }
+                        } catch (e) {
+                            continue;
+                        }
+                    }
+                }
+                
+                return Array.from(variables);
+            }
+
+            checkCircularDependency(newEqName, newEq) {
+                const findDependencies = (eq) => {
+                    const deps = new Set();
+                    for (const [, eqData] of Object.entries(this.equations)) {
+                        if (eq.includes(`${eqData.name}_result`)) {
+                            deps.add(eqData.name);
+                        }
+                    }
+                    return deps;
+                };
+
+                const checkCycle = (start, current, visited = new Set()) => {
+                    if (current === start) return true;
+                    visited.add(current);
+                    for (const eqName of findDependencies(current)) {
+                        if (!visited.has(eqName) && checkCycle(start, eqName, new Set([...visited]))) {
+                            return true;
+                        }
+                    }
+                    return false;
+                };
+
+                const deps = findDependencies(newEq);
+                return Array.from(deps).some(dep => checkCycle(newEqName, dep));
+            }
+
+            evaluateEquation(equation) {
+                try {
+                    let evalStr = equation;
+                    
+                    // Заменяем результаты других уравнений
+                    for (const [eq, eqData] of Object.entries(this.equations)) {
+                        const resultVar = `${eqData.name}_result`;
+                        if (evalStr.includes(resultVar)) {
+                            const resultValue = eqData.currentResult;
+                            if (resultValue === "н/д" || resultValue === "Загрузка..." || resultValue.startsWith("Ошибка")) {
+                                return "н/д";
+                            }
+                            evalStr = evalStr.replace(new RegExp(resultVar, 'g'), resultValue);
+                        }
+                    }
+                    
+                    // Заменяем цены
+                    for (const variable of this.equations[equation].variables) {
+                        if (variable.includes('_bid') || variable.includes('_ask')) {
+                            const [symbol, exchange, priceType] = variable.split('_');
+                            const pairKey = `${exchange}_${symbol}`;
+                            
+                            const priceElement = document.querySelector(
+                                `.pair-item[data-pair="${pairKey}"] .${priceType}`
+                            );
+                            
+                            if (!priceElement) return "н/д";
+                            
+                            const value = priceElement.textContent;
+                            if (value === "Загрузка...") return "Загрузка...";
+                            
+                            evalStr = evalStr.replace(new RegExp(variable, 'g'), value);
+                        }
+                    }
+                    
+                    evalStr = evalStr.replace(/\s+/g, '');
+                    if (!/^[0-9.+\-*/() ]+$/.test(evalStr)) return "н/д";
+                    if (['__', 'eval', 'exec', 'import'].some(s => evalStr.includes(s))) return "н/д";
+                    
+                    const result = new Decimal(eval(evalStr));
+                    return result.toFixed(8);
+                    
+                } catch (error) {
+                    if (error instanceof Decimal.DivisionByZero) {
+                        return "Ошибка: деление на ноль";
+                    }
+                    return "н/д";
+                }
+            }
+
+            addEquation(equation) {
+                let baseName = "Уравнение";
+                let counter = 1;
+                let equationName = `${baseName}_${counter}`;
+                
+                while (Object.values(this.equations).some(eq => eq.name === equationName)) {
+                    counter++;
+                    equationName = `${baseName}_${counter}`;
+                }
+
+                if (this.checkCircularDependency(equationName, equation)) {
+                    throw new Error("Обнаружена циклическая зависимость между уравнениями");
+                }
+
+                this.equations[equation] = {
+                    name: equationName,
+                    variables: this.extractVariables(equation),
+                    currentResult: "Загрузка...",
+                    dependents: new Set()
+                };
+
+                for (const [eq, eqData] of Object.entries(this.equations)) {
+                    if (eq !== equation && eq.includes(`${equationName}_result`)) {
+                        this.equations[equation].dependents.add(eq);
+                    }
+                }
+
+                return equationName;
+            }
+
+            applyFee(equation, cursorPosition, fee) {
+                const pairs = [];
+                let pos = 0;
+                
+                while (pos < equation.length) {
+                    const nextBid = equation.indexOf('_bid', pos);
+                    const nextAsk = equation.indexOf('_ask', pos);
+                    
+                    if (nextBid === -1 && nextAsk === -1) break;
+                    
+                    let posEnd, isBid;
+                    
+                    if (nextBid === -1) {
+                        posEnd = nextAsk + 4;
+                        isBid = false;
+                    } else if (nextAsk === -1) {
+                        posEnd = nextBid + 4;
+                        isBid = true;
+                    } else {
+                        if (nextBid < nextAsk) {
+                            posEnd = nextBid + 4;
+                            isBid = true;
+                        } else {
+                            posEnd = nextAsk + 4;
+                            isBid = false;
+                        }
+                    }
+                    
+                    let posStart = posEnd - 4;
+                    while (posStart > 0 && !'+-*/() '.includes(equation[posStart - 1])) {
+                        posStart--;
+                    }
+                    
+                    pairs.push({
+                        start: posStart,
+                        end: posEnd,
+                        text: equation.substring(posStart, posEnd),
+                        isBid,
+                        distance: Math.abs(cursorPosition - posStart)
+                    });
+                    
+                    pos = posEnd;
+                }
+                
+                if (!pairs.length) return equation;
+                
+                const nearestPair = pairs.reduce((a, b) => 
+                    a.distance < b.distance ? a : b
+                );
+                
+                const feeMultiplier = 1 - fee/100;
+                const newExpr = nearestPair.isBid ?
+                    `(${nearestPair.text}*${feeMultiplier})` :
+                    `(${nearestPair.text}/${feeMultiplier})`;
+                
+                return (
+                    equation.substring(0, nearestPair.start) +
+                    newExpr +
+                    equation.substring(nearestPair.end)
+                );
+            }
+
+            removeEquation(equation) {
+                if (equation in this.equations) {
+                    const equationName = this.equations[equation].name;
+                    delete this.equations[equation];
+                    
+                    // Обновляем зависимости
+                    for (const eq in this.equations) {
+                        if (eq.includes(`${equationName}_result`)) {
+                            this.equations[eq].currentResult = "н/д";
+                        }
+                    }
+                }
+            }
+
+            updateResult(equation, result) {
+                if (equation in this.equations) {
+                    this.equations[equation].currentResult = result;
+                    
+                    // Обновляем зависимые уравнения
+                    for (const dependent of this.equations[equation].dependents) {
+                        this.updateResult(dependent, this.evaluateEquation(dependent));
+                    }
+                }
+            }
+        }
+
+        // Инициализация
         let tg = window.Telegram.WebApp;
         let pairs = {};
         let equations = {};
         let connections = {};
+        const equationManager = new EquationManager();
         
         tg.expand();
         tg.ready();
-
-        function applyTgTheme() {
-            document.documentElement.style.setProperty('--tg-theme-bg-color', '#222222');
-            document.documentElement.style.setProperty('--tg-theme-text-color', '#ffffff');
-            document.documentElement.style.setProperty('--tg-theme-hint-color', '#666666');
-            document.documentElement.style.setProperty('--tg-theme-link-color', '#2481cc');
-            document.documentElement.style.setProperty('--tg-theme-button-color', '#2481cc');
-            document.documentElement.style.setProperty('--tg-theme-button-text-color', '#ffffff');
-            document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', '#333333');
-        }
-
-        function showScreen(screenName) {
-            document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
-            document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`${screenName}-screen`).classList.add('active');
-            document.querySelector(`.nav-button[onclick="showScreen('${screenName}')"]`).classList.add('active');
-        }
 
         const exchangeConfigs = {
             'Mexc': {
@@ -337,6 +569,13 @@
             }
         };
 
+        function showScreen(screenName) {
+            document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+            document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`${screenName}-screen`).classList.add('active');
+            document.querySelector(`.nav-button[onclick="showScreen('${screenName}')"]`).classList.add('active');
+        }
+
         async function connectWebSocket(exchange, symbol) {
             const config = exchangeConfigs[exchange];
             const ws = new WebSocket(config.wsUrl);
@@ -381,11 +620,12 @@
 
             const pairElement = document.createElement('div');
             pairElement.className = 'pair-item';
+            pairElement.setAttribute('data-pair', pairKey);
             pairElement.innerHTML = `
                 <span class="pair-name">${symbol} ${exchange}</span>
                 <div class="price">
-                    <button class="price-button bid">Загрузка...</button>
-                    <button class="price-button ask">Загрузка...</button>
+                    <button class="price-button bid" onclick="addToEquation('${symbol}_${exchange}_bid')">Загрузка...</button>
+                    <button class="price-button ask" onclick="addToEquation('${symbol}_${exchange}_ask')">Загрузка...</button>
                     <button class="remove-button" onclick="removePair('${pairKey}')">×</button>
                 </div>
             `;
@@ -418,158 +658,145 @@
             const pairKey = `${exchange}_${symbol}`;
             const pairElement = pairs[pairKey];
             
-            if (pairElement) {const bidElement = pairElement.querySelector('.bid');
-            const askElement = pairElement.querySelector('.ask');
+            if (pairElement) {
+                const bidButton = pairElement.querySelector('.bid');
+                const askButton = pairElement.querySelector('.ask');
+                
+                bidButton.textContent = parseFloat(bid).toFixed(8);
+                askButton.textContent = parseFloat(ask).toFixed(8);
+                
+                updateEquations();
+            }
+        }
+
+        function addToEquation(value) {
+            const equationInput = document.getElementById('equation-input-bottom');
+            const cursorPosition = equationInput.selectionStart;
+            const currentText = equationInput.value;
             
-            bidElement.textContent = parseFloat(bid).toFixed(8);
-            askElement.textContent = parseFloat(ask).toFixed(8);
+            const newText = currentText.slice(0, cursorPosition) + 
+                           value + 
+                           currentText.slice(cursorPosition);
             
-            updateEquations();
+            equationInput.value = newText;
+            equationInput.focus();
+            equationInput.setSelectionRange(
+                cursorPosition + value.length,
+                cursorPosition + value.length
+            );
         }
-    }
 
-    function addEquation() {
-        const equation = document.getElementById('equation-input-bottom').value.trim();
-        if (!equation) return;
-        
-        const equationElement = document.createElement('div');
-        equationElement.className = 'equation-item';
-        equationElement.innerHTML = `
-            <div>
-                <div>${equation}</div>
-                <div class="result">Вычисление...</div>
-            </div>
-            <button class="remove-button" onclick="removeEquation('${equation}')">×</button>
-        `;
-        
-        document.getElementById('equations-list').appendChild(equationElement);
-        equations[equation] = equationElement;
-        
-        document.getElementById('equation-input-bottom').value = '';
-        updateEquations();
-    }
+        function addEquationFromBottom() {
+            const equation = document.getElementById('equation-input-bottom').value.trim();
+            if (!equation) return;
+            
+            try {
+                const equationName = equationManager.addEquation(equation);
+                
+                const equationElement = document.createElement('div');
+                equationElement.className = 'equation-item';
+                equationElement.setAttribute('data-equation', equation);
+                equationElement.innerHTML = `
+                    <div>
+                        <div class="equation-name" contenteditable="true">${equationName}</div>
+                        <div class="equation-text">${equation}</div>
+                        <div class="result">Вычисление...</div>
+                    </div>
+                    <button class="remove-button" onclick="removeEquation('${equation}')">×</button>
+                `;
+                
+                const nameElement = equationElement.querySelector('.equation-name');
+                nameElement.addEventListener('blur', () => {
+                    const oldName = equationManager.equations[equation].name;
+                    const newName = nameElement.textContent.trim();
+                    
+                    if (newName && newName !== oldName) {
+                        equationManager.equations[equation].name = newName;
+                        
+                        for (const eq in equationManager.equations) {
+                            if (eq.includes(`${oldName}_result`)) {
+                                const updatedEq = eq.replace(`${oldName}_result`, `${newName}_result`);
+                                const eqData = equationManager.equations[eq];
+                                delete equationManager.equations[eq];
+                                equationManager.equations[updatedEq] = eqData;
+                                
+                                const eqElement = document.querySelector(`[data-equation="${eq}"]`);
+                                if (eqElement) {
+                                    eqElement.querySelector('.equation-text').textContent = updatedEq;
+                                    eqElement.setAttribute('data-equation', updatedEq);
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                document.getElementById('equations-list').appendChild(equationElement);
+                equations[equation] = equationElement;
+                
+                document.getElementById('equation-input-bottom').value = '';
+                updateEquations();
+                
+            } catch (error) {
+                tg.showAlert(error.message);
+            }
+        }
 
-    function removeEquation(equation) {
-        if (equations[equation]) {
-            equations[equation].remove();
-            delete equations[equation];
-            updateEquations();
+        function removeEquation(equation) {
+            if (equation in equations) {
+                equations[equation].remove();
+                equationManager.removeEquation(equation);
+                delete equations[equation];
+                updateEquations();
+            }
         }
-    }
 
-    function applyFeeFromBottom() {
-        const fee = parseFloat(document.getElementById('fee-input-bottom').value);
-        const equationInput = document.getElementById('equation-input-bottom');
-        const equation = equationInput.value;
-        
-        if (isNaN(fee)) {
-            tg.showAlert('Введите корректное значение комиссии');
-            return;
+        function applyFeeFromBottom() {
+            const fee = parseFloat(document.getElementById('fee-input-bottom').value);
+            const equationInput = document.getElementById('equation-input-bottom');
+            
+            if (isNaN(fee)) {
+                tg.showAlert('Введите корректное значение комиссии');
+                return;
+            }
+            
+            const cursorPosition = equationInput.selectionStart;
+            const newEquation = equationManager.applyFee(
+                equationInput.value,
+                cursorPosition,
+                fee
+            );
+            
+            equationInput.value = newEquation;
+            equationInput.setSelectionRange(cursorPosition, cursorPosition);
         }
-        
-        const feeMultiplier = 1 - fee/100;
-        const cursor = equationInput.selectionStart;
-        
-        const variables = equation.match(/[A-Z]+_(?:Mexc|Bybit|OKX)_(?:bid|ask)/g) || [];
-        if (!variables.length) {
-            tg.showAlert('Выберите пару для применения комиссии');
-            return;
+
+        function updateEquations() {
+            for (const [equation, element] of Object.entries(equations)) {
+                const result = equationManager.evaluateEquation(equation);
+                const resultElement = element.querySelector('.result');
+                
+                resultElement.textContent = result;
+                resultElement.className = 'result' + 
+                    (result === "н/д" || result.startsWith("Ошибка") ? ' error' : '');
+                
+                equationManager.updateResult(equation, result);
+            }
         }
-        
-        let nearestVar = variables.reduce((nearest, current) => {
-            const currentPos = equation.indexOf(current);
-            const nearestPos = equation.indexOf(nearest);
-            return Math.abs(currentPos - cursor) < Math.abs(nearestPos - cursor) ? current : nearest;
+
+        // Инициализация и обработчики событий
+        document.getElementById('pair-symbol').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addPair();
+            }
         });
-        
-        const isBid = nearestVar.endsWith('_bid');
-        const replacement = isBid ? 
-            `(${nearestVar}*${feeMultiplier})` : 
-            `(${nearestVar}/${feeMultiplier})`;
-        
-        const newEquation = equation.replace(nearestVar, replacement);
-        equationInput.value = newEquation;
-    }
 
-    function addEquationFromBottom() {
-        addEquation();
-    }
-
-    function evaluateEquation(equation) {
-        try {
-            let evalStr = equation;
-            
-            const variables = equation.match(/[A-Z]+_(?:Mexc|Bybit|OKX)_(?:bid|ask)/g) || [];
-            for (const variable of variables) {
-                const [symbol, exchange, priceType] = variable.split('_');
-                const pairKey = `${exchange}_${symbol}`;
-                
-                if (!pairs[pairKey]) {
-                    return 'н/д';
-                }
-                
-                const priceElement = pairs[pairKey].querySelector(`.${priceType}`);
-                const price = priceElement.textContent;
-                
-                if (price === 'Загрузка...') {
-                    return 'Загрузка...';
-                }
-                
-                evalStr = evalStr.replace(variable, price);
+        document.getElementById('equation-input-bottom').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addEquationFromBottom();
             }
-            
-            evalStr = evalStr.replace(/\s+/g, '');
-            
-            if (!/^[0-9.+\-*/() ]+$/.test(evalStr)) {
-                return 'н/д';
-            }
-            
-            const result = new Decimal(eval(evalStr));
-            return result.toFixed(8);
-            
-        } catch (error) {
-            console.error('Ошибка вычисления:', error);
-            return 'Ошибка';
-        }
-    }
+        });
 
-    function updateEquations() {
-        for (const [equation, element] of Object.entries(equations)) {
-            const result = evaluateEquation(equation);
-            const resultElement = element.querySelector('.result');
-            resultElement.textContent = result;
-            
-            if (result === 'н/д' || result === 'Ошибка') {
-                resultElement.style.color = '#ef4444';
-            } else {
-                resultElement.style.color = 'inherit';
-            }
-        }
-    }
-
-    function initialize() {
-        applyTgTheme();
-        
-        setInterval(() => {
-            updateEquations();
-        }, 1000);
-        
-        tg.onEvent('themeChanged', applyTgTheme);
-    }
-
-    document.getElementById('pair-symbol').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            addPair();
-        }
-    });
-
-    document.getElementById('equation-input-bottom').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            addEquationFromBottom();
-        }
-    });
-
-    initialize();
-</script>
+        setInterval(updateEquations, 1000);
+    </script>
 </body>
 </html>
