@@ -1,153 +1,139 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Калькулятор</title>
+    <title>MEXC BTC/USDT Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/decimal.js/10.4.3/decimal.min.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
-            background-color: #f0f2f5;
+            padding: 16px;
+            background-color: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
         }
-
-        .calculator {
-            background-color: #fff;
+        .price-container {
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             padding: 20px;
-            width: 300px;
+            margin-bottom: 16px;
         }
-
-        #display {
-            width: 100%;
-            height: 60px;
-            margin-bottom: 10px;
-            font-size: 24px;
-            text-align: right;
-            padding: 10px;
-            box-sizing: border-box;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
         }
-
-        .buttons {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-        }
-
-        button {
-            padding: 15px;
+        .price-label {
             font-size: 18px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            background-color: #f0f2f5;
+            font-weight: bold;
         }
-
-        button:hover {
-            background-color: #e4e6e9;
+        .price-value {
+            font-size: 20px;
+            font-weight: bold;
         }
-
-        .operator {
-            background-color: #007AFF;
-            color: white;
+        .bid {
+            color: #28a745;
         }
-
-        .operator:hover {
-            background-color: #0056b3;
+        .ask {
+            color: #dc3545;
         }
-
-        .equals {
-            background-color: #34C759;
-            color: white;
-            grid-column: span 2;
-        }
-
-        .equals:hover {
-            background-color: #2da44e;
-        }
-
-        .clear {
-            background-color: #FF3B30;
-            color: white;
-        }
-
-        .clear:hover {
-            background-color: #d63384;
+        .status {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #999);
         }
     </style>
 </head>
 <body>
-    <div class="calculator">
-        <input type="text" id="display" readonly>
-        <div class="buttons">
-            <button class="clear" onclick="clearDisplay()">C</button>
-            <button onclick="appendToDisplay('(')">(</button>
-            <button onclick="appendToDisplay(')')">)</button>
-            <button class="operator" onclick="appendToDisplay('/')">/</button>
-            
-            <button onclick="appendToDisplay('7')">7</button>
-            <button onclick="appendToDisplay('8')">8</button>
-            <button onclick="appendToDisplay('9')">9</button>
-            <button class="operator" onclick="appendToDisplay('*')">×</button>
-            
-            <button onclick="appendToDisplay('4')">4</button>
-            <button onclick="appendToDisplay('5')">5</button>
-            <button onclick="appendToDisplay('6')">6</button>
-            <button class="operator" onclick="appendToDisplay('-')">-</button>
-            
-            <button onclick="appendToDisplay('1')">1</button>
-            <button onclick="appendToDisplay('2')">2</button>
-            <button onclick="appendToDisplay('3')">3</button>
-            <button class="operator" onclick="appendToDisplay('+')">+</button>
-            
-            <button onclick="appendToDisplay('0')">0</button>
-            <button onclick="appendToDisplay('.')">.</button>
-            <button class="equals" onclick="calculate()">=</button>
+    <div class="price-container">
+        <div class="price-row">
+            <span class="price-label">Bid:</span>
+            <span class="price-value bid" id="bidPrice">---.--</span>
+        </div>
+        <div class="price-row">
+            <span class="price-label">Ask:</span>
+            <span class="price-value ask" id="askPrice">---.--</span>
         </div>
     </div>
+    <div class="status" id="status">Connecting...</div>
 
     <script>
         let tg = window.Telegram.WebApp;
+        tg.expand();
         tg.ready();
 
-        const display = document.getElementById('display');
+        const bidElement = document.getElementById('bidPrice');
+        const askElement = document.getElementById('askPrice');
+        const statusElement = document.getElementById('status');
+        
+        let ws = null;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
 
-        function appendToDisplay(value) {
-            display.value += value;
-        }
+        function connect() {
+            ws = new WebSocket('wss://wbs.mexc.com/ws');
 
-        function clearDisplay() {
-            display.value = '';
-        }
-
-        function calculate() {
-            try {
-                const expression = display.value;
-                // Используем Function вместо eval для большей безопасности
-                const result = Function('"use strict";return (' + expression + ')')();
-                display.value = result;
+            ws.onopen = function() {
+                statusElement.textContent = 'Connected';
+                reconnectAttempts = 0;
                 
-                // Отправляем результат в Telegram бот
-                tg.sendData(JSON.stringify({
-                    result: result,
-                    expression: expression
-                }));
-            } catch (error) {
-                display.value = 'Ошибка';
-                setTimeout(clearDisplay, 1000);
-            }
+                // Subscribe to BTC/USDT order book
+                const subscribeMsg = {
+                    "method": "SUBSCRIPTION",
+                    "params": ["spot@public.bookTicker.v3.api@BTCUSDT"]
+                };
+                ws.send(JSON.stringify(subscribeMsg));
+            };
+
+            ws.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    
+                    // Check if it's a price update message
+                    if (data.d) {
+                        const bid = new Decimal(data.d.bp).toFixed(2);
+                        const ask = new Decimal(data.d.ap).toFixed(2);
+                        
+                        bidElement.textContent = `$${bid}`;
+                        askElement.textContent = `$${ask}`;
+                    }
+                } catch (error) {
+                    console.error('Error processing message:', error);
+                }
+            };
+
+            ws.onclose = function() {
+                statusElement.textContent = 'Disconnected';
+                
+                // Implement reconnection logic
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    reconnectAttempts++;
+                    statusElement.textContent = `Reconnecting (attempt ${reconnectAttempts}/${maxReconnectAttempts})...`;
+                    setTimeout(connect, 3000);
+                } else {
+                    statusElement.textContent = 'Connection failed. Please reload the page.';
+                }
+            };
+
+            ws.onerror = function(error) {
+                console.error('WebSocket error:', error);
+                statusElement.textContent = 'Connection error';
+            };
         }
 
-        // Настраиваем тему в соответствии с темой Telegram
-        document.body.style.backgroundColor = tg.backgroundColor;
+        // Start connection
+        connect();
+
+        // Cleanup on page unload
+        window.addEventListener('unload', () => {
+            if (ws) {
+                ws.close();
+            }
+        });
     </script>
 </body>
 </html>
