@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Многоуровневое меню</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/telegram-web-app/7.0.0/telegram-web-app.js"></script>
     <style>
         * {
             margin: 0;
@@ -14,30 +13,36 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background-color: var(--tg-theme-bg-color, #fff);
-            color: var(--tg-theme-text-color, #000);
+            background-color: #f0f2f5;
+            color: #000;
+            min-height: 100vh;
+            padding: 20px;
         }
 
         .container {
             max-width: 800px;
             margin: 0 auto;
-            padding: 16px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 20px;
         }
 
         .header {
             display: flex;
             align-items: center;
             padding: 16px;
-            background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            background-color: #ffffff;
             border-radius: 12px;
             margin-bottom: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
         .back-button {
             background: none;
             border: none;
             font-size: 24px;
-            color: var(--tg-theme-button-color, #2481cc);
+            color: #2481cc;
             cursor: pointer;
             padding: 8px;
             margin-right: 8px;
@@ -47,6 +52,7 @@
         .header-title {
             font-size: 20px;
             font-weight: 600;
+            color: #1a1a1a;
         }
 
         .menu-list {
@@ -56,11 +62,12 @@
         }
 
         .menu-item {
-            background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
             border-radius: 12px;
             padding: 16px;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             gap: 12px;
@@ -69,12 +76,13 @@
         .menu-item:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #2481cc;
         }
 
         .menu-item-icon {
             width: 40px;
             height: 40px;
-            background-color: var(--tg-theme-button-color, #2481cc);
+            background-color: #2481cc;
             border-radius: 8px;
             display: flex;
             align-items: center;
@@ -90,16 +98,49 @@
         .menu-item-title {
             font-weight: 600;
             margin-bottom: 4px;
+            color: #1a1a1a;
         }
 
         .menu-item-description {
             font-size: 14px;
-            color: var(--tg-theme-hint-color, #999);
+            color: #666;
         }
 
         .detail-view {
-            display: none;
             animation: slideIn 0.3s ease-out;
+        }
+
+        .detail-content {
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .detail-image {
+            width: 100%;
+            height: 200px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .action-button {
+            background-color: #2481cc;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 16px;
+            transition: background-color 0.2s;
+        }
+
+        .action-button:hover {
+            background-color: #1a6dad;
         }
 
         @keyframes slideIn {
@@ -111,33 +152,6 @@
                 opacity: 1;
                 transform: translateX(0);
             }
-        }
-
-        .detail-content {
-            background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
-            border-radius: 12px;
-            padding: 16px;
-            margin-top: 16px;
-        }
-
-        .detail-image {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin-bottom: 16px;
-        }
-
-        .action-button {
-            background-color: var(--tg-theme-button-color, #2481cc);
-            color: var(--tg-theme-button-text-color, #fff);
-            border: none;
-            border-radius: 8px;
-            padding: 12px 24px;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 16px;
         }
     </style>
 </head>
@@ -151,9 +165,6 @@
     </div>
 
     <script>
-        let tg = window.Telegram.WebApp;
-        tg.expand();
-
         // Структура данных меню
         const menuData = {
             services: {
@@ -263,7 +274,6 @@
                 this.mainContent.innerHTML = '';
                 this.mainContent.appendChild(menuList);
 
-                // Обновляем заголовок и видимость кнопки назад
                 this.updateHeader();
             }
 
@@ -296,7 +306,6 @@
                 this.currentPath.push(key);
                 this.renderCurrentLevel();
                 
-                // Анимация перехода
                 this.mainContent.style.animation = 'slideIn 0.3s ease-out';
                 setTimeout(() => {
                     this.mainContent.style.animation = '';
@@ -334,11 +343,10 @@
             showDetail(item) {
                 const detailView = document.createElement('div');
                 detailView.className = 'detail-view';
-                detailView.style.display = 'block';
 
                 detailView.innerHTML = `
                     <div class="detail-content">
-                        <img src="/api/placeholder/800/400" alt="placeholder" class="detail-image">
+                        <div class="detail-image"></div>
                         <h2>${item.title}</h2>
                         <p>${item.content || item.description}</p>
                         <p><strong>Стоимость:</strong> ${item.price}</p>
@@ -349,13 +357,8 @@
                 this.mainContent.innerHTML = '';
                 this.mainContent.appendChild(detailView);
 
-                // Добавляем обработчик для кнопки заказа
                 detailView.querySelector('.action-button').addEventListener('click', () => {
-                    tg.sendData(JSON.stringify({
-                        action: 'order',
-                        item: item.title,
-                        price: item.price
-                    }));
+                    alert('В локальной версии функция заказа недоступна');
                 });
             }
         }
