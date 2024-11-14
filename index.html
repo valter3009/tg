@@ -30,6 +30,7 @@
             max-width: 800px;
             margin: 0 auto;
             padding: 1rem;
+            padding-bottom: 7rem; /* Увеличили отступ для новой панели */
         }
 
         .nav {
@@ -44,12 +45,25 @@
             z-index: 100;
         }
 
+        .input-panel {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--tg-theme-secondary-bg-color);
+            padding: 0.5rem;
+            position: fixed;
+            bottom: 2.5rem;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
         .nav-button {
             padding: 0.5rem 1rem;
             border: none;
             background: none;
             color: var(--tg-theme-text-color);
-            font-size: 7px;
+            font-size: 12px; /* Увеличенный размер шрифта */
         }
 
         .nav-button.active {
@@ -122,14 +136,18 @@
         .price {
             display: flex;
             gap: 0.5rem;
+            align-items: center;
         }
 
         .price-button {
+            width: 80px; /* Фиксированная ширина для кнопок цен */
+            text-align: center;
             padding: 0.25rem 0.5rem;
             border-radius: 4px;
             border: none;
             font-size: 7px;
             cursor: pointer;
+            font-family: monospace; /* Моноширинный шрифт для лучшего выравнивания цифр */
         }
 
         .bid {
@@ -159,7 +177,8 @@
             font-size: 7px;
         }
 
-        .equation-input input {
+        .fee-input {
+            width: 60px;
             padding: 0.5rem;
             border: 1px solid var(--tg-theme-hint-color);
             border-radius: 4px;
@@ -168,13 +187,38 @@
             font-size: 7px;
         }
 
-        .equation-input button {
-            padding: 0.5rem 1rem;
+        .equation-input-bottom {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid var(--tg-theme-hint-color);
+            border-radius: 4px;
+            background: var(--tg-theme-secondary-bg-color);
+            color: var(--tg-theme-text-color);
+            font-size: 7px;
+        }
+
+        .action-button {
+            padding: 0.5rem;
             background: var(--tg-theme-button-color);
             color: var(--tg-theme-button-text-color);
             border: none;
             border-radius: 4px;
             font-size: 7px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .remove-button {
+            padding: 0.25rem 0.5rem;
+            background: var(--tg-theme-secondary-bg-color);
+            color: var(--tg-theme-text-color);
+            border: 1px solid var(--tg-theme-hint-color);
+            border-radius: 4px;
+            font-size: 7px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -194,16 +238,15 @@
         </div>
 
         <div id="equations-screen" class="screen">
-            <div class="equation-input">
-                <textarea id="equation-input" placeholder="Введите формулу"></textarea>
-                <div style="display: flex; gap: 0.5rem;">
-                    <input type="number" id="fee-input" placeholder="Комиссия %" value="0.02" style="width: 100px;">
-                    <button onclick="applyFee()">Применить комиссию</button>
-                    <button onclick="addEquation()">Добавить формулу</button>
-                </div>
-            </div>
             <div id="equations-list" class="equations-list"></div>
         </div>
+    </div>
+
+    <div class="input-panel">
+        <input type="number" id="fee-input-bottom" class="fee-input" placeholder="%" value="0.02" step="0.01">
+        <button class="action-button" onclick="applyFeeFromBottom()">✓</button>
+        <input type="text" id="equation-input-bottom" class="equation-input-bottom" placeholder="Введите связку...">
+        <button class="action-button" onclick="addEquationFromBottom()">✓</button>
     </div>
 
     <div class="nav">
@@ -343,7 +386,7 @@
                 <div class="price">
                     <button class="price-button bid">Загрузка...</button>
                     <button class="price-button ask">Загрузка...</button>
-                    <button onclick="removePair('${pairKey}')">×</button>
+                    <button class="remove-button" onclick="removePair('${pairKey}')">×</button>
                 </div>
             `;
             
@@ -375,155 +418,158 @@
             const pairKey = `${exchange}_${symbol}`;
             const pairElement = pairs[pairKey];
             
-            if (pairElement) {
-                const bidElement = pairElement.querySelector('.bid');
-                const askElement = pairElement.querySelector('.ask');
-                
-                bidElement.textContent = bid;
-                askElement.textContent = ask;
-                
-                updateEquations();
-            }
-        }
-
-        function addEquation() {
-            const equation = document.getElementById('equation-input').value.trim();
-            if (!equation) return;
+            if (pairElement) {const bidElement = pairElement.querySelector('.bid');
+            const askElement = pairElement.querySelector('.ask');
             
-            const equationElement = document.createElement('div');
-            equationElement.className = 'equation-item';
-            equationElement.innerHTML = `
-                <div>
-                    <div>${equation}</div>
-                    <div class="result">Вычисление...</div>
-                </div>
-                <button onclick="removeEquation('${equation}')">×</button>
-            `;
+            bidElement.textContent = parseFloat(bid).toFixed(8);
+            askElement.textContent = parseFloat(ask).toFixed(8);
             
-            document.getElementById('equations-list').appendChild(equationElement);
-            equations[equation] = equationElement;
-            
-            document.getElementById('equation-input').value = '';
             updateEquations();
         }
+    }
 
-        function removeEquation(equation) {
-            if (equations[equation]) {
-                equations[equation].remove();
-                delete equations[equation];
-                updateEquations();
-            }
+    function addEquation() {
+        const equation = document.getElementById('equation-input-bottom').value.trim();
+        if (!equation) return;
+        
+        const equationElement = document.createElement('div');
+        equationElement.className = 'equation-item';
+        equationElement.innerHTML = `
+            <div>
+                <div>${equation}</div>
+                <div class="result">Вычисление...</div>
+            </div>
+            <button class="remove-button" onclick="removeEquation('${equation}')">×</button>
+        `;
+        
+        document.getElementById('equations-list').appendChild(equationElement);
+        equations[equation] = equationElement;
+        
+        document.getElementById('equation-input-bottom').value = '';
+        updateEquations();
+    }
+
+    function removeEquation(equation) {
+        if (equations[equation]) {
+            equations[equation].remove();
+            delete equations[equation];
+            updateEquations();
         }
+    }
 
-        function applyFee() {
-            const fee = parseFloat(document.getElementById('fee-input').value);
-            const equationInput = document.getElementById('equation-input');
-            const equation = equationInput.value;
-            
-            if (isNaN(fee)) {
-                tg.showAlert('Введите корректное значение комиссии');
-                return;
-            }
-            
-            const feeMultiplier = 1 - fee/100;
-            const cursor = equationInput.selectionStart;
+    function applyFeeFromBottom() {
+        const fee = parseFloat(document.getElementById('fee-input-bottom').value);
+        const equationInput = document.getElementById('equation-input-bottom');
+        const equation = equationInput.value;
+        
+        if (isNaN(fee)) {
+            tg.showAlert('Введите корректное значение комиссии');
+            return;
+        }
+        
+        const feeMultiplier = 1 - fee/100;
+        const cursor = equationInput.selectionStart;
+        
+        const variables = equation.match(/[A-Z]+_(?:Mexc|Bybit|OKX)_(?:bid|ask)/g) || [];
+        if (!variables.length) {
+            tg.showAlert('Выберите пару для применения комиссии');
+            return;
+        }
+        
+        let nearestVar = variables.reduce((nearest, current) => {
+            const currentPos = equation.indexOf(current);
+            const nearestPos = equation.indexOf(nearest);
+            return Math.abs(currentPos - cursor) < Math.abs(nearestPos - cursor) ? current : nearest;
+        });
+        
+        const isBid = nearestVar.endsWith('_bid');
+        const replacement = isBid ? 
+            `(${nearestVar}*${feeMultiplier})` : 
+            `(${nearestVar}/${feeMultiplier})`;
+        
+        const newEquation = equation.replace(nearestVar, replacement);
+        equationInput.value = newEquation;
+    }
+
+    function addEquationFromBottom() {
+        addEquation();
+    }
+
+    function evaluateEquation(equation) {
+        try {
+            let evalStr = equation;
             
             const variables = equation.match(/[A-Z]+_(?:Mexc|Bybit|OKX)_(?:bid|ask)/g) || [];
-            if (!variables.length) {
-                tg.showAlert('Выберите пару для применения комиссии');
-                return;
-            }
-            
-            let nearestVar = variables.reduce((nearest, current) => {
-                const currentPos = equation.indexOf(current);
-                const nearestPos = equation.indexOf(nearest);
-                return Math.abs(currentPos - cursor) < Math.abs(nearestPos - cursor) ? current : nearest;
-            });
-            
-            const isBid = nearestVar.endsWith('_bid');
-            const replacement = isBid ? 
-                `(${nearestVar}*${feeMultiplier})` : 
-                `(${nearestVar}/${feeMultiplier})`;
-            
-            const newEquation = equation.replace(nearestVar, replacement);
-            equationInput.value = newEquation;
-        }
-
-        function evaluateEquation(equation) {
-            try {
-                let evalStr = equation;
+            for (const variable of variables) {
+                const [symbol, exchange, priceType] = variable.split('_');
+                const pairKey = `${exchange}_${symbol}`;
                 
-                const variables = equation.match(/[A-Z]+_(?:Mexc|Bybit|OKX)_(?:bid|ask)/g) || [];
-                for (const variable of variables) {
-                    const [symbol, exchange, priceType] = variable.split('_');
-                    const pairKey = `${exchange}_${symbol}`;
-                    
-                    if (!pairs[pairKey]) {
-                        return 'н/д';
-                    }
-                    
-                    const priceElement = pairs[pairKey].querySelector(`.${priceType}`);
-                    const price = priceElement.textContent;
-                    
-                    if (price === 'Загрузка...') {
-                        return 'Загрузка...';
-                    }
-                    
-                    evalStr = evalStr.replace(variable, price);
-                }
-                
-                evalStr = evalStr.replace(/\s+/g, '');
-                
-                if (!/^[0-9.+\-*/() ]+$/.test(evalStr)) {
+                if (!pairs[pairKey]) {
                     return 'н/д';
                 }
                 
-                const result = new Decimal(eval(evalStr));
-                return result.toFixed(8);
+                const priceElement = pairs[pairKey].querySelector(`.${priceType}`);
+                const price = priceElement.textContent;
                 
-            } catch (error) {
-                console.error('Ошибка вычисления:', error);
-                return 'Ошибка';
-            }
-        }
-
-        function updateEquations() {
-            for (const [equation, element] of Object.entries(equations)) {
-                const result = evaluateEquation(equation);
-                const resultElement = element.querySelector('.result');
-                resultElement.textContent = result;
-                
-                if (result === 'н/д' || result === 'Ошибка') {
-                    resultElement.style.color = '#ef4444';
-                } else {
-                    resultElement.style.color = 'inherit';
+                if (price === 'Загрузка...') {
+                    return 'Загрузка...';
                 }
+                
+                evalStr = evalStr.replace(variable, price);
+            }
+            
+            evalStr = evalStr.replace(/\s+/g, '');
+            
+            if (!/^[0-9.+\-*/() ]+$/.test(evalStr)) {
+                return 'н/д';
+            }
+            
+            const result = new Decimal(eval(evalStr));
+            return result.toFixed(8);
+            
+        } catch (error) {
+            console.error('Ошибка вычисления:', error);
+            return 'Ошибка';
+        }
+    }
+
+    function updateEquations() {
+        for (const [equation, element] of Object.entries(equations)) {
+            const result = evaluateEquation(equation);
+            const resultElement = element.querySelector('.result');
+            resultElement.textContent = result;
+            
+            if (result === 'н/д' || result === 'Ошибка') {
+                resultElement.style.color = '#ef4444';
+            } else {
+                resultElement.style.color = 'inherit';
             }
         }
+    }
 
-        function initialize() {
-            applyTgTheme();
-            
-            setInterval(() => {
-                updateEquations();
-            }, 1000);
-            
-            tg.onEvent('themeChanged', applyTgTheme);
+    function initialize() {
+        applyTgTheme();
+        
+        setInterval(() => {
+            updateEquations();
+        }, 1000);
+        
+        tg.onEvent('themeChanged', applyTgTheme);
+    }
+
+    document.getElementById('pair-symbol').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            addPair();
         }
+    });
 
-        document.getElementById('pair-symbol').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                addPair();
-            }
-        });
+    document.getElementById('equation-input-bottom').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            addEquationFromBottom();
+        }
+    });
 
-        document.getElementById('equation-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && e.ctrlKey) {
-                addEquation();
-            }
-        });
-
-        initialize();
-    </script>
+    initialize();
+</script>
 </body>
 </html>
