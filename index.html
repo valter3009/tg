@@ -8,13 +8,13 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --tg-theme-bg-color: #fff;
-            --tg-theme-text-color: #000;
-            --tg-theme-hint-color: #999;
+            --tg-theme-bg-color: #222222;
+            --tg-theme-text-color: #ffffff;
+            --tg-theme-hint-color: #666666;
             --tg-theme-link-color: #2481cc;
             --tg-theme-button-color: #2481cc;
-            --tg-theme-button-text-color: #fff;
-            --tg-theme-secondary-bg-color: #f4f4f5;
+            --tg-theme-button-text-color: #ffffff;
+            --tg-theme-secondary-bg-color: #333333;
         }
 
         body {
@@ -23,6 +23,7 @@
             padding: 0;
             background-color: var(--tg-theme-bg-color);
             color: var(--tg-theme-text-color);
+            font-size: 7px;
         }
 
         .container {
@@ -48,7 +49,7 @@
             border: none;
             background: none;
             color: var(--tg-theme-text-color);
-            font-size: 0.9rem;
+            font-size: 7px;
         }
 
         .nav-button.active {
@@ -75,6 +76,9 @@
             padding: 0.5rem;
             border: 1px solid var(--tg-theme-hint-color);
             border-radius: 4px;
+            background: var(--tg-theme-secondary-bg-color);
+            color: var(--tg-theme-text-color);
+            font-size: 7px;
         }
 
         .pair-input button {
@@ -83,6 +87,7 @@
             color: var(--tg-theme-button-text-color);
             border: none;
             border-radius: 4px;
+            font-size: 7px;
         }
 
         .pairs-list,
@@ -102,13 +107,40 @@
             border-radius: 4px;
         }
 
-        .price {
-            display: flex;
-            gap: 1rem;
+        .pair-item {
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        .bid { color: #22c55e; }
-        .ask { color: #ef4444; }
+        .pair-name {
+            width: 120px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .price {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .price-button {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            border: none;
+            font-size: 7px;
+            cursor: pointer;
+        }
+
+        .bid {
+            background-color: #22c55e;
+            color: white;
+        }
+
+        .ask {
+            background-color: #ef4444;
+            color: white;
+        }
 
         .equation-input {
             display: flex;
@@ -122,14 +154,27 @@
             border: 1px solid var(--tg-theme-hint-color);
             border-radius: 4px;
             min-height: 60px;
+            background: var(--tg-theme-secondary-bg-color);
+            color: var(--tg-theme-text-color);
+            font-size: 7px;
         }
 
-        .settings-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 0;
-            border-bottom: 1px solid var(--tg-theme-hint-color);
+        .equation-input input {
+            padding: 0.5rem;
+            border: 1px solid var(--tg-theme-hint-color);
+            border-radius: 4px;
+            background: var(--tg-theme-secondary-bg-color);
+            color: var(--tg-theme-text-color);
+            font-size: 7px;
+        }
+
+        .equation-input button {
+            padding: 0.5rem 1rem;
+            background: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            border: none;
+            border-radius: 4px;
+            font-size: 7px;
         }
     </style>
 </head>
@@ -159,23 +204,11 @@
             </div>
             <div id="equations-list" class="equations-list"></div>
         </div>
-
-        <div id="settings-screen" class="screen">
-            <div class="settings-item">
-                <span>Уведомления о изменении цен</span>
-                <input type="checkbox" id="price-notifications">
-            </div>
-            <div class="settings-item">
-                <span>Интервал обновления (сек)</span>
-                <input type="number" id="update-interval" value="1" min="1" max="60">
-            </div>
-        </div>
     </div>
 
     <div class="nav">
         <button class="nav-button active" onclick="showScreen('pairs')">Пары</button>
-        <button class="nav-button" onclick="showScreen('equations')">Формулы</button>
-        <button class="nav-button" onclick="showScreen('settings')">Настройки</button>
+        <button class="nav-button" onclick="showScreen('equations')">Связки</button>
     </div>
 
     <script>
@@ -184,22 +217,19 @@
         let equations = {};
         let connections = {};
         
-        // Инициализация Telegram WebApp
         tg.expand();
         tg.ready();
 
-        // Применение темы Telegram
         function applyTgTheme() {
-            document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color);
-            document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color);
-            document.documentElement.style.setProperty('--tg-theme-hint-color', tg.themeParams.hint_color);
-            document.documentElement.style.setProperty('--tg-theme-link-color', tg.themeParams.link_color);
-            document.documentElement.style.setProperty('--tg-theme-button-color', tg.themeParams.button_color);
-            document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.themeParams.button_text_color);
-            document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', tg.themeParams.secondary_bg_color);
+            document.documentElement.style.setProperty('--tg-theme-bg-color', '#222222');
+            document.documentElement.style.setProperty('--tg-theme-text-color', '#ffffff');
+            document.documentElement.style.setProperty('--tg-theme-hint-color', '#666666');
+            document.documentElement.style.setProperty('--tg-theme-link-color', '#2481cc');
+            document.documentElement.style.setProperty('--tg-theme-button-color', '#2481cc');
+            document.documentElement.style.setProperty('--tg-theme-button-text-color', '#ffffff');
+            document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', '#333333');
         }
 
-        // Навигация между экранами
         function showScreen(screenName) {
             document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
             document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
@@ -207,7 +237,6 @@
             document.querySelector(`.nav-button[onclick="showScreen('${screenName}')"]`).classList.add('active');
         }
 
-        // WebSocket подключения
         const exchangeConfigs = {
             'Mexc': {
                 wsUrl: 'wss://wbs.mexc.com/ws',
@@ -292,7 +321,6 @@
             return ws;
         }
 
-        // Управление парами
         function addPair() {
             const symbol = document.getElementById('pair-symbol').value.toUpperCase();
             const exchange = document.getElementById('exchange-select').value;
@@ -311,10 +339,10 @@
             const pairElement = document.createElement('div');
             pairElement.className = 'pair-item';
             pairElement.innerHTML = `
-                <span>${symbol} ${exchange}</span>
+                <span class="pair-name">${symbol} ${exchange}</span>
                 <div class="price">
-                    <span class="bid">Загрузка...</span>
-                    <span class="ask">Загрузка...</span>
+                    <button class="price-button bid">Загрузка...</button>
+                    <button class="price-button ask">Загрузка...</button>
                     <button onclick="removePair('${pairKey}')">×</button>
                 </div>
             `;
@@ -351,25 +379,13 @@
                 const bidElement = pairElement.querySelector('.bid');
                 const askElement = pairElement.querySelector('.ask');
                 
-                const oldBid = bidElement.textContent;
-                const oldAsk = askElement.textContent;
-                
                 bidElement.textContent = bid;
                 askElement.textContent = ask;
-                
-                if (document.getElementById('price-notifications').checked) {
-                    if (oldBid !== 'Загрузка...' && oldAsk !== 'Загрузка...') {
-                        if (bid !== oldBid || ask !== oldAsk) {
-                            tg.showAlert(`${symbol} ${exchange}\nBid: ${bid}\nAsk: ${ask}`);
-                        }
-                    }
-                }
                 
                 updateEquations();
             }
         }
 
-        // Управление формулами
         function addEquation() {
             const equation = document.getElementById('equation-input').value.trim();
             if (!equation) return;
@@ -437,7 +453,6 @@
             try {
                 let evalStr = equation;
                 
-                // Заменяем значения пар на их текущие цены
                 const variables = equation.match(/[A-Z]+_(?:Mexc|Bybit|OKX)_(?:bid|ask)/g) || [];
                 for (const variable of variables) {
                     const [symbol, exchange, priceType] = variable.split('_');
@@ -457,15 +472,12 @@
                     evalStr = evalStr.replace(variable, price);
                 }
                 
-                // Очищаем строку от пробелов
                 evalStr = evalStr.replace(/\s+/g, '');
                 
-                // Проверяем на недопустимые символы
                 if (!/^[0-9.+\-*/() ]+$/.test(evalStr)) {
                     return 'н/д';
                 }
                 
-                // Вычисляем результат с помощью Decimal.js для точности
                 const result = new Decimal(eval(evalStr));
                 return result.toFixed(8);
                 
@@ -489,45 +501,16 @@
             }
         }
 
-        // Сохранение настроек
-        function saveSettings() {
-            const settings = {
-                priceNotifications: document.getElementById('price-notifications').checked,
-                updateInterval: document.getElementById('update-interval').value,
-                pairs: Object.keys(pairs),
-                equations: Object.keys(equations)
-            };
+        function initialize() {
+            applyTgTheme();
             
-            localStorage.setItem('cryptoMonitorSettings', JSON.stringify(settings));
+            setInterval(() => {
+                updateEquations();
+            }, 1000);
+            
+            tg.onEvent('themeChanged', applyTgTheme);
         }
 
-        function loadSettings() {
-            try {
-                const settings = JSON.parse(localStorage.getItem('cryptoMonitorSettings'));
-                if (settings) {
-                    document.getElementById('price-notifications').checked = settings.priceNotifications;
-                    document.getElementById('update-interval').value = settings.updateInterval;
-                    
-                    // Восстанавливаем пары
-                    settings.pairs.forEach(pairKey => {
-                        const [exchange, symbol] = pairKey.split('_');
-                        document.getElementById('pair-symbol').value = symbol;
-                        document.getElementById('exchange-select').value = exchange;
-                        addPair();
-                    });
-                    
-                    // Восстанавливаем формулы
-                    settings.equations.forEach(equation => {
-                        document.getElementById('equation-input').value = equation;
-                        addEquation();
-                    });
-                }
-            } catch (error) {
-                console.error('Ошибка загрузки настроек:', error);
-            }
-        }
-
-        // Обработчики событий
         document.getElementById('pair-symbol').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 addPair();
@@ -539,28 +522,6 @@
                 addEquation();
             }
         });
-
-        // События для сохранения настроек
-        ['price-notifications', 'update-interval'].forEach(id => {
-            document.getElementById(id).addEventListener('change', saveSettings);
-        });
-
-        // Инициализация
-        function initialize() {
-            applyTgTheme();
-            loadSettings();
-            
-            // Запускаем периодическое обновление
-            setInterval(() => {
-                const interval = parseInt(document.getElementById('update-interval').value);
-                if (!isNaN(interval) && interval >= 1) {
-                    updateEquations();
-                }
-            }, 1000);
-            
-            // Добавляем обработчик изменения темы Telegram
-            tg.onEvent('themeChanged', applyTgTheme);
-        }
 
         initialize();
     </script>
