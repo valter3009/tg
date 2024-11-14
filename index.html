@@ -20,6 +20,13 @@
             padding: 20px;
             margin-bottom: 16px;
         }
+        .pair-name {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+            color: var(--tg-theme-button-color, #2481cc);
+        }
         .price-row {
             display: flex;
             justify-content: space-between;
@@ -53,6 +60,7 @@
 </head>
 <body>
     <div class="price-container">
+        <div class="pair-name">BTC/USDT</div>
         <div class="price-row">
             <span class="price-label">Bid:</span>
             <span class="price-value bid" id="bidPrice">---.--</span>
@@ -88,12 +96,15 @@
                     statusElement.classList.remove('error');
                     reconnectAttempts = 0;
                     
-                    // Subscribe to BTC/USDT order book
+                    // Subscribe to BTC/USDT order book with updated format
                     const subscribeMsg = {
                         "method": "SUBSCRIPTION",
-                        "params": ["spot@public.bookTicker.v3.api@BTCUSDT"]
+                        "params": ["spot@public.bookTicker.v3.api@BTCUSDT", "spot@public.deals.v3.api@BTCUSDT"]
                     };
                     ws.send(JSON.stringify(subscribeMsg));
+
+                    // Log subscription message
+                    console.log('Subscription message sent:', subscribeMsg);
 
                     // Setup ping interval
                     pingInterval = setInterval(() => {
@@ -105,15 +116,18 @@
 
                 ws.onmessage = function(event) {
                     try {
+                        console.log('Received message:', event.data); // Log raw message
                         const data = JSON.parse(event.data);
                         
                         // Handle pong message
                         if (data.pong) {
+                            console.log('Received pong:', data);
                             return;
                         }
                         
                         // Check if it's a price update message
                         if (data.d && data.d.bp && data.d.ap) {
+                            console.log('Price update received:', data.d);
                             const bid = new Decimal(data.d.bp).toFixed(2);
                             const ask = new Decimal(data.d.ap).toFixed(2);
                             
@@ -170,6 +184,21 @@
                 ws.close();
             }
         });
+
+        // Add debug button
+        const debugButton = document.createElement('button');
+        debugButton.textContent = 'Show Debug Info';
+        debugButton.style.marginTop = '10px';
+        debugButton.style.padding = '8px';
+        debugButton.style.width = '100%';
+        debugButton.onclick = () => {
+            alert(`WebSocket State: ${ws ? ws.readyState : 'not initialized'}
+Reconnect Attempts: ${reconnectAttempts}
+Bid Price: ${bidElement.textContent}
+Ask Price: ${askElement.textContent}
+Status: ${statusElement.textContent}`);
+        };
+        document.body.appendChild(debugButton);
     </script>
 </body>
 </html>
