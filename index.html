@@ -3,184 +3,366 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Крестики-нолики</title>
+    <title>Многоуровневое меню</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/telegram-web-app/7.0.0/telegram-web-app.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: #f0f2f5;
+        * {
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        .game-title {
-            color: #2f3136;
-            margin-bottom: 20px;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
         }
 
-        .game-board {
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .back-button {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--tg-theme-button-color, #2481cc);
+            cursor: pointer;
+            padding: 8px;
+            margin-right: 8px;
+            display: none;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .menu-list {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            background-color: #fff;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            gap: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
         }
 
-        .cell {
-            width: 80px;
-            height: 80px;
-            border: 2px solid #e4e6eb;
+        .menu-item {
+            background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .menu-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .menu-item-icon {
+            width: 40px;
+            height: 40px;
+            background-color: var(--tg-theme-button-color, #2481cc);
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 40px;
-            cursor: pointer;
-            background-color: white;
-            transition: background-color 0.2s;
-        }
-
-        .cell:hover {
-            background-color: #f5f6f7;
-        }
-
-        .cell.x {
-            color: #2196f3;
-        }
-
-        .cell.o {
-            color: #f44336;
-        }
-
-        .status {
-            margin-top: 20px;
+            color: white;
             font-size: 20px;
-            color: #2f3136;
         }
 
-        .restart-btn {
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 16px;
+        .menu-item-content {
+            flex: 1;
+        }
+
+        .menu-item-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .menu-item-description {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #999);
+        }
+
+        .detail-view {
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .detail-content {
+            background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .detail-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .action-button {
+            background-color: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #fff);
             border: none;
             border-radius: 8px;
-            background-color: #5865f2;
-            color: white;
+            padding: 12px 24px;
+            font-size: 16px;
             cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .restart-btn:hover {
-            background-color: #4752c4;
+            width: 100%;
+            margin-top: 16px;
         }
     </style>
 </head>
 <body>
-    <h1 class="game-title">Крестики-нолики</h1>
-    <div class="game-board" id="board"></div>
-    <div class="status" id="status">Ход: X</div>
-    <button class="restart-btn" id="restartBtn">Начать заново</button>
+    <div class="container">
+        <div class="header">
+            <button class="back-button">←</button>
+            <div class="header-title">Главное меню</div>
+        </div>
+        <div id="mainContent"></div>
+    </div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        class TicTacToe {
+        // Структура данных меню
+        const menuData = {
+            services: {
+                title: 'Услуги',
+                icon: '🛠',
+                description: 'Наши основные услуги',
+                items: {
+                    development: {
+                        title: 'Разработка',
+                        icon: '💻',
+                        description: 'Веб и мобильная разработка',
+                        items: {
+                            web: {
+                                title: 'Веб-разработка',
+                                description: 'Создание сайтов и веб-приложений',
+                                content: 'Полный цикл разработки веб-проектов',
+                                price: 'от 50000 ₽'
+                            },
+                            mobile: {
+                                title: 'Мобильная разработка',
+                                description: 'iOS и Android приложения',
+                                content: 'Разработка нативных приложений',
+                                price: 'от 100000 ₽'
+                            }
+                        }
+                    },
+                    design: {
+                        title: 'Дизайн',
+                        icon: '🎨',
+                        description: 'UI/UX дизайн',
+                        items: {
+                            ui: {
+                                title: 'UI Дизайн',
+                                description: 'Проектирование интерфейсов',
+                                content: 'Создание современных интерфейсов',
+                                price: 'от 30000 ₽'
+                            },
+                            ux: {
+                                title: 'UX Дизайн',
+                                description: 'Проектирование опыта',
+                                content: 'Улучшение пользовательского опыта',
+                                price: 'от 40000 ₽'
+                            }
+                        }
+                    }
+                }
+            },
+            products: {
+                title: 'Продукты',
+                icon: '📦',
+                description: 'Готовые решения',
+                items: {
+                    cms: {
+                        title: 'CMS',
+                        icon: '🗄',
+                        description: 'Системы управления контентом',
+                        items: {
+                            basic: {
+                                title: 'Базовая CMS',
+                                description: 'Для малого бизнеса',
+                                content: 'Простая и удобная система управления',
+                                price: 'от 20000 ₽'
+                            },
+                            pro: {
+                                title: 'Pro CMS',
+                                description: 'Для крупного бизнеса',
+                                content: 'Продвинутая система управления',
+                                price: 'от 60000 ₽'
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        class MenuNavigator {
             constructor() {
-                this.board = Array(9).fill('');
-                this.currentPlayer = 'X';
-                this.gameActive = true;
+                this.currentPath = [];
+                this.mainContent = document.getElementById('mainContent');
+                this.backButton = document.querySelector('.back-button');
+                this.headerTitle = document.querySelector('.header-title');
                 
-                this.boardElement = document.getElementById('board');
-                this.statusElement = document.getElementById('status');
-                this.restartBtn = document.getElementById('restartBtn');
+                this.backButton.addEventListener('click', () => this.goBack());
                 
-                this.createBoard();
-                this.addEventListeners();
+                this.renderCurrentLevel();
             }
 
-            createBoard() {
-                this.boardElement.innerHTML = '';
-                for (let i = 0; i < 9; i++) {
-                    const cell = document.createElement('div');
-                    cell.classList.add('cell');
-                    cell.dataset.index = i;
-                    this.boardElement.appendChild(cell);
+            getCurrentData() {
+                let current = menuData;
+                for (let key of this.currentPath) {
+                    current = current[key].items;
                 }
+                return current;
             }
 
-            addEventListeners() {
-                this.boardElement.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('cell')) {
-                        this.handleCellClick(e.target);
-                    }
-                });
+            renderCurrentLevel() {
+                const currentData = this.getCurrentData();
+                const menuList = document.createElement('div');
+                menuList.className = 'menu-list';
 
-                this.restartBtn.addEventListener('click', () => this.restartGame());
+                for (let key in currentData) {
+                    const item = currentData[key];
+                    const menuItem = this.createMenuItem(key, item);
+                    menuList.appendChild(menuItem);
+                }
+
+                this.mainContent.innerHTML = '';
+                this.mainContent.appendChild(menuList);
+
+                // Обновляем заголовок и видимость кнопки назад
+                this.updateHeader();
             }
 
-            handleCellClick(cell) {
-                const index = cell.dataset.index;
-                if (this.board[index] === '' && this.gameActive) {
-                    this.board[index] = this.currentPlayer;
-                    cell.textContent = this.currentPlayer;
-                    cell.classList.add(this.currentPlayer.toLowerCase());
-                    
-                    if (this.checkWin()) {
-                        this.statusElement.textContent = `Победил: ${this.currentPlayer}!`;
-                        this.gameActive = false;
-                        tg.sendData(`win:${this.currentPlayer}`);
-                    } else if (this.checkDraw()) {
-                        this.statusElement.textContent = 'Ничья!';
-                        this.gameActive = false;
-                        tg.sendData('draw');
+            createMenuItem(key, item) {
+                const div = document.createElement('div');
+                div.className = 'menu-item';
+
+                const hasSubitems = item.items !== undefined;
+
+                div.innerHTML = `
+                    <div class="menu-item-icon">${item.icon || '📁'}</div>
+                    <div class="menu-item-content">
+                        <div class="menu-item-title">${item.title}</div>
+                        <div class="menu-item-description">${item.description || ''}</div>
+                    </div>
+                `;
+
+                div.addEventListener('click', () => {
+                    if (hasSubitems) {
+                        this.navigateTo(key);
                     } else {
-                        this.currentPlayer = this.currentPlayer === 'X' ? 'O' : 'X';
-                        this.statusElement.textContent = `Ход: ${this.currentPlayer}`;
+                        this.showDetail(item);
                     }
+                });
+
+                return div;
+            }
+
+            navigateTo(key) {
+                this.currentPath.push(key);
+                this.renderCurrentLevel();
+                
+                // Анимация перехода
+                this.mainContent.style.animation = 'slideIn 0.3s ease-out';
+                setTimeout(() => {
+                    this.mainContent.style.animation = '';
+                }, 300);
+            }
+
+            goBack() {
+                if (this.currentPath.length > 0) {
+                    this.currentPath.pop();
+                    this.renderCurrentLevel();
                 }
             }
 
-            checkWin() {
-                const winPatterns = [
-                    [0, 1, 2], [3, 4, 5], [6, 7, 8], // горизонтали
-                    [0, 3, 6], [1, 4, 7], [2, 5, 8], // вертикали
-                    [0, 4, 8], [2, 4, 6] // диагонали
-                ];
-
-                return winPatterns.some(pattern => {
-                    const [a, b, c] = pattern;
-                    return this.board[a] &&
-                           this.board[a] === this.board[b] &&
-                           this.board[a] === this.board[c];
-                });
+            updateHeader() {
+                if (this.currentPath.length > 0) {
+                    this.backButton.style.display = 'block';
+                    const currentData = this.getCurrentData();
+                    const currentKey = this.currentPath[this.currentPath.length - 1];
+                    const parentData = this.getParentData();
+                    this.headerTitle.textContent = parentData[currentKey].title;
+                } else {
+                    this.backButton.style.display = 'none';
+                    this.headerTitle.textContent = 'Главное меню';
+                }
             }
 
-            checkDraw() {
-                return this.board.every(cell => cell !== '');
+            getParentData() {
+                let current = menuData;
+                for (let i = 0; i < this.currentPath.length - 1; i++) {
+                    current = current[this.currentPath[i]].items;
+                }
+                return current;
             }
 
-            restartGame() {
-                this.board = Array(9).fill('');
-                this.currentPlayer = 'X';
-                this.gameActive = true;
-                this.statusElement.textContent = 'Ход: X';
-                document.querySelectorAll('.cell').forEach(cell => {
-                    cell.textContent = '';
-                    cell.classList.remove('x', 'o');
+            showDetail(item) {
+                const detailView = document.createElement('div');
+                detailView.className = 'detail-view';
+                detailView.style.display = 'block';
+
+                detailView.innerHTML = `
+                    <div class="detail-content">
+                        <img src="/api/placeholder/800/400" alt="placeholder" class="detail-image">
+                        <h2>${item.title}</h2>
+                        <p>${item.content || item.description}</p>
+                        <p><strong>Стоимость:</strong> ${item.price}</p>
+                        <button class="action-button">Заказать</button>
+                    </div>
+                `;
+
+                this.mainContent.innerHTML = '';
+                this.mainContent.appendChild(detailView);
+
+                // Добавляем обработчик для кнопки заказа
+                detailView.querySelector('.action-button').addEventListener('click', () => {
+                    tg.sendData(JSON.stringify({
+                        action: 'order',
+                        item: item.title,
+                        price: item.price
+                    }));
                 });
-                tg.sendData('restart');
             }
         }
 
-        // Инициализация игры
+        // Инициализация навигатора при загрузке страницы
         document.addEventListener('DOMContentLoaded', () => {
-            new TicTacToe();
+            new MenuNavigator();
         });
     </script>
 </body>
