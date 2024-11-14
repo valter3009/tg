@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Crypto Monitor</title>
+    <title>IDTrade</title>
     <style>
         :root {
             --tg-theme-bg-color: #222222;
@@ -13,6 +13,12 @@
             --tg-theme-button-color: #2481cc;
             --tg-theme-button-text-color: #ffffff;
             --tg-theme-secondary-bg-color: #333333;
+            --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -21,95 +27,83 @@
             padding: 0;
             background-color: var(--tg-theme-bg-color);
             color: var(--tg-theme-text-color);
-            font-size: 11px;
+            font-size: 14px;
             min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--tg-theme-secondary-bg-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .title {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        .subtitle {
+            font-size: 0.8rem;
+            color: var(--tg-theme-hint-color);
         }
 
         .container {
-            max-width: 800px;
-            margin: 0 auto;
+            flex: 1;
+            overflow-y: auto;
             padding: 1rem;
-            padding-bottom: 7rem;
-        }
-
-        .nav {
-            display: flex;
-            justify-content: space-around;
-            background: var(--tg-theme-secondary-bg-color);
-            padding: 0.5rem;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-        }
-
-        .input-panel {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: var(--tg-theme-secondary-bg-color);
-            padding: 0.5rem;
-            position: fixed;
-            bottom: 2.5rem;
-            left: 0;
-            right: 0;
-            z-index: 100;
-        }
-
-        .nav-button {
-            padding: 0.5rem 1rem;
-            border: none;
-            background: none;
-            color: var(--tg-theme-text-color);
-            font-size: 12px;
-            cursor: pointer;
-        }
-
-        .nav-button.active {
-            color: var(--tg-theme-button-color);
-        }
-
-        .screen {
-            display: none;
-        }
-
-        .screen.active {
-            display: block;
+            padding-bottom: calc(120px + var(--safe-area-inset-bottom));
+            -webkit-overflow-scrolling: touch;
         }
 
         .pair-input {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr auto auto;
             gap: 0.5rem;
             margin-bottom: 1rem;
         }
 
         .pair-input input,
         .pair-input select {
-            padding: 0.5rem;
+            padding: 0.75rem;
             border: 1px solid var(--tg-theme-hint-color);
-            border-radius: 4px;
+            border-radius: 8px;
             background: var(--tg-theme-secondary-bg-color);
             color: var(--tg-theme-text-color);
-            font-size: 13px;
+            font-size: 14px;
+            width: 100%;
+            appearance: none;
         }
 
-        .pair-input button {
-            padding: 0.5rem 1rem;
+        .add-button {
+            padding: 0.75rem 1.25rem;
             background: var(--tg-theme-button-color);
             color: var(--tg-theme-button-text-color);
             border: none;
-            border-radius: 4px;
-            font-size: 13px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .add-button:active {
+            opacity: 0.7;
         }
 
         .pairs-list,
         .equations-list {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
-            font-size: 11px;
+            gap: 0.75rem;
         }
 
         .pair-item,
@@ -117,16 +111,26 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.75rem;
+            padding: 1rem;
             background: var(--tg-theme-secondary-bg-color);
-            border-radius: 4px;
+            border-radius: 12px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .pair-name {
-            width: 120px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            font-size: 14px;
+            font-weight: 500;
         }
 
         .price {
@@ -136,14 +140,19 @@
         }
 
         .price-button {
-            width: 80px;
-            text-align: center;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
+            min-width: 100px;
+            padding: 0.5rem;
+            border-radius: 6px;
             border: none;
-            font-size: 11px;
+            font-size: 13px;
+            font-family: 'SF Mono', SFMono-Regular, Consolas, monospace;
+            font-weight: 500;
             cursor: pointer;
-            font-family: monospace;
+            transition: transform 0.2s;
+        }
+
+        .price-button:active {
+            transform: scale(0.95);
         }
 
         .bid {
@@ -156,155 +165,283 @@
             color: white;
         }
 
-        .fee-input {
-            width: 60px;
-            padding: 0.5rem;
-            border: 1px solid var(--tg-theme-hint-color);
-            border-radius: 4px;
-            background: var(--tg-theme-secondary-bg-color);
+        .remove-button {
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
             color: var(--tg-theme-text-color);
-            font-size: 11px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
         }
 
-        .equation-input-bottom {
-            flex: 1;
-            padding: 0.5rem;
+        .remove-button:active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .bottom-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--tg-theme-secondary-bg-color);
+            padding: 1rem;
+            padding-bottom: calc(1rem + var(--safe-area-inset-bottom));
+            border-top-left-radius: 16px;
+            border-top-right-radius: 16px;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            transition: transform 0.3s ease-out;
+        }
+
+        .bottom-panel.keyboard-visible {
+            transform: translateY(-100%);
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 80px 1fr auto;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .fee-input {
+            padding: 0.75rem;
             border: 1px solid var(--tg-theme-hint-color);
-            border-radius: 4px;
+            border-radius: 8px;
             background: var(--tg-theme-secondary-bg-color);
             color: var(--tg-theme-text-color);
-            font-size: 11px;
+            font-size: 14px;
+            width: 100%;
+            -moz-appearance: textfield;
+        }
+
+        .fee-input::-webkit-outer-spin-button,
+        .fee-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .equation-input {
+            padding: 0.75rem;
+            border: 1px solid var(--tg-theme-hint-color);
+            border-radius: 8px;
+            background: var(--tg-theme-secondary-bg-color);
+            color: var(--tg-theme-text-color);
+            font-size: 14px;
+            width: 100%;
         }
 
         .action-button {
-            padding: 0.5rem;
+            width: 40px;
+            height: 40px;
+            padding: 0;
             background: var(--tg-theme-button-color);
             color: var(--tg-theme-button-text-color);
             border: none;
-            border-radius: 4px;
-            font-size: 11px;
-            width: 24px;
-            height: 24px;
+            border-radius: 8px;
+            font-size: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            transition: opacity 0.2s;
         }
 
-        .remove-button {
-            padding: 0.25rem 0.5rem;
-            background: var(--tg-theme-secondary-bg-color);
-            color: var(--tg-theme-text-color);
-            border: 1px solid var(--tg-theme-hint-color);
-            border-radius: 4px;
-            font-size: 11px;
-            cursor: pointer;
+        .action-button:active {
+            opacity: 0.7;
         }
 
-        .equation-name {
-            font-weight: bold;
-            margin-bottom: 0.25rem;
-            padding: 0.25rem;
-            border-radius: 4px;
+        .nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            padding-bottom: var(--safe-area-inset-bottom);
         }
 
-        .equation-text {
-            margin-bottom: 0.25rem;
+        .nav-button {
+            padding: 0.75rem;
+            border: none;
+            background: none;
             color: var(--tg-theme-hint-color);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.2s;
+            position: relative;
         }
 
-        .result {
-            font-family: monospace;
-            font-size: 11px;
+        .nav-button::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 25%;
+            right: 25%;
+            height: 2px;
+            background: var(--tg-theme-button-color);
+            border-radius: 1px;
+            opacity: 0;
+            transition: opacity 0.2s;
         }
 
-        .error {
-            color: #ef4444;
+        .nav-button.active {
+            color: var(--tg-theme-button-color);
+        }
+
+        .nav-button.active::after {
+            opacity: 1;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @media (max-height: 600px) {
+            .bottom-panel {
+                position: static;
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            .container {
+                padding-bottom: 1rem;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="header">
+        <div>
+            <div class="title">IDTrade</div>
+            <div class="subtitle">мини-приложение</div>
+        </div>
+    </div>
+
     <div class="container">
         <div id="pairs-screen" class="screen active">
             <div class="pair-input">
-                <input type="text" id="pair-symbol" placeholder="Символ (например, BTCUSDT)">
+                <input type="text" id="pair-symbol" placeholder="Символ (например, BTCUSDT)" autocomplete="off">
                 <select id="exchange-select">
                     <option value="Mexc">Mexc</option>
                     <option value="Bybit">Bybit</option>
                     <option value="OKX">OKX</option>
                 </select>
-                <button>Добавить</button>
+                <button class="add-button">Добавить</button>
             </div>
-            <div id="pairs-list" class="pairs-list">
-                <!-- Примеры пар -->
-                <div class="pair-item">
-                    <span class="pair-name">BTCUSDT Mexc</span>
-                    <div class="price">
-                        <button class="price-button bid">42156.78900000</button>
-                        <button class="price-button ask">42159.32100000</button>
-                        <button class="remove-button">×</button>
-                    </div>
-                </div>
-                <div class="pair-item">
-                    <span class="pair-name">ETHUSDT Bybit</span>
-                    <div class="price">
-                        <button class="price-button bid">2245.67800000</button>
-                        <button class="price-button ask">2246.12300000</button>
-                        <button class="remove-button">×</button>
-                    </div>
-                </div>
-                <div class="pair-item">
-                    <span class="pair-name">DOGEUSDT OKX</span>
-                    <div class="price">
-                        <button class="price-button bid">0.08123400</button>
-                        <button class="price-button ask">0.08125600</button>
-                        <button class="remove-button">×</button>
-                    </div>
-                </div>
-            </div>
+            <div id="pairs-list" class="pairs-list"></div>
         </div>
 
         <div id="equations-screen" class="screen">
-            <div id="equations-list" class="equations-list">
-                <!-- Примеры уравнений -->
-                <div class="equation-item">
-                    <div>
-                        <div class="equation-name">Уравнение_1</div>
-                        <div class="equation-text">BTCUSDT_Mexc_ask/BTCUSDT_Bybit_bid</div>
-                        <div class="result">1.00234500</div>
-                    </div>
-                    <button class="remove-button">×</button>
-                </div>
-                <div class="equation-item">
-                    <div>
-                        <div class="equation-name">Уравнение_2</div>
-                        <div class="equation-text">ETHUSDT_Bybit_ask/ETHUSDT_OKX_bid</div>
-                        <div class="result">0.99876500</div>
-                    </div>
-                    <button class="remove-button">×</button>
-                </div>
-                <div class="equation-item">
-                    <div>
-                        <div class="equation-name">Уравнение_3</div>
-                        <div class="equation-text">DOGEUSDT_OKX_ask/DOGEUSDT_Mexc_bid</div>
-                        <div class="result">1.00123400</div>
-                    </div>
-                    <button class="remove-button">×</button>
-                </div>
-            </div>
+            <div id="equations-list" class="equations-list"></div>
         </div>
     </div>
 
-    <div class="input-panel">
-        <input type="number" class="fee-input" placeholder="%" value="0.02" step="0.01">
-        <button class="action-button">✓</button>
-        <input type="text" class="equation-input-bottom" placeholder="Введите связку...">
-        <button class="action-button">✓</button>
+    <div class="bottom-panel">
+        <div class="input-group">
+            <input type="number" class="fee-input" placeholder="%" value="0.02" step="0.01">
+            <input type="text" class="equation-input" placeholder="Введите связку...">
+            <button class="action-button">✓</button>
+        </div>
+        <div class="nav">
+            <button class="nav-button active" data-screen="pairs">Пары</button>
+            <button class="nav-button" data-screen="equations">Связки</button>
+        </div>
     </div>
 
-    <div class="nav">
-        <button class="nav-button active" onclick="document.getElementById('pairs-screen').classList.add('active'); document.getElementById('equations-screen').classList.remove('active'); this.classList.add('active'); this.nextElementSibling.classList.remove('active')">Пары</button>
-        <button class="nav-button" onclick="document.getElementById('equations-screen').classList.add('active'); document.getElementById('pairs-screen').classList.remove('active'); this.classList.add('active'); this.previousElementSibling.classList.remove('active')">Связки</button>
-    </div>
+    <script>
+        // Handle keyboard visibility
+        const bottomPanel = document.querySelector('.bottom-panel');
+        const inputs = document.querySelectorAll('input');
+
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                bottomPanel.classList.add('keyboard-visible');
+                setTimeout(() => {
+                    input.scrollIntoView({ behavior: 'smooth' });
+                }, 300);
+            });
+
+            input.addEventListener('blur', () => {
+                bottomPanel.classList.remove('keyboard-visible');
+            });
+        });
+
+        // Navigation
+        const navButtons = document.querySelectorAll('.nav-button');
+        const screens = document.querySelectorAll('.screen');
+
+        navButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const targetScreen = button.dataset.screen;
+                
+                navButtons.forEach(btn => btn.classList.remove('active'));
+                screens.forEach(screen => screen.classList.remove('active'));
+                
+                button.classList.add('active');
+                document.getElementById(`${targetScreen}-screen`).classList.add('active');
+            });
+        });
+
+        // Example data handling
+        function addPair(symbol, exchange) {
+            const pairsList = document.getElementById('pairs-list');
+            const pairItem = document.createElement('div');
+            pairItem.className = 'pair-item';
+            pairItem.innerHTML = `
+                <span class="pair-name">${symbol} ${exchange}</span>
+                <div class="price">
+                    <button class="price-button bid">42156.78900000</button>
+                    <button class="price-button ask">42159.32100000</button>
+                    <button class="remove-button">×</button>
+                </div>
+            `;
+            
+            const removeButton = pairItem.querySelector('.remove-button');
+            removeButton.addEventListener('click', () => {
+                pairItem.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => pairItem.remove(), 300);
+            });
+
+            pairsList.appendChild(pairItem);
+        }
+
+        // Add initial example pairs
+        addPair('BTCUSDT', 'Mexc');
+        addPair('ETHUSDT', 'Bybit');
+        addPair('DOGEUSDT', 'OKX');
+
+        // Add new pair handling
+        const addButton = document.querySelector('.add-button');
+        const pairSymbolInput = document.getElementById('pair-symbol');
+        const exchangeSelect = document.getElementById('exchange-select');
+
+        addButton.addEventListener('click', () => {
+            const symbol = pairSymbolInput.value.trim();
+            const exchange = exchangeSelect.value;
+            
+            if (symbol) {
+                addPair(symbol, exchange);
+                pairSymbolInput.value = '';
+                pairSymbolInput.blur();
+            }
+        });
+
+        // Handle enter key in pair symbol input
+        pairSymbolInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addButton.click();
+            }
+        });
+    </script>
 </body>
 </html>
