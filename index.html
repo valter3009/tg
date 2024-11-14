@@ -33,13 +33,12 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            position: fixed;
+            width: 100%;
         }
 
         .header {
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 0.75rem 1rem;
             background: var(--tg-theme-secondary-bg-color);
             position: sticky;
             top: 0;
@@ -47,8 +46,9 @@
         }
 
         .title {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 500;
+            margin-bottom: 0.2rem;
         }
 
         .subtitle {
@@ -59,8 +59,8 @@
         .container {
             flex: 1;
             overflow-y: auto;
-            padding: 1rem;
-            padding-bottom: calc(120px + var(--safe-area-inset-bottom));
+            padding: 0.75rem;
+            padding-bottom: calc(100px + var(--safe-area-inset-bottom));
             -webkit-overflow-scrolling: touch;
         }
 
@@ -68,59 +68,57 @@
             display: grid;
             grid-template-columns: 1fr auto auto;
             gap: 0.5rem;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
         }
 
         .pair-input input,
         .pair-input select {
-            padding: 0.75rem;
+            padding: 0.6rem;
             border: 1px solid var(--tg-theme-hint-color);
             border-radius: 8px;
             background: var(--tg-theme-secondary-bg-color);
             color: var(--tg-theme-text-color);
-            font-size: 14px;
-            width: 100%;
-            appearance: none;
+            font-size: 13px;
         }
 
         .add-button {
-            padding: 0.75rem 1.25rem;
+            padding: 0.6rem 1rem;
             background: var(--tg-theme-button-color);
             color: var(--tg-theme-button-text-color);
             border: none;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-
-        .add-button:active {
-            opacity: 0.7;
         }
 
         .pairs-list,
         .equations-list {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 0.5rem;
         }
 
-        .pair-item,
-        .equation-item {
+        .pair-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem;
+            padding: 0.6rem 0.75rem;
             background: var(--tg-theme-secondary-bg-color);
-            border-radius: 12px;
-            animation: slideIn 0.3s ease-out;
+            border-radius: 8px;
+            animation: slideIn 0.2s ease-out;
+        }
+
+        .equation-item {
+            padding: 0.75rem;
+            background: var(--tg-theme-secondary-bg-color);
+            border-radius: 8px;
+            animation: slideIn 0.2s ease-out;
         }
 
         @keyframes slideIn {
             from {
                 opacity: 0;
-                transform: translateY(10px);
+                transform: translateY(5px);
             }
             to {
                 opacity: 1;
@@ -129,30 +127,25 @@
         }
 
         .pair-name {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
+            min-width: 90px;
         }
 
         .price {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.4rem;
             align-items: center;
         }
 
         .price-button {
-            min-width: 100px;
-            padding: 0.5rem;
+            min-width: 85px;
+            padding: 0.4rem;
             border-radius: 6px;
             border: none;
-            font-size: 13px;
+            font-size: 12px;
             font-family: 'SF Mono', SFMono-Regular, Consolas, monospace;
-            font-weight: 500;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .price-button:active {
-            transform: scale(0.95);
+            text-align: right;
         }
 
         .bid {
@@ -166,8 +159,8 @@
         }
 
         .remove-button {
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
             padding: 0;
             display: flex;
             align-items: center;
@@ -176,13 +169,8 @@
             color: var(--tg-theme-text-color);
             border: none;
             border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .remove-button:active {
-            background: rgba(255, 255, 255, 0.2);
+            font-size: 14px;
+            margin-left: 0.3rem;
         }
 
         .bottom-panel {
@@ -191,93 +179,75 @@
             left: 0;
             right: 0;
             background: var(--tg-theme-secondary-bg-color);
-            padding: 1rem;
-            padding-bottom: calc(1rem + var(--safe-area-inset-bottom));
-            border-top-left-radius: 16px;
-            border-top-right-radius: 16px;
+            padding: 0.75rem;
+            padding-bottom: calc(0.75rem + var(--safe-area-inset-bottom));
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
             box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
             z-index: 100;
-            transition: transform 0.3s ease-out;
-        }
-
-        .bottom-panel.keyboard-visible {
-            transform: translateY(-100%);
         }
 
         .input-group {
             display: grid;
-            grid-template-columns: 80px 1fr auto;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
+            grid-template-columns: 60px 1fr auto;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
         }
 
         .fee-input {
-            padding: 0.75rem;
+            padding: 0.6rem;
             border: 1px solid var(--tg-theme-hint-color);
             border-radius: 8px;
             background: var(--tg-theme-secondary-bg-color);
             color: var(--tg-theme-text-color);
-            font-size: 14px;
-            width: 100%;
+            font-size: 13px;
             -moz-appearance: textfield;
         }
 
-        .fee-input::-webkit-outer-spin-button,
-        .fee-input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-
         .equation-input {
-            padding: 0.75rem;
+            padding: 0.6rem;
             border: 1px solid var(--tg-theme-hint-color);
             border-radius: 8px;
             background: var(--tg-theme-secondary-bg-color);
             color: var(--tg-theme-text-color);
-            font-size: 14px;
-            width: 100%;
+            font-size: 13px;
         }
 
         .action-button {
-            width: 40px;
-            height: 40px;
+            width: 32px;
+            height: 32px;
             padding: 0;
             background: var(--tg-theme-button-color);
             color: var(--tg-theme-button-text-color);
             border: none;
             border-radius: 8px;
-            font-size: 18px;
+            font-size: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-
-        .action-button:active {
-            opacity: 0.7;
         }
 
         .nav {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 0.5rem;
-            padding-bottom: var(--safe-area-inset-bottom);
         }
 
         .nav-button {
-            padding: 0.75rem;
+            padding: 0.6rem;
             border: none;
             background: none;
             color: var(--tg-theme-hint-color);
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
-            cursor: pointer;
-            transition: color 0.2s;
             position: relative;
         }
 
-        .nav-button::after {
+        .nav-button.active {
+            color: var(--tg-theme-button-color);
+        }
+
+        .nav-button.active::after {
             content: '';
             position: absolute;
             bottom: 0;
@@ -286,16 +256,6 @@
             height: 2px;
             background: var(--tg-theme-button-color);
             border-radius: 1px;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-
-        .nav-button.active {
-            color: var(--tg-theme-button-color);
-        }
-
-        .nav-button.active::after {
-            opacity: 1;
         }
 
         .screen {
@@ -306,31 +266,50 @@
             display: block;
         }
 
-        @media (max-height: 600px) {
-            .bottom-panel {
-                position: static;
-                border-radius: 0;
-                box-shadow: none;
-            }
+        .equation-name {
+            font-weight: 500;
+            margin-bottom: 0.3rem;
+        }
 
-            .container {
-                padding-bottom: 1rem;
-            }
+        .equation-text {
+            font-size: 13px;
+            color: var(--tg-theme-hint-color);
+            margin-bottom: 0.3rem;
+        }
+
+        .result {
+            font-family: 'SF Mono', SFMono-Regular, Consolas, monospace;
+            font-size: 13px;
+            color: var(--tg-theme-button-color);
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 90;
+        }
+
+        .overlay.active {
+            display: block;
         }
     </style>
 </head>
 <body>
+    <div class="overlay"></div>
+    
     <div class="header">
-        <div>
-            <div class="title">IDTrade</div>
-            <div class="subtitle">мини-приложение</div>
-        </div>
+        <div class="title">IDTrade</div>
+        <div class="subtitle">мини-приложение</div>
     </div>
 
     <div class="container">
         <div id="pairs-screen" class="screen active">
             <div class="pair-input">
-                <input type="text" id="pair-symbol" placeholder="Символ (например, BTCUSDT)" autocomplete="off">
+                <input type="text" id="pair-symbol" placeholder="Символ (например, BTC)" autocomplete="off">
                 <select id="exchange-select">
                     <option value="Mexc">Mexc</option>
                     <option value="Bybit">Bybit</option>
@@ -342,7 +321,23 @@
         </div>
 
         <div id="equations-screen" class="screen">
-            <div id="equations-list" class="equations-list"></div>
+            <div id="equations-list" class="equations-list">
+                <div class="equation-item">
+                    <div class="equation-name">Bybit → OKX</div>
+                    <div class="equation-text">BTCUSDT_Bybit_ask/BTCUSDT_OKX_bid-1</div>
+                    <div class="result">0.00234 (0.234%)</div>
+                </div>
+                <div class="equation-item">
+                    <div class="equation-name">Треугольник USDT-BTC-ETH</div>
+                    <div class="equation-text">(1/ETHUSDT_Mexc_ask)*ETHBTC_Mexc_bid*BTCUSDT_Mexc_bid-1</div>
+                    <div class="result">0.00156 (0.156%)</div>
+                </div>
+                <div class="equation-item">
+                    <div class="equation-name">OKX → Mexc</div>
+                    <div class="equation-text">ETHUSDT_OKX_ask/ETHUSDT_Mexc_bid-1</div>
+                    <div class="result">0.00189 (0.189%)</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -359,20 +354,26 @@
     </div>
 
     <script>
-        // Handle keyboard visibility
+        // Handle keyboard and overlay
         const bottomPanel = document.querySelector('.bottom-panel');
+        const overlay = document.querySelector('.overlay');
         const inputs = document.querySelectorAll('input');
+        const container = document.querySelector('.container');
+
+        function hideKeyboard() {
+            document.activeElement.blur();
+            overlay.classList.remove('active');
+        }
+
+        overlay.addEventListener('click', hideKeyboard);
+        container.addEventListener('click', hideKeyboard);
 
         inputs.forEach(input => {
             input.addEventListener('focus', () => {
-                bottomPanel.classList.add('keyboard-visible');
+                overlay.classList.add('active');
                 setTimeout(() => {
-                    input.scrollIntoView({ behavior: 'smooth' });
-                }, 300);
-            });
-
-            input.addEventListener('blur', () => {
-                bottomPanel.classList.remove('keyboard-visible');
+                    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
             });
         });
 
@@ -389,30 +390,41 @@
                 
                 button.classList.add('active');
                 document.getElementById(`${targetScreen}-screen`).classList.add('active');
+                hideKeyboard();
             });
         });
 
-        // Example data handling
+        // Format number with fixed decimals
+        function formatNumber(num, decimals = 8) {
+            return Number(num).toFixed(decimals);
+        }
+
+        // Add pair to the list
         function addPair(symbol, exchange) {
             const pairsList = document.getElementById('pairs-list');
             const pairItem = document.createElement('div');
             pairItem.className = 'pair-item';
+            
+            const bid = (Math.random() * (40000 - 30000) + 30000).toFixed(8);
+            const ask = (Number(bid) + Math.random() * 10).toFixed(8);
+            
             pairItem.innerHTML = `
                 <span class="pair-name">${symbol} ${exchange}</span>
                 <div class="price">
-                    <button class="price-button bid">42156.78900000</button>
-                    <button class="price-button ask">42159.32100000</button>
+                    <button class="price-button bid">${formatNumber(bid)}</button>
+                    <button class="price-button ask">${formatNumber(ask)}</button>
                     <button class="remove-button">×</button>
                 </div>
             `;
             
             const removeButton = pairItem.querySelector('.remove-button');
-            removeButton.addEventListener('click', () => {
-                pairItem.style.animation = 'slideOut 0.3s ease-out';
-                setTimeout(() => pairItem.remove(), 300);
+            removeButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                pairItem.style.animation = 'slideOut 0.2s ease-out';
+                setTimeout(() => pairItem.remove(), 200);
             });
 
-            pairsList.appendChild(pairItem);
+            pairsList.prepend(pairItem);
         }
 
         // Add initial example pairs
@@ -420,28 +432,124 @@
         addPair('ETHUSDT', 'Bybit');
         addPair('DOGEUSDT', 'OKX');
 
-        // Add new pair handling
+        // Handle new pair addition
         const addButton = document.querySelector('.add-button');
         const pairSymbolInput = document.getElementById('pair-symbol');
         const exchangeSelect = document.getElementById('exchange-select');
 
-        addButton.addEventListener('click', () => {
-            const symbol = pairSymbolInput.value.trim();
-            const exchange = exchangeSelect.value;
-            
-            if (symbol) {
-                addPair(symbol, exchange);
-                pairSymbolInput.value = '';
-                pairSymbolInput.blur();
+        function handleAddPair() {
+            const symbol = pairSymbolInput.value.trim().toUpperCase();
+            if (!symbol) return;
+
+            // Automatically append USDT if not present and no other quote currency
+            const finalSymbol = symbol.includes('/') || symbol.includes('USDT') || 
+                              symbol.includes('BUSD') || symbol.includes('USDC') ? 
+                              symbol : `${symbol}USDT`;
+
+            addPair(finalSymbol, exchangeSelect.value);
+            pairSymbolInput.value = '';
+            hideKeyboard();
+        }
+
+        addButton.addEventListener('click', handleAddPair);
+        pairSymbolInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleAddPair();
             }
         });
 
-        // Handle enter key in pair symbol input
-        pairSymbolInput.addEventListener('keypress', (e) => {
+        // Handle price updates
+        function updatePrices() {
+            const pairs = document.querySelectorAll('.pair-item');
+            pairs.forEach(pair => {
+                const bidButton = pair.querySelector('.bid');
+                const askButton = pair.querySelector('.ask');
+                
+                // Simulate price updates with small random changes
+                const currentBid = parseFloat(bidButton.textContent);
+                const change = currentBid * (Math.random() * 0.002 - 0.001); // ±0.1% change
+                const newBid = currentBid + change;
+                const newAsk = newBid + (newBid * (Math.random() * 0.001 + 0.0005)); // 0.05-0.15% spread
+
+                bidButton.textContent = formatNumber(newBid);
+                askButton.textContent = formatNumber(newAsk);
+
+                // Add flash effect on price change
+                const flashClass = change >= 0 ? 'price-up' : 'price-down';
+                bidButton.classList.add(flashClass);
+                askButton.classList.add(flashClass);
+                setTimeout(() => {
+                    bidButton.classList.remove(flashClass);
+                    askButton.classList.remove(flashClass);
+                }, 500);
+            });
+        }
+
+        // Update prices periodically
+        setInterval(updatePrices, 3000);
+
+        // Equation handling
+        const equationInput = document.querySelector('.equation-input');
+        const feeInput = document.querySelector('.fee-input');
+        const addEquationButton = document.querySelector('.action-button');
+
+        function addEquation(name, formula) {
+            const equationsList = document.getElementById('equations-list');
+            const equationItem = document.createElement('div');
+            equationItem.className = 'equation-item';
+            
+            // Generate random result between 0.1% and 0.5%
+            const result = (Math.random() * 0.004 + 0.001).toFixed(5);
+            const resultPercent = (result * 100).toFixed(3);
+            
+            equationItem.innerHTML = `
+                <div class="equation-name">${name}</div>
+                <div class="equation-text">${formula}</div>
+                <div class="result">${result} (${resultPercent}%)</div>
+            `;
+            
+            equationsList.prepend(equationItem);
+        }
+
+        addEquationButton.addEventListener('click', () => {
+            const formula = equationInput.value.trim();
+            if (!formula) return;
+
+            const name = `Связка ${Math.floor(Math.random() * 1000)}`;
+            addEquation(name, formula);
+            equationInput.value = '';
+            hideKeyboard();
+        });
+
+        equationInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                addButton.click();
+                addEquationButton.click();
             }
         });
+
+        // Add CSS for price flash effects
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes priceUp {
+                0% { background-color: rgba(34, 197, 94, 0.5); }
+                100% { background-color: #22c55e; }
+            }
+
+            @keyframes priceDown {
+                0% { background-color: rgba(239, 68, 68, 0.5); }
+                100% { background-color: #ef4444; }
+            }
+
+            .price-up {
+                animation: priceUp 0.5s ease-out;
+            }
+
+            .price-down {
+                animation: priceDown 0.5s ease-out;
+            }
+        `;
+        document.head.appendChild(style);
+
     </script>
 </body>
 </html>
