@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Monitor</title>
+    <title>Крипто Монитор</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/telegram-web-app/6.7.0/telegram-web-app.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/reconnecting-websocket/1.0.0/reconnecting-websocket.min.js"></script>
     
@@ -23,6 +23,7 @@
             padding: 0;
             background: var(--tg-theme-bg-color);
             color: var(--tg-theme-text-color);
+            padding-bottom: 60px;
         }
 
         .container {
@@ -51,10 +52,14 @@
             color: var(--tg-theme-hint-color);
             text-decoration: none;
             font-size: 12px;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
         }
 
         .nav-item.active {
             color: var(--tg-theme-button-color);
+            background: rgba(36, 129, 204, 0.1);
         }
 
         .nav-icon {
@@ -64,31 +69,40 @@
 
         .page {
             display: none;
-            padding-bottom: 60px;
+            animation: fadeIn 0.3s ease;
         }
 
         .page.active {
             display: block;
         }
 
-        .add-pair {
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .input-group {
             display: flex;
             gap: 8px;
             margin-bottom: 16px;
+            flex-wrap: wrap;
         }
 
         .input {
-            padding: 8px;
+            flex: 1;
+            padding: 12px;
             border: 1px solid rgba(0,0,0,0.1);
             border-radius: 8px;
             font-size: 14px;
+            min-width: 120px;
         }
 
         .select {
-            padding: 8px;
+            padding: 12px;
             border: 1px solid rgba(0,0,0,0.1);
             border-radius: 8px;
             font-size: 14px;
+            background: var(--tg-theme-bg-color);
         }
 
         .button {
@@ -96,56 +110,105 @@
             color: var(--tg-theme-button-text-color);
             border: none;
             border-radius: 8px;
-            padding: 8px 16px;
+            padding: 12px 16px;
             font-size: 14px;
             cursor: pointer;
+            transition: opacity 0.2s ease;
         }
 
         .button:disabled {
             opacity: 0.5;
         }
 
+        .button.secondary {
+            background: rgba(36, 129, 204, 0.1);
+            color: var(--tg-theme-button-color);
+        }
+
+        .button.icon-button {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
         .pair-list {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 12px;
+        }
+
+        .section-header {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--tg-theme-text-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         .pair-item {
+            background: rgba(0,0,0,0.03);
+            border-radius: 12px;
+            padding: 16px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-10px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .pair-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px;
-            background: rgba(0,0,0,0.03);
-            border-radius: 8px;
-        }
-
-        .pair-info {
-            flex: 1;
+            margin-bottom: 8px;
         }
 
         .pair-symbol {
             font-weight: 600;
-            margin-bottom: 4px;
+            font-size: 16px;
         }
 
-        .pair-prices {
-            display: flex;
-            gap: 16px;
-            font-size: 14px;
+        .exchange-badge {
+            font-size: 12px;
+            padding: 4px 8px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 4px;
+            color: var(--tg-theme-hint-color);
         }
 
-        .price {
-            display: flex;
-            flex-direction: column;
+        .price-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .price-card {
+            padding: 12px;
+            background: var(--tg-theme-bg-color);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .price-card:active {
+            transform: scale(0.98);
         }
 
         .price-label {
-            color: var(--tg-theme-hint-color);
             font-size: 12px;
+            color: var(--tg-theme-hint-color);
+            margin-bottom: 4px;
         }
 
         .price-value {
+            font-size: 16px;
             font-weight: 500;
         }
 
@@ -160,79 +223,119 @@
         .equation-list {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 12px;
         }
 
         .equation-item {
-            padding: 12px;
             background: rgba(0,0,0,0.03);
-            border-radius: 8px;
+            border-radius: 12px;
+            padding: 16px;
         }
 
         .equation-header {
             display: flex;
-            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
             margin-bottom: 8px;
         }
 
         .equation-name {
             font-weight: 600;
+            flex: 1;
         }
 
         .equation-result {
             font-weight: 500;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: var(--tg-theme-bg-color);
+        }
+
+        .equation-result.error {
+            color: #f44336;
         }
 
         .equation-expression {
             font-size: 14px;
             color: var(--tg-theme-hint-color);
+            white-space: nowrap;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 4px;
         }
 
-        .error {
-            color: #f44336;
+        .equation-expression::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .equation-expression::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.1);
+            border-radius: 2px;
+        }
+
+        .fee-badge {
+            background: rgba(36, 129, 204, 0.1);
+            color: var(--tg-theme-button-color);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 8px;
         }
 
         .loading {
             color: var(--tg-theme-hint-color);
+            font-style: italic;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div id="pairs" class="page active">
-            <div class="add-pair">
-                <input type="text" id="pairInput" class="input" placeholder="Enter pair (e.g. BTCUSDT)">
+        <div id="main" class="page active">
+            <div class="input-group">
+                <input type="text" id="equationInput" class="input" placeholder="Введите уравнение">
+                <button id="addEquationBtn" class="button">Добавить</button>
+            </div>
+
+            <div class="input-group">
+                <input type="text" id="feeInput" class="input" placeholder="Комиссия %" value="0.02">
+                <button id="applyFeeBtn" class="button secondary">Применить комиссию</button>
+            </div>
+
+            <div class="section-header">
+                Добавить пару
+                <div class="fee-badge" id="feeIndicator">Комиссия: 0.02%</div>
+            </div>
+
+            <div class="input-group">
+                <input type="text" id="pairInput" class="input" placeholder="Например: BTCUSDT">
                 <select id="exchangeSelect" class="select">
                     <option value="Mexc">Mexc</option>
                     <option value="Bybit">Bybit</option>
                     <option value="OKX">OKX</option>
                 </select>
-                <button id="addPairBtn" class="button">Add Pair</button>
+                <button id="addPairBtn" class="button">Добавить</button>
             </div>
+
             <div id="pairList" class="pair-list"></div>
         </div>
 
         <div id="equations" class="page">
-            <div class="add-pair">
-                <input type="text" id="equationInput" class="input" placeholder="Enter equation">
-                <button id="addEquationBtn" class="button">Add</button>
-            </div>
-            <div class="add-pair">
-                <input type="text" id="feeInput" class="input" placeholder="Fee %" value="0.02">
-                <button id="applyFeeBtn" class="button">Apply Fee</button>
+            <div class="section-header">
+                Активные уравнения
+                <button class="button secondary" onclick="switchPage('main')">Вернуться</button>
             </div>
             <div id="equationList" class="equation-list"></div>
         </div>
     </div>
 
     <nav class="navbar">
-        <a href="#pairs" class="nav-item active" onclick="switchPage('pairs')">
+        <a href="#main" class="nav-item active" onclick="switchPage('main')">
             <div class="nav-icon">📊</div>
-            <span>Pairs</span>
+            <span>Мониторинг</span>
         </a>
         <a href="#equations" class="nav-item" onclick="switchPage('equations')">
             <div class="nav-icon">📐</div>
-            <span>Equations</span>
+            <span>Уравнения</span>
         </a>
     </nav>
 
@@ -296,7 +399,10 @@
                         op: 'subscribe',
                         args: [{
                             channel: 'tickers',
-                            instId: symbol.replace('USDT', '-USDT').replace('BTC', '-BTC')
+                            instId: symbol.includes('-') ? symbol : 
+                                   symbol.endsWith('USDT') ? symbol.replace('USDT', '-USDT') :
+                                   symbol.endsWith('BTC') ? symbol.replace('BTC', '-BTC') :
+                                   `${symbol}-USDT`
                         }]
                     }),
                     parse_message: (data) => {
@@ -315,42 +421,59 @@
 
         // WebSocket Connection Management
         function connectWebSocket(exchange) {
-            if (state.websockets.has(exchange)) return;
-
-            const config = state.exchanges[exchange];
-            const ws = new ReconnectingWebSocket(config.ws_url);
-
-            ws.onopen = () => {
-                console.log(`Connected to ${exchange}`);
-                // Resubscribe to all pairs for this exchange
-                for (const [key, pair] of state.pairs) {
-                    if (pair.exchange === exchange) {
-                        ws.send(JSON.stringify(config.subscribe_format(pair.symbol)));
-                    }
-                }
-            };
-
-            ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                const parsed = config.parse_message(data);
-                if (parsed) {
-                    updatePairPrices(parsed.symbol, exchange, parsed.bid, parsed.ask);
-                }
-            };
-
-            // Setup ping interval
-            const pingInterval = setInterval(() => {
+            if (state.websockets.has(exchange)) {
+                const ws = state.websockets.get(exchange);
                 if (ws.readyState === WebSocket.OPEN) {
-                    ws.send(JSON.stringify(config.ping_message));
+                    return Promise.resolve();
                 }
-            }, config.ping_interval);
+            }
 
-            ws.onclose = () => {
-                clearInterval(pingInterval);
-                state.websockets.delete(exchange);
-            };
+            return new Promise((resolve, reject) => {
+                const config = state.exchanges[exchange];
+                const ws = new ReconnectingWebSocket(config.ws_url);
 
-            state.websockets.set(exchange, ws);
+                ws.onopen = () => {
+                    console.log(`Connected to ${exchange}`);
+                    // Resubscribe to all pairs for this exchange
+                    for (const [key, pair] of state.pairs) {
+                        if (pair.exchange === exchange) {
+                            ws.send(JSON.stringify(config.subscribe_format(pair.symbol)));
+                        }
+                    }
+                    resolve();
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        const parsed = config.parse_message(data);
+                        if (parsed) {
+                            updatePairPrices(parsed.symbol, exchange, parsed.bid, parsed.ask);
+                        }
+                    } catch (e) {
+                        console.error('Error parsing message:', e);
+                    }
+                };
+
+                ws.onerror = (error) => {
+                    console.error(`WebSocket error for ${exchange}:`, error);
+                    reject(error);
+                };
+
+                // Setup ping interval
+                const pingInterval = setInterval(() => {
+                    if (ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify(config.ping_message));
+                    }
+                }, config.ping_interval);
+
+                ws.onclose = () => {
+                    clearInterval(pingInterval);
+                    state.websockets.delete(exchange);
+                };
+
+                state.websockets.set(exchange, ws);
+            });
         }
 
         // UI Updates
@@ -361,101 +484,92 @@
 
             const element = document.getElementById(`pair-${key}`);
             if (element) {
-                element.querySelector('.bid-value').textContent = parseFloat(bid).toFixed(8);
-                element.querySelector('.ask-value').textContent = parseFloat(ask).toFixed(8);
+                const bidElement = element.querySelector('.bid-value');
+                const askElement = element.querySelector('.ask-value');
+                
+                if (bidElement && askElement) {
+                    bidElement.textContent = parseFloat(bid).toFixed(8);
+                    askElement.textContent = parseFloat(ask).toFixed(8);
+                    
+                    // Remove loading state if present
+                    bidElement.classList.remove('loading');
+                    askElement.classList.remove('loading');
+                }
             }
 
             // Update equations that use this pair
             updateEquations();
         }
 
-        function updateEquations() {
-            for (const [id, equation] of state.equations) {
-                const result = evaluateEquation(equation.expression);
-                const element = document.getElementById(`equation-${id}`);
-                if (element) {
-                    const resultElement = element.querySelector('.equation-result');
-                    resultElement.textContent = result;
-                    resultElement.className = `equation-result ${result === 'n/d' ? 'error' : ''}`;
-                }
-            }
-        }
-
-        // Equation Evaluation
-        function evaluateEquation(expression) {
-            try {
-                let evalStr = expression;
-
-                // Replace equation references
-                for (const [id, eq] of state.equations) {
-                    const resultElement = document.getElementById(`equation-${id}`)?.querySelector('.equation-result');
-                    if (resultElement) {
-                        const result = resultElement.textContent;
-                        if (result === 'n/d' || result === 'Loading...') return 'n/d';
-                        evalStr = evalStr.replace(`${eq.name}_result`, result);
-                    }
-                }
-
-                // Replace pair values
-                for (const [key, pair] of state.pairs) {
-                    const element = document.getElementById(`pair-${key}`);
-                    if (element) {
-                        const bid = element.querySelector('.bid-value').textContent;
-                        const ask = element.querySelector('.ask-value').textContent;
-                        evalStr = evalStr.replace(`${pair.symbol}_${pair.exchange}_bid`, bid);
-                        evalStr = evalStr.replace(`${pair.symbol}_${pair.exchange}_ask`, ask);
-                    }
-                }
-
-                evalStr = evalStr.replace(/[^0-9+\-*/().]/g, '');
-                const result = eval(evalStr);
-                return isFinite(result) ? result.toFixed(8) : 'n/d';
-            } catch (e) {
-                return 'n/d';
-            }
-        }
-
-        // UI Event Handlers
-        function addPair() {
+        async function addPair() {
             const symbol = document.getElementById('pairInput').value.trim().toUpperCase();
             const exchange = document.getElementById('exchangeSelect').value;
             const key = `${exchange}-${symbol}`;
 
-            if (state.pairs.has(key)) {
-                webapp.showAlert('This pair is already added');
+            if (!symbol) {
+                webapp.showPopup({
+                    title: 'Ошибка',
+                    message: 'Пожалуйста, введите торговую пару'
+                });
                 return;
             }
 
-            state.pairs.set(key, { symbol, exchange });
-            connectWebSocket(exchange);
-
-            const ws = state.websockets.get(exchange);
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify(state.exchanges[exchange].subscribe_format(symbol)));
+            if (state.pairs.has(key)) {
+                webapp.showPopup({
+                    title: 'Ошибка',
+                    message: 'Эта пара уже добавлена'
+                });
+                return;
             }
 
-            const pairList = document.getElementById('pairList');
-            const pairElement = document.createElement('div');
-            pairElement.id = `pair-${key}`;
-            pairElement.className = 'pair-item';
-            pairElement.innerHTML = `
-                <div class="pair-info">
-                    <div class="pair-symbol">${symbol} (${exchange})</div>
-                    <div class="pair-prices">
-                        <div class="price">
-                            <span class="price-label">Bid</span>
-                            <span class="price-value bid bid-value" onclick="addToEquation('${symbol}_${exchange}_bid')">Loading...</span>
+            try {
+                await connectWebSocket(exchange);
+                
+                state.pairs.set(key, { symbol, exchange });
+                
+                const ws = state.websockets.get(exchange);
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify(state.exchanges[exchange].subscribe_format(symbol)));
+                }
+
+                const pairList = document.getElementById('pairList');
+                const pairElement = document.createElement('div');
+                pairElement.id = `pair-${key}`;
+                pairElement.className = 'pair-item';
+                pairElement.innerHTML = `
+                    <div class="pair-header">
+                        <div class="pair-symbol">${symbol}</div>
+                        <div class="exchange-badge">${exchange}</div>
+                    </div>
+                    <div class="price-grid">
+                        <div class="price-card" onclick="addToEquation('${symbol}_${exchange}_bid')">
+                            <div class="price-label">Покупка</div>
+                            <div class="price-value bid bid-value loading">Загрузка...</div>
                         </div>
-                        <div class="price">
-                            <span class="price-label">Ask</span>
-                            <span class="price-value ask ask-value" onclick="addToEquation('${symbol}_${exchange}_ask')">Loading...</span>
+                        <div class="price-card" onclick="addToEquation('${symbol}_${exchange}_ask')">
+                            <div class="price-label">Продажа</div>
+                            <div class="price-value ask ask-value loading">Загрузка...</div>
                         </div>
                     </div>
-                </div>
-                <button class="button" onclick="removePair('${key}')">×</button>
-            `;
-            pairList.appendChild(pairElement);
-            document.getElementById('pairInput').value = '';
+                    <button class="button icon-button" style="margin-top: 8px;" onclick="removePair('${key}')">×</button>
+                `;
+                
+                // Вставляем новую пару в начало списка
+                if (pairList.firstChild) {
+                    pairList.insertBefore(pairElement, pairList.firstChild);
+                } else {
+                    pairList.appendChild(pairElement);
+                }
+                
+                document.getElementById('pairInput').value = '';
+
+            } catch (error) {
+                console.error('Error adding pair:', error);
+                webapp.showPopup({
+                    title: 'Ошибка',
+                    message: 'Не удалось подключиться к бирже'
+                });
+            }
         }
 
         function removePair(key) {
@@ -464,7 +578,10 @@
 
             // Remove from DOM
             const element = document.getElementById(`pair-${key}`);
-            if (element) element.remove();
+            if (element) {
+                element.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => element.remove(), 300);
+            }
 
             // Remove from state
             state.pairs.delete(key);
@@ -481,16 +598,21 @@
                 }
             }
 
-            // Update equations that might use this pair
             updateEquations();
         }
 
         function addEquation() {
             const expression = document.getElementById('equationInput').value.trim();
-            if (!expression) return;
+            if (!expression) {
+                webapp.showPopup({
+                    title: 'Ошибка',
+                    message: 'Введите уравнение'
+                });
+                return;
+            }
 
             const id = Date.now().toString();
-            const name = `Equation_${state.equations.size + 1}`;
+            const name = `Уравнение_${state.equations.size + 1}`;
             
             state.equations.set(id, {
                 name,
@@ -505,15 +627,24 @@
                 <div class="equation-header">
                     <input type="text" class="input equation-name" value="${name}" 
                            onchange="updateEquationName('${id}', this.value)">
-                    <span class="equation-result" onclick="addToEquation('${name}_result')">Loading...</span>
-                    <button class="button" onclick="removeEquation('${id}')">×</button>
+                    <span class="equation-result loading" onclick="addToEquation('${name}_result')">Вычисление...</span>
+                    <button class="button icon-button" onclick="removeEquation('${id}')">×</button>
                 </div>
                 <div class="equation-expression">${expression}</div>
             `;
-            equationList.appendChild(equationElement);
-            document.getElementById('equationInput').value = '';
 
+            // Вставляем новое уравнение в начало списка
+            if (equationList.firstChild) {
+                equationList.insertBefore(equationElement, equationList.firstChild);
+            } else {
+                equationList.appendChild(equationElement);
+            }
+
+            document.getElementById('equationInput').value = '';
             updateEquations();
+
+            // Переключаемся на вкладку с уравнениями при добавлении
+            switchPage('equations');
         }
 
         function updateEquationName(id, newName) {
@@ -541,14 +672,16 @@
             const equation = state.equations.get(id);
             if (!equation) return;
 
-            // Remove from DOM
+            // Remove from DOM with animation
             const element = document.getElementById(`equation-${id}`);
-            if (element) element.remove();
+            if (element) {
+                element.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => element.remove(), 300);
+            }
 
             // Remove from state
             state.equations.delete(id);
 
-            // Update other equations that might reference this one
             updateEquations();
         }
 
@@ -563,12 +696,18 @@
 
         function applyFee() {
             const feeInput = document.getElementById('feeInput');
-            const fee = parseFloat(feeInput.value);
+            const fee = parseFloat(feeInput.value.replace(',', '.'));
+            
             if (isNaN(fee)) {
-                webapp.showAlert('Invalid fee value');
+                webapp.showPopup({
+                    title: 'Ошибка',
+                    message: 'Неверное значение комиссии'
+                });
                 return;
             }
 
+            document.getElementById('feeIndicator').textContent = `Комиссия: ${fee}%`;
+            
             const feeMultiplier = 1 - fee/100;
             const input = document.getElementById('equationInput');
             const cursorPos = input.selectionStart;
@@ -600,16 +739,82 @@
             }
         }
 
+        function updateEquations() {
+            for (const [id, equation] of state.equations) {
+                const result = evaluateEquation(equation.expression);
+                const element = document.getElementById(`equation-${id}`);
+                if (element) {
+                    const resultElement = element.querySelector('.equation-result');
+                    if (resultElement) {
+                        resultElement.textContent = result;
+                        resultElement.classList.remove('loading');
+                        resultElement.classList.toggle('error', result === 'n/d' || result.startsWith('Ошибка'));
+                    }
+                }
+            }
+        }
+
+        function evaluateEquation(expression) {
+            try {
+                let evalStr = expression;
+
+                // Replace equation references
+                for (const [id, eq] of state.equations) {
+                    const resultElement = document.getElementById(`equation-${id}`)?.querySelector('.equation-result');
+                    if (resultElement) {
+                        const result = resultElement.textContent;
+                        if (result === 'n/d' || result === 'Вычисление...') return 'n/d';
+                        evalStr = evalStr.replace(`${eq.name}_result`, result);
+                    }
+                }
+
+                // Replace pair values
+                for (const [key, pair] of state.pairs) {
+                    const element = document.getElementById(`pair-${key}`);
+                    if (element) {
+                        const bid = element.querySelector('.bid-value').textContent;
+                        const ask = element.querySelector('.ask-value').textContent;
+                        
+                        if (bid === 'Загрузка...' || ask === 'Загрузка...') {
+                            return 'Загрузка...';
+                        }
+                        
+                        evalStr = evalStr.replace(`${pair.symbol}_${pair.exchange}_bid`, bid);
+                        evalStr = evalStr.replace(`${pair.symbol}_${pair.exchange}_ask`, ask);
+                    }
+                }
+
+                evalStr = evalStr.replace(/[^0-9+\-*/().]/g, '');
+                const result = eval(evalStr);
+                return isFinite(result) ? result.toFixed(8) : 'n/d';
+            } catch (e) {
+                return 'n/d';
+            }
+        }
+
         function switchPage(pageId) {
-            // Update pages
+            // Update pages with animation
             document.querySelectorAll('.page').forEach(page => {
-                page.classList.toggle('active', page.id === pageId);
+                if (page.id === pageId) {
+                    page.style.display = 'block';
+                    setTimeout(() => page.classList.add('active'), 50);
+                } else {
+                    page.classList.remove('active');
+                    setTimeout(() => {
+                        if (!page.classList.contains('active')) {
+                            page.style.display = 'none';
+                        }
+                    }, 300);
+                }
             });
 
             // Update navigation
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.toggle('active', item.getAttribute('href') === `#${pageId}`);
             });
+
+            // Update URL without page reload
+            history.pushState(null, '', `#${pageId}`);
         }
 
         // Initialize default pairs
@@ -622,34 +827,169 @@
             ['Mexc', 'SOLUSDT'], ['Bybit', 'SOLUSDT'], ['OKX', 'SOLUSDT']
         ];
 
-        window.onload = () => {
-            defaultPairs.forEach(([exchange, symbol]) => {
+        window.onload = async () => {
+            // Initialize default pairs
+            for (const [exchange, symbol] of defaultPairs) {
                 document.getElementById('exchangeSelect').value = exchange;
                 document.getElementById('pairInput').value = symbol;
+                await addPair();
+            }
+
+            // Handle navigation based on URL hash
+            const hash = window.location.hash.slice(1) || 'main';
+            switchPage(hash);
+
+            // Set up event listeners
+            document.getElementById('addPairBtn').addEventListener('click', addPair);
+            document.getElementById('addEquationBtn').addEventListener('click', addEquation);
+            document.getElementById('applyFeeBtn').addEventListener('click', applyFee);
+
+            // Add keyboard event listeners
+            document.getElementById('pairInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addPair();
+            });
+
+            document.getElementById('equationInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addEquation();
+            });
+
+            document.getElementById('feeInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') applyFee();
+            });
+
+            // Listen for back button in Telegram WebApp
+            webapp.onEvent('backButtonClicked', () => {
+                if (document.getElementById('equations').classList.contains('active')) {
+                    switchPage('main');
+                    return true;
+                }
+                return false;
+            });
+
+            // Handle WebApp back button visibility
+            window.addEventListener('hashchange', () => {
+                const hash = window.location.hash.slice(1) || 'main';
+                webapp.BackButton.isVisible = hash !== 'main';
+            });
+
+            // Handle MainButton visibility
+            webapp.MainButton.setParams({
+                text: 'ДОБАВИТЬ ПАРУ',
+                color: webapp.themeParams.button_color,
+            });
+
+            webapp.MainButton.onClick(() => {
                 addPair();
             });
 
-            // Handle navigation based on URL hash
-            const hash = window.location.hash.slice(1) || 'pairs';
-            switchPage(hash);
+            // Update MainButton visibility based on input
+            document.getElementById('pairInput').addEventListener('input', (e) => {
+                webapp.MainButton.isVisible = e.target.value.trim() !== '';
+            });
+
+            // Handle orientation changes and resize
+            window.addEventListener('resize', () => {
+                webapp.expand();
+            });
         };
-
-        // Event Listeners
-        document.getElementById('addPairBtn').addEventListener('click', addPair);
-        document.getElementById('addEquationBtn').addEventListener('click', addEquation);
-        document.getElementById('applyFeeBtn').addEventListener('click', applyFee);
-
-        document.getElementById('pairInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') addPair();
-        });
-
-        document.getElementById('equationInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') addEquation();
-        });
 
         // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
             state.websockets.forEach(ws => ws.close());
+        });
+
+        // Add error handling for WebSocket connections
+        window.addEventListener('offline', () => {
+            webapp.showPopup({
+                title: 'Ошибка соединения',
+                message: 'Проверьте подключение к интернету'
+            });
+        });
+
+        // Add periodic price update check
+        setInterval(() => {
+            const now = Date.now();
+            state.pairs.forEach((pair, key) => {
+                const element = document.getElementById(`pair-${key}`);
+                if (element) {
+                    const bidElement = element.querySelector('.bid-value');
+                    const askElement = element.querySelector('.ask-value');
+                    
+                    if (!bidElement || !askElement) return;
+                    
+                    const bid = bidElement.textContent;
+                    const ask = askElement.textContent;
+                    
+                    if (bid === 'Загрузка...' || ask === 'Загрузка...') {
+                        const ws = state.websockets.get(pair.exchange);
+                        if (ws && ws.readyState === WebSocket.OPEN) {
+                            ws.send(JSON.stringify(state.exchanges[pair.exchange].subscribe_format(pair.symbol)));
+                        }
+                    }
+                }
+            });
+        }, 5000);
+
+        // Add storage support for equations
+        try {
+            const savedEquations = localStorage.getItem('equations');
+            if (savedEquations) {
+                const equations = JSON.parse(savedEquations);
+                equations.forEach(eq => {
+                    document.getElementById('equationInput').value = eq.expression;
+                    addEquation();
+                });
+            }
+        } catch (e) {
+            console.error('Error loading saved equations:', e);
+        }
+
+        window.addEventListener('beforeunload', () => {
+            try {
+                const equations = Array.from(state.equations.values())
+                    .map(eq => ({
+                        name: eq.name,
+                        expression: eq.expression
+                    }));
+                localStorage.setItem('equations', JSON.stringify(equations));
+            } catch (e) {
+                console.error('Error saving equations:', e);
+            }
+        });
+
+        // Add haptic feedback for Telegram
+        function vibrate(style = 'medium') {
+            if (webapp.isVersionAtLeast('6.1')) {
+                switch(style) {
+                    case 'light':
+                        webapp.HapticFeedback.impactOccurred('light');
+                        break;
+                    case 'medium':
+                        webapp.HapticFeedback.impactOccurred('medium');
+                        break;
+                    case 'heavy':
+                        webapp.HapticFeedback.impactOccurred('heavy');
+                        break;
+                    case 'rigid':
+                        webapp.HapticFeedback.impactOccurred('rigid');
+                        break;
+                    case 'soft':
+                        webapp.HapticFeedback.impactOccurred('soft');
+                        break;
+                }
+            }
+        }
+
+        // Add haptic feedback to buttons
+        document.querySelectorAll('.button').forEach(button => {
+            button.addEventListener('click', () => vibrate('light'));
+        });
+
+        // Add haptic feedback to price cards
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.price-card')) {
+                vibrate('soft');
+            }
         });
     </script>
 </body>
