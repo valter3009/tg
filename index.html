@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Калькулятор</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/telegram-webapp/0.1.0/telegram-web-app.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -115,9 +115,9 @@
     </div>
 
     <script>
-        // Инициализация Telegram WebApp
-        window.Telegram.WebApp.ready();
-        
+        let tg = window.Telegram.WebApp;
+        tg.ready();
+
         const display = document.getElementById('display');
 
         function appendToDisplay(value) {
@@ -130,14 +130,15 @@
 
         function calculate() {
             try {
+                const expression = display.value;
                 // Используем Function вместо eval для большей безопасности
-                const result = Function('"use strict";return (' + display.value + ')')();
+                const result = Function('"use strict";return (' + expression + ')')();
                 display.value = result;
                 
                 // Отправляем результат в Telegram бот
-                window.Telegram.WebApp.sendData(JSON.stringify({
+                tg.sendData(JSON.stringify({
                     result: result,
-                    expression: display.value
+                    expression: expression
                 }));
             } catch (error) {
                 display.value = 'Ошибка';
@@ -146,7 +147,7 @@
         }
 
         // Настраиваем тему в соответствии с темой Telegram
-        document.body.style.backgroundColor = window.Telegram.WebApp.backgroundColor;
+        document.body.style.backgroundColor = tg.backgroundColor;
     </script>
 </body>
 </html>
