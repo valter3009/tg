@@ -15,6 +15,7 @@
             --tg-theme-button-color: #2481cc;
             --tg-theme-button-text-color: #ffffff;
             --tg-theme-secondary-bg-color: #333333;
+            --keyboard-height: 260px;
         }
 
         body {
@@ -27,6 +28,16 @@
             padding-bottom: env(safe-area-inset-bottom);
             min-height: 100vh;
             min-height: -webkit-fill-available;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body.keyboard-open {
+            margin-bottom: var(--keyboard-height);
+        }
+
+        body.keyboard-open .container {
+            padding-bottom: calc(7rem + var(--keyboard-height));
         }
 
         html {
@@ -38,6 +49,18 @@
             margin: 0 auto;
             padding: 1rem;
             padding-bottom: 7rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .content-wrapper {
+            position: relative;
+            min-height: 100vh;
+            transition: transform 0.3s ease;
+        }
+
+        body.keyboard-open .content-wrapper {
+            transform: translateY(calc(-1 * var(--keyboard-height)));
         }
 
         .nav {
@@ -50,6 +73,11 @@
             left: 0;
             right: 0;
             z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        body.keyboard-open .nav {
+            transform: translateY(calc(-1 * var(--keyboard-height)));
         }
 
         .input-panel {
@@ -63,6 +91,25 @@
             left: 0;
             right: 0;
             z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        body.keyboard-open .input-panel {
+            transform: translateY(calc(-1 * var(--keyboard-height)));
+        }
+
+        .click-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 50;
+        }
+
+        body.keyboard-open .click-overlay {
+            display: block;
         }
 
         .nav-button {
@@ -254,52 +301,41 @@
         .error {
             color: #ef4444;
         }
-
-        @media screen and (max-height: 600px) {
-            body.keyboard-open {
-                padding-bottom: 260px;
-            }
-            
-            body.keyboard-open .input-panel {
-                position: absolute;
-            }
-            
-            body.keyboard-open .nav {
-                position: absolute;
-            }
-        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div id="pairs-screen" class="screen active">
-            <div class="pair-input">
-                <input type="text" id="pair-symbol" placeholder="Символ (например, BTCUSDT)">
-                <select id="exchange-select">
-                    <option value="Mexc">Mexc</option>
-                    <option value="Bybit">Bybit</option>
-                    <option value="OKX">OKX</option>
-                </select>
-                <button onclick="addPair()">Добавить</button>
+    <div class="click-overlay"></div>
+    <div class="content-wrapper">
+        <div class="container">
+            <div id="pairs-screen" class="screen active">
+                <div class="pair-input">
+                    <input type="text" id="pair-symbol" placeholder="Символ (например, BTCUSDT)">
+                    <select id="exchange-select">
+                        <option value="Mexc">Mexc</option>
+                        <option value="Bybit">Bybit</option>
+                        <option value="OKX">OKX</option>
+                    </select>
+                    <button onclick="addPair()">Добавить</button>
+                </div>
+                <div id="pairs-list" class="pairs-list"></div>
             </div>
-            <div id="pairs-list" class="pairs-list"></div>
+
+            <div id="equations-screen" class="screen">
+                <div id="equations-list" class="equations-list"></div>
+            </div>
         </div>
 
-        <div id="equations-screen" class="screen">
-            <div id="equations-list" class="equations-list"></div>
+        <div class="input-panel">
+            <input type="number" id="fee-input-bottom" class="fee-input" placeholder="%" value="0.02" step="0.01">
+            <button class="action-button" onclick="applyFeeFromBottom()">✓</button>
+            <input type="text" id="equation-input-bottom" class="equation-input-bottom" placeholder="Введите связку...">
+            <button class="action-button" onclick="addEquationFromBottom()">✓</button>
         </div>
-    </div>
 
-    <div class="input-panel">
-        <input type="number" id="fee-input-bottom" class="fee-input" placeholder="%" value="0.02" step="0.01">
-        <button class="action-button" onclick="applyFeeFromBottom()">✓</button>
-        <input type="text" id="equation-input-bottom" class="equation-input-bottom" placeholder="Введите связку...">
-        <button class="action-button" onclick="addEquationFromBottom()">✓</button>
-    </div>
-
-    <div class="nav">
-        <button class="nav-button active" onclick="showScreen('pairs')">Пары</button>
-        <button class="nav-button" onclick="showScreen('equations')">Связки</button>
+        <div class="nav">
+            <button class="nav-button active" onclick="showScreen('pairs')">Пары</button>
+            <button class="nav-button" onclick="showScreen('equations')">Связки</button>
+        </div>
     </div>
 
     <script>
@@ -530,6 +566,7 @@
         tg.expand();
         tg.ready();
 
+        // Конфигурация для различных бирж
         const exchangeConfigs = {
             'Mexc': {
                 wsUrl: 'wss://wbs.mexc.com/ws',
@@ -587,249 +624,281 @@
             }
         };
 
-        function showScreen(screenName) {
-            document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
-            document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`${screenName}-screen`).classList.add('active');
-            document.querySelector(`.nav-button[onclick="showScreen('${screenName}')"]`).classList.add('active');
+// Вспомогательные функции
+function hideKeyboard() {
+    document.activeElement.blur();
+    document.body.classList.remove('keyboard-open');
+}
+
+function showScreen(screenName) {
+    document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+    document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`${screenName}-screen`).classList.add('active');
+    document.querySelector(`.nav-button[onclick="showScreen('${screenName}')"]`).classList.add('active');
+}
+
+async function connectWebSocket(exchange, symbol) {
+    const config = exchangeConfigs[exchange];
+    const ws = new WebSocket(config.wsUrl);
+    
+    ws.onopen = () => {
+        ws.send(JSON.stringify(config.subscribeFormat(symbol)));
+    };
+    
+    ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        const parsed = config.parseMessage(data);
+        if (parsed) {
+            updatePairPrices(exchange, parsed.symbol, parsed.bid, parsed.ask);
         }
+    };
+    
+    ws.onerror = (error) => {
+        console.error(`WebSocket error for ${exchange}:`, error);
+    };
+    
+    ws.onclose = () => {
+        setTimeout(() => connectWebSocket(exchange, symbol), 5000);
+    };
+    
+    return ws;
+}
 
-        async function connectWebSocket(exchange, symbol) {
-            const config = exchangeConfigs[exchange];
-            const ws = new WebSocket(config.wsUrl);
-            
-            ws.onopen = () => {
-                ws.send(JSON.stringify(config.subscribeFormat(symbol)));
-            };
-            
-            ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                const parsed = config.parseMessage(data);
-                if (parsed) {
-                    updatePairPrices(exchange, parsed.symbol, parsed.bid, parsed.ask);
-                }
-            };
-            
-            ws.onerror = (error) => {
-                console.error(`WebSocket error for ${exchange}:`, error);
-            };
-            
-            ws.onclose = () => {
-                setTimeout(() => connectWebSocket(exchange, symbol), 5000);
-            };
-            
-            return ws;
+function addPair() {
+    const symbol = document.getElementById('pair-symbol').value.toUpperCase();
+    const exchange = document.getElementById('exchange-select').value;
+    
+    if (!symbol) {
+        tg.showAlert('Введите символ пары');
+        return;
+    }
+    
+    const pairKey = `${exchange}_${symbol}`;
+    if (pairs[pairKey]) {
+        tg.showAlert('Эта пара уже добавлена');
+        return;
+    }
+
+    const pairElement = document.createElement('div');
+    pairElement.className = 'pair-item';
+    pairElement.setAttribute('data-pair', pairKey);
+    pairElement.innerHTML = `
+        <span class="pair-name">${symbol} ${exchange}</span>
+        <div class="price">
+            <button class="price-button bid" onclick="addToEquation('${symbol}_${exchange}_bid')">Загрузка...</button>
+            <button class="price-button ask" onclick="addToEquation('${symbol}_${exchange}_ask')">Загрузка...</button>
+            <button class="remove-button" onclick="removePair('${pairKey}')">×</button>
+        </div>
+    `;
+    
+    document.getElementById('pairs-list').appendChild(pairElement);
+    pairs[pairKey] = pairElement;
+    
+    connectWebSocket(exchange, symbol).then(ws => {
+        connections[pairKey] = ws;
+    });
+    
+    document.getElementById('pair-symbol').value = '';
+    hideKeyboard();
+}
+
+function removePair(pairKey) {
+    if (pairs[pairKey]) {
+        pairs[pairKey].remove();
+        delete pairs[pairKey];
+        
+        if (connections[pairKey]) {
+            connections[pairKey].close();
+            delete connections[pairKey];
         }
+        
+        updateEquations();
+    }
+}
 
-        function addPair() {
-            const symbol = document.getElementById('pair-symbol').value.toUpperCase();
-            const exchange = document.getElementById('exchange-select').value;
-            
-            if (!symbol) {
-                tg.showAlert('Введите символ пары');
-                return;
-            }
-            
-            const pairKey = `${exchange}_${symbol}`;
-            if (pairs[pairKey]) {
-                tg.showAlert('Эта пара уже добавлена');
-                return;
-            }
+function updatePairPrices(exchange, symbol, bid, ask) {
+    const pairKey = `${exchange}_${symbol}`;
+    const pairElement = pairs[pairKey];
+    
+    if (pairElement) {
+        const bidButton = pairElement.querySelector('.bid');
+        const askButton = pairElement.querySelector('.ask');
+        
+        bidButton.textContent = parseFloat(bid).toFixed(8);
+        askButton.textContent = parseFloat(ask).toFixed(8);
+        
+        updateEquations();
+    }
+}
 
-            const pairElement = document.createElement('div');
-            pairElement.className = 'pair-item';
-            pairElement.setAttribute('data-pair', pairKey);
-            pairElement.innerHTML = `
-                <span class="pair-name">${symbol} ${exchange}</span>
-                <div class="price">
-                    <button class="price-button bid" onclick="addToEquation('${symbol}_${exchange}_bid')">Загрузка...</button>
-                    <button class="price-button ask" onclick="addToEquation('${symbol}_${exchange}_ask')">Загрузка...</button>
-                    <button class="remove-button" onclick="removePair('${pairKey}')">×</button>
-                </div>
-            `;
-            
-            document.getElementById('pairs-list').appendChild(pairElement);
-            pairs[pairKey] = pairElement;
-            
-            connectWebSocket(exchange, symbol).then(ws => {
-                connections[pairKey] = ws;
-            });
-            
-            document.getElementById('pair-symbol').value = '';
-        }
+function addToEquation(value) {
+    const equationInput = document.getElementById('equation-input-bottom');
+    const cursorPosition = equationInput.selectionStart;
+    const currentText = equationInput.value;
+    
+    const newText = currentText.slice(0, cursorPosition) + 
+                   value + 
+                   currentText.slice(cursorPosition);
+    
+    equationInput.value = newText;
+    equationInput.focus();
+    equationInput.setSelectionRange(
+        cursorPosition + value.length,
+        cursorPosition + value.length
+    );
+}
 
-        function removePair(pairKey) {
-            if (pairs[pairKey]) {
-                pairs[pairKey].remove();
-                delete pairs[pairKey];
-                
-                if (connections[pairKey]) {
-                    connections[pairKey].close();
-                    delete connections[pairKey];
-                }
-                
-                updateEquations();
-            }
-        }
-
-        function updatePairPrices(exchange, symbol, bid, ask) {
-            const pairKey = `${exchange}_${symbol}`;
-            const pairElement = pairs[pairKey];
+function addEquationFromBottom() {
+    const equation = document.getElementById('equation-input-bottom').value.trim();
+    if (!equation) return;
+    
+    try {
+        const equationName = equationManager.addEquation(equation);
+        
+        const equationElement = document.createElement('div');
+        equationElement.className = 'equation-item';
+        equationElement.setAttribute('data-equation', equation);
+        equationElement.innerHTML = `
+            <div>
+                <div class="equation-name" contenteditable="true">${equationName}</div>
+                <div class="equation-text">${equation}</div>
+                <div class="result">Вычисление...</div>
+            </div>
+            <button class="remove-button" onclick="removeEquation('${equation}')">×</button>
+        `;
+        
+        const nameElement = equationElement.querySelector('.equation-name');
+        nameElement.addEventListener('blur', () => {
+            const oldName = equationManager.equations[equation].name;
+            const newName = nameElement.textContent.trim();
             
-            if (pairElement) {
-                const bidButton = pairElement.querySelector('.bid');
-                const askButton = pairElement.querySelector('.ask');
+            if (newName && newName !== oldName) {
+                equationManager.equations[equation].name = newName;
                 
-                bidButton.textContent = parseFloat(bid).toFixed(8);
-                askButton.textContent = parseFloat(ask).toFixed(8);
-                
-                updateEquations();
-            }
-        }
-
-        function addToEquation(value) {
-            const equationInput = document.getElementById('equation-input-bottom');
-            const cursorPosition = equationInput.selectionStart;
-            const currentText = equationInput.value;
-            
-            const newText = currentText.slice(0, cursorPosition) + 
-                           value + 
-                           currentText.slice(cursorPosition);
-            
-            equationInput.value = newText;
-            equationInput.focus();
-            equationInput.setSelectionRange(
-                cursorPosition + value.length,
-                cursorPosition + value.length
-            );
-        }
-
-        function addEquationFromBottom() {
-            const equation = document.getElementById('equation-input-bottom').value.trim();
-            if (!equation) return;
-            
-            try {
-                const equationName = equationManager.addEquation(equation);
-                
-                const equationElement = document.createElement('div');
-                equationElement.className = 'equation-item';
-                equationElement.setAttribute('data-equation', equation);
-                equationElement.innerHTML = `
-                    <div>
-                        <div class="equation-name" contenteditable="true">${equationName}</div>
-                        <div class="equation-text">${equation}</div>
-                        <div class="result">Вычисление...</div>
-                    </div>
-                    <button class="remove-button" onclick="removeEquation('${equation}')">×</button>
-                `;
-                
-                const nameElement = equationElement.querySelector('.equation-name');
-                nameElement.addEventListener('blur', () => {
-                    const oldName = equationManager.equations[equation].name;
-                    const newName = nameElement.textContent.trim();
-                    
-                    if (newName && newName !== oldName) {
-                        equationManager.equations[equation].name = newName;
+                for (const eq in equationManager.equations) {
+                    if (eq.includes(`${oldName}_result`)) {
+                        const updatedEq = eq.replace(`${oldName}_result`, `${newName}_result`);
+                        const eqData = equationManager.equations[eq];
+                        delete equationManager.equations[eq];
+                        equationManager.equations[updatedEq] = eqData;
                         
-                        for (const eq in equationManager.equations) {
-                            if (eq.includes(`${oldName}_result`)) {
-                                const updatedEq = eq.replace(`${oldName}_result`, `${newName}_result`);
-                                const eqData = equationManager.equations[eq];
-                                delete equationManager.equations[eq];
-                                equationManager.equations[updatedEq] = eqData;
-                                
-                                const eqElement = document.querySelector(`[data-equation="${eq}"]`);
-                                if (eqElement) {
-                                    eqElement.querySelector('.equation-text').textContent = updatedEq;
-                                    eqElement.setAttribute('data-equation', updatedEq);
-                                }
-                            }
+                        const eqElement = document.querySelector(`[data-equation="${eq}"]`);
+                        if (eqElement) {
+                            eqElement.querySelector('.equation-text').textContent = updatedEq;
+                            eqElement.setAttribute('data-equation', updatedEq);
                         }
                     }
-                });
-                
-                document.getElementById('equations-list').appendChild(equationElement);
-                equations[equation] = equationElement;
-                
-                document.getElementById('equation-input-bottom').value = '';
-                updateEquations();
-                
-            } catch (error) {
-                tg.showAlert(error.message);
-            }
-        }
-
-        function removeEquation(equation) {
-            if (equation in equations) {
-                equations[equation].remove();
-                equationManager.removeEquation(equation);
-                delete equations[equation];
-                updateEquations();
-            }
-        }
-
-        function applyFeeFromBottom() {
-            const fee = parseFloat(document.getElementById('fee-input-bottom').value);
-            const equationInput = document.getElementById('equation-input-bottom');
-            
-            if (isNaN(fee)) {
-                tg.showAlert('Введите корректное значение комиссии');
-                return;
-            }
-            
-            const cursorPosition = equationInput.selectionStart;
-            const newEquation = equationManager.applyFee(
-                equationInput.value,
-                cursorPosition,
-                fee
-            );
-            
-            equationInput.value = newEquation;
-            equationInput.setSelectionRange(cursorPosition, cursorPosition);
-        }
-
-        function updateEquations() {
-            for (const [equation, element] of Object.entries(equations)) {
-                const result = equationManager.evaluateEquation(equation);
-                const resultElement = element.querySelector('.result');
-                
-                resultElement.textContent = result;
-                resultElement.className = 'result' + 
-                    (result === "н/д" || result.startsWith("Ошибка") ? ' error' : '');
-                
-                equationManager.updateResult(equation, result);
-            }
-        }
-
-        // Keyboard handlers
-        const inputs = document.querySelectorAll('input, textarea');
-        inputs.forEach(input => {
-            input.addEventListener('focus', () => {
-                document.body.classList.add('keyboard-open');
-                setTimeout(() => {
-                    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 300);
-            });
-            
-            input.addEventListener('blur', () => {
-                document.body.classList.remove('keyboard-open');
-            });
-        });
-
-        // Инициализация и обработчики событий
-        document.getElementById('pair-symbol').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                addPair();
+                }
             }
         });
+        
+        document.getElementById('equations-list').appendChild(equationElement);
+        equations[equation] = equationElement;
+        
+        document.getElementById('equation-input-bottom').value = '';
+        updateEquations();
+        hideKeyboard();
+        
+    } catch (error) {
+        tg.showAlert(error.message);
+    }
+}
 
-        document.getElementById('equation-input-bottom').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                addEquationFromBottom();
+function removeEquation(equation) {
+    if (equation in equations) {
+        equations[equation].remove();
+        equationManager.removeEquation(equation);
+        delete equations[equation];
+        updateEquations();
+    }
+}
+
+function applyFeeFromBottom() {
+    const fee = parseFloat(document.getElementById('fee-input-bottom').value);
+    const equationInput = document.getElementById('equation-input-bottom');
+    
+    if (isNaN(fee)) {
+        tg.showAlert('Введите корректное значение комиссии');
+        return;
+    }
+    
+    const cursorPosition = equationInput.selectionStart;
+    const newEquation = equationManager.applyFee(
+        equationInput.value,
+        cursorPosition,
+        fee
+    );
+    
+    equationInput.value = newEquation;
+    equationInput.setSelectionRange(cursorPosition, cursorPosition);
+}
+
+function updateEquations() {
+    for (const [equation, element] of Object.entries(equations)) {
+        const result = equationManager.evaluateEquation(equation);
+        const resultElement = element.querySelector('.result');
+        
+        resultElement.textContent = result;
+        resultElement.className = 'result' + 
+            (result === "н/д" || result.startsWith("Ошибка") ? ' error' : '');
+        
+        equationManager.updateResult(equation, result);
+    }
+}
+
+// Обработчики событий для клавиатуры и касаний
+const inputs = document.querySelectorAll('input, textarea');
+inputs.forEach(input => {
+    input.addEventListener('focus', (e) => {
+        document.body.classList.add('keyboard-open');
+        setTimeout(() => {
+            input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+        e.stopPropagation();
+    });
+});
+
+// Обработчик для закрытия клавиатуры при касании оверлея
+document.querySelector('.click-overlay').addEventListener('touchstart', (e) => {
+    hideKeyboard();
+    e.preventDefault();
+});
+
+// Добавляем обработчик касания на весь контент, кроме инпутов
+document.querySelector('.container').addEventListener('touchstart', (e) => {
+    if (!e.target.matches('input, textarea, button')) {
+        hideKeyboard();
+    }
+});
+
+// Инициализация и обработчики событий
+document.getElementById('pair-symbol').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        addPair();
+        hideKeyboard();
+    }
+});
+
+document.getElementById('equation-input-bottom').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        addEquationFromBottom();
+        hideKeyboard();
+    }
+});
+
+// Обработчик изменения размера окна
+window.addEventListener('resize', () => {
+    if (document.body.classList.contains('keyboard-open')) {
+        setTimeout(() => {
+            const activeInput = document.activeElement;
+            if (activeInput.matches('input, textarea')) {
+                activeInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
-        });
+        }, 100);
+    }
+});
 
-        setInterval(updateEquations, 1000);
-    </script>
+setInterval(updateEquations, 1000);
+</script>
 </body>
 </html>
