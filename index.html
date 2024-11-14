@@ -1,371 +1,655 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Многоуровневое меню</title>
+    <title>Crypto Monitor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/telegram-web-app/6.7.0/telegram-web-app.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reconnecting-websocket/1.0.0/reconnecting-websocket.min.js"></script>
+    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --tg-theme-bg-color: #fff;
+            --tg-theme-text-color: #000;
+            --tg-theme-hint-color: #999;
+            --tg-theme-link-color: #2481cc;
+            --tg-theme-button-color: #2481cc;
+            --tg-theme-button-text-color: #fff;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background-color: #f0f2f5;
-            color: #000;
-            min-height: 100vh;
-            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
         }
 
         .container {
             max-width: 800px;
             margin: 0 auto;
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            padding: 20px;
-        }
-
-        .header {
-            display: flex;
-            align-items: center;
             padding: 16px;
-            background-color: #ffffff;
-            border-radius: 12px;
-            margin-bottom: 16px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
-        .back-button {
-            background: none;
-            border: none;
-            font-size: 24px;
-            color: #2481cc;
-            cursor: pointer;
+        .navbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--tg-theme-bg-color);
+            border-top: 1px solid rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-around;
             padding: 8px;
-            margin-right: 8px;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--tg-theme-hint-color);
+            text-decoration: none;
+            font-size: 12px;
+        }
+
+        .nav-item.active {
+            color: var(--tg-theme-button-color);
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .page {
             display: none;
+            padding-bottom: 60px;
         }
 
-        .header-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: #1a1a1a;
+        .page.active {
+            display: block;
         }
 
-        .menu-list {
-            display: grid;
-            gap: 12px;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        }
-
-        .menu-item {
-            background-color: #ffffff;
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 16px;
-            cursor: pointer;
-            transition: all 0.2s ease;
+        .add-pair {
             display: flex;
-            align-items: center;
-            gap: 12px;
+            gap: 8px;
+            margin-bottom: 16px;
         }
 
-        .menu-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            border-color: #2481cc;
-        }
-
-        .menu-item-icon {
-            width: 40px;
-            height: 40px;
-            background-color: #2481cc;
+        .input {
+            padding: 8px;
+            border: 1px solid rgba(0,0,0,0.1);
             border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 20px;
+            font-size: 14px;
         }
 
-        .menu-item-content {
+        .select {
+            padding: 8px;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .button {
+            background: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+        }
+
+        .pair-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .pair-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(0,0,0,0.03);
+            border-radius: 8px;
+        }
+
+        .pair-info {
             flex: 1;
         }
 
-        .menu-item-title {
+        .pair-symbol {
             font-weight: 600;
             margin-bottom: 4px;
-            color: #1a1a1a;
         }
 
-        .menu-item-description {
+        .pair-prices {
+            display: flex;
+            gap: 16px;
             font-size: 14px;
-            color: #666;
         }
 
-        .detail-view {
-            animation: slideIn 0.3s ease-out;
+        .price {
+            display: flex;
+            flex-direction: column;
         }
 
-        .detail-content {
-            background-color: #ffffff;
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        .price-label {
+            color: var(--tg-theme-hint-color);
+            font-size: 12px;
         }
 
-        .detail-image {
-            width: 100%;
-            height: 200px;
-            background-color: #f5f5f5;
+        .price-value {
+            font-weight: 500;
+        }
+
+        .price-value.bid {
+            color: #4caf50;
+        }
+
+        .price-value.ask {
+            color: #f44336;
+        }
+
+        .equation-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .equation-item {
+            padding: 12px;
+            background: rgba(0,0,0,0.03);
             border-radius: 8px;
-            margin-bottom: 16px;
         }
 
-        .action-button {
-            background-color: #2481cc;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 12px 24px;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 16px;
-            transition: background-color 0.2s;
+        .equation-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
         }
 
-        .action-button:hover {
-            background-color: #1a6dad;
+        .equation-name {
+            font-weight: 600;
         }
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+        .equation-result {
+            font-weight: 500;
+        }
+
+        .equation-expression {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color);
+        }
+
+        .error {
+            color: #f44336;
+        }
+
+        .loading {
+            color: var(--tg-theme-hint-color);
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <button class="back-button">←</button>
-            <div class="header-title">Главное меню</div>
+        <div id="pairs" class="page active">
+            <div class="add-pair">
+                <input type="text" id="pairInput" class="input" placeholder="Enter pair (e.g. BTCUSDT)">
+                <select id="exchangeSelect" class="select">
+                    <option value="Mexc">Mexc</option>
+                    <option value="Bybit">Bybit</option>
+                    <option value="OKX">OKX</option>
+                </select>
+                <button id="addPairBtn" class="button">Add Pair</button>
+            </div>
+            <div id="pairList" class="pair-list"></div>
         </div>
-        <div id="mainContent"></div>
+
+        <div id="equations" class="page">
+            <div class="add-pair">
+                <input type="text" id="equationInput" class="input" placeholder="Enter equation">
+                <button id="addEquationBtn" class="button">Add</button>
+            </div>
+            <div class="add-pair">
+                <input type="text" id="feeInput" class="input" placeholder="Fee %" value="0.02">
+                <button id="applyFeeBtn" class="button">Apply Fee</button>
+            </div>
+            <div id="equationList" class="equation-list"></div>
+        </div>
     </div>
 
+    <nav class="navbar">
+        <a href="#pairs" class="nav-item active" onclick="switchPage('pairs')">
+            <div class="nav-icon">📊</div>
+            <span>Pairs</span>
+        </a>
+        <a href="#equations" class="nav-item" onclick="switchPage('equations')">
+            <div class="nav-icon">📐</div>
+            <span>Equations</span>
+        </a>
+    </nav>
+
     <script>
-        // Структура данных меню
-        const menuData = {
-            services: {
-                title: 'Услуги',
-                icon: '🛠',
-                description: 'Наши основные услуги',
-                items: {
-                    development: {
-                        title: 'Разработка',
-                        icon: '💻',
-                        description: 'Веб и мобильная разработка',
-                        items: {
-                            web: {
-                                title: 'Веб-разработка',
-                                description: 'Создание сайтов и веб-приложений',
-                                content: 'Полный цикл разработки веб-проектов',
-                                price: 'от 50000 ₽'
-                            },
-                            mobile: {
-                                title: 'Мобильная разработка',
-                                description: 'iOS и Android приложения',
-                                content: 'Разработка нативных приложений',
-                                price: 'от 100000 ₽'
-                            }
-                        }
+        // Initialize Telegram WebApp
+        const webapp = window.Telegram.WebApp;
+        webapp.ready();
+        webapp.expand();
+
+        // Set theme colors
+        document.documentElement.style.setProperty('--tg-theme-bg-color', webapp.themeParams.bg_color);
+        document.documentElement.style.setProperty('--tg-theme-text-color', webapp.themeParams.text_color);
+        document.documentElement.style.setProperty('--tg-theme-hint-color', webapp.themeParams.hint_color);
+        document.documentElement.style.setProperty('--tg-theme-link-color', webapp.themeParams.link_color);
+        document.documentElement.style.setProperty('--tg-theme-button-color', webapp.themeParams.button_color);
+        document.documentElement.style.setProperty('--tg-theme-button-text-color', webapp.themeParams.button_text_color);
+
+        // State management
+        const state = {
+            pairs: new Map(),
+            equations: new Map(),
+            websockets: new Map(),
+            exchanges: {
+                'Mexc': {
+                    ws_url: 'wss://wbs.mexc.com/ws',
+                    subscribe_format: (symbol) => ({
+                        method: 'SUBSCRIPTION',
+                        params: [`spot@public.bookTicker.v3.api@${symbol}`]
+                    }),
+                    parse_message: (data) => {
+                        if (!data.s || !data.d) return null;
+                        return {
+                            symbol: data.s,
+                            bid: data.d.b,
+                            ask: data.d.a
+                        };
                     },
-                    design: {
-                        title: 'Дизайн',
-                        icon: '🎨',
-                        description: 'UI/UX дизайн',
-                        items: {
-                            ui: {
-                                title: 'UI Дизайн',
-                                description: 'Проектирование интерфейсов',
-                                content: 'Создание современных интерфейсов',
-                                price: 'от 30000 ₽'
-                            },
-                            ux: {
-                                title: 'UX Дизайн',
-                                description: 'Проектирование опыта',
-                                content: 'Улучшение пользовательского опыта',
-                                price: 'от 40000 ₽'
-                            }
-                        }
-                    }
-                }
-            },
-            products: {
-                title: 'Продукты',
-                icon: '📦',
-                description: 'Готовые решения',
-                items: {
-                    cms: {
-                        title: 'CMS',
-                        icon: '🗄',
-                        description: 'Системы управления контентом',
-                        items: {
-                            basic: {
-                                title: 'Базовая CMS',
-                                description: 'Для малого бизнеса',
-                                content: 'Простая и удобная система управления',
-                                price: 'от 20000 ₽'
-                            },
-                            pro: {
-                                title: 'Pro CMS',
-                                description: 'Для крупного бизнеса',
-                                content: 'Продвинутая система управления',
-                                price: 'от 60000 ₽'
-                            }
-                        }
-                    }
+                    ping_interval: 30000,
+                    ping_message: { method: 'PING' }
+                },
+                'Bybit': {
+                    ws_url: 'wss://stream.bybit.com/v5/public/spot',
+                    subscribe_format: (symbol) => ({
+                        op: 'subscribe',
+                        args: [`orderbook.1.${symbol}`]
+                    }),
+                    parse_message: (data) => {
+                        if (!data.data || !data.data.s) return null;
+                        return {
+                            symbol: data.data.s,
+                            bid: data.data.b?.[0]?.[0],
+                            ask: data.data.a?.[0]?.[0]
+                        };
+                    },
+                    ping_interval: 20000,
+                    ping_message: { op: 'ping' }
+                },
+                'OKX': {
+                    ws_url: 'wss://ws.okx.com:8443/ws/v5/public',
+                    subscribe_format: (symbol) => ({
+                        op: 'subscribe',
+                        args: [{
+                            channel: 'tickers',
+                            instId: symbol.replace('USDT', '-USDT').replace('BTC', '-BTC')
+                        }]
+                    }),
+                    parse_message: (data) => {
+                        if (!data.data?.[0]) return null;
+                        return {
+                            symbol: data.data[0].instId.replace('-', ''),
+                            bid: data.data[0].bidPx,
+                            ask: data.data[0].askPx
+                        };
+                    },
+                    ping_interval: 25000,
+                    ping_message: { op: 'ping' }
                 }
             }
         };
 
-        class MenuNavigator {
-            constructor() {
-                this.currentPath = [];
-                this.mainContent = document.getElementById('mainContent');
-                this.backButton = document.querySelector('.back-button');
-                this.headerTitle = document.querySelector('.header-title');
-                
-                this.backButton.addEventListener('click', () => this.goBack());
-                
-                this.renderCurrentLevel();
-            }
+        // WebSocket Connection Management
+        function connectWebSocket(exchange) {
+            if (state.websockets.has(exchange)) return;
 
-            getCurrentData() {
-                let current = menuData;
-                for (let key of this.currentPath) {
-                    current = current[key].items;
-                }
-                return current;
-            }
+            const config = state.exchanges[exchange];
+            const ws = new ReconnectingWebSocket(config.ws_url);
 
-            renderCurrentLevel() {
-                const currentData = this.getCurrentData();
-                const menuList = document.createElement('div');
-                menuList.className = 'menu-list';
-
-                for (let key in currentData) {
-                    const item = currentData[key];
-                    const menuItem = this.createMenuItem(key, item);
-                    menuList.appendChild(menuItem);
-                }
-
-                this.mainContent.innerHTML = '';
-                this.mainContent.appendChild(menuList);
-
-                this.updateHeader();
-            }
-
-            createMenuItem(key, item) {
-                const div = document.createElement('div');
-                div.className = 'menu-item';
-
-                const hasSubitems = item.items !== undefined;
-
-                div.innerHTML = `
-                    <div class="menu-item-icon">${item.icon || '📁'}</div>
-                    <div class="menu-item-content">
-                        <div class="menu-item-title">${item.title}</div>
-                        <div class="menu-item-description">${item.description || ''}</div>
-                    </div>
-                `;
-
-                div.addEventListener('click', () => {
-                    if (hasSubitems) {
-                        this.navigateTo(key);
-                    } else {
-                        this.showDetail(item);
+            ws.onopen = () => {
+                console.log(`Connected to ${exchange}`);
+                // Resubscribe to all pairs for this exchange
+                for (const [key, pair] of state.pairs) {
+                    if (pair.exchange === exchange) {
+                        ws.send(JSON.stringify(config.subscribe_format(pair.symbol)));
                     }
-                });
-
-                return div;
-            }
-
-            navigateTo(key) {
-                this.currentPath.push(key);
-                this.renderCurrentLevel();
-                
-                this.mainContent.style.animation = 'slideIn 0.3s ease-out';
-                setTimeout(() => {
-                    this.mainContent.style.animation = '';
-                }, 300);
-            }
-
-            goBack() {
-                if (this.currentPath.length > 0) {
-                    this.currentPath.pop();
-                    this.renderCurrentLevel();
                 }
-            }
+            };
 
-            updateHeader() {
-                if (this.currentPath.length > 0) {
-                    this.backButton.style.display = 'block';
-                    const currentData = this.getCurrentData();
-                    const currentKey = this.currentPath[this.currentPath.length - 1];
-                    const parentData = this.getParentData();
-                    this.headerTitle.textContent = parentData[currentKey].title;
-                } else {
-                    this.backButton.style.display = 'none';
-                    this.headerTitle.textContent = 'Главное меню';
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                const parsed = config.parse_message(data);
+                if (parsed) {
+                    updatePairPrices(parsed.symbol, exchange, parsed.bid, parsed.ask);
                 }
-            }
+            };
 
-            getParentData() {
-                let current = menuData;
-                for (let i = 0; i < this.currentPath.length - 1; i++) {
-                    current = current[this.currentPath[i]].items;
+            // Setup ping interval
+            const pingInterval = setInterval(() => {
+                if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify(config.ping_message));
                 }
-                return current;
+            }, config.ping_interval);
+
+            ws.onclose = () => {
+                clearInterval(pingInterval);
+                state.websockets.delete(exchange);
+            };
+
+            state.websockets.set(exchange, ws);
+        }
+
+        // UI Updates
+        function updatePairPrices(symbol, exchange, bid, ask) {
+            const key = `${exchange}-${symbol}`;
+            const pair = state.pairs.get(key);
+            if (!pair) return;
+
+            const element = document.getElementById(`pair-${key}`);
+            if (element) {
+                element.querySelector('.bid-value').textContent = parseFloat(bid).toFixed(8);
+                element.querySelector('.ask-value').textContent = parseFloat(ask).toFixed(8);
             }
 
-            showDetail(item) {
-                const detailView = document.createElement('div');
-                detailView.className = 'detail-view';
+            // Update equations that use this pair
+            updateEquations();
+        }
 
-                detailView.innerHTML = `
-                    <div class="detail-content">
-                        <div class="detail-image"></div>
-                        <h2>${item.title}</h2>
-                        <p>${item.content || item.description}</p>
-                        <p><strong>Стоимость:</strong> ${item.price}</p>
-                        <button class="action-button">Заказать</button>
-                    </div>
-                `;
-
-                this.mainContent.innerHTML = '';
-                this.mainContent.appendChild(detailView);
-
-                detailView.querySelector('.action-button').addEventListener('click', () => {
-                    alert('В локальной версии функция заказа недоступна');
-                });
+        function updateEquations() {
+            for (const [id, equation] of state.equations) {
+                const result = evaluateEquation(equation.expression);
+                const element = document.getElementById(`equation-${id}`);
+                if (element) {
+                    const resultElement = element.querySelector('.equation-result');
+                    resultElement.textContent = result;
+                    resultElement.className = `equation-result ${result === 'n/d' ? 'error' : ''}`;
+                }
             }
         }
 
-        // Инициализация навигатора при загрузке страницы
-        document.addEventListener('DOMContentLoaded', () => {
-            new MenuNavigator();
+        // Equation Evaluation
+        function evaluateEquation(expression) {
+            try {
+                let evalStr = expression;
+
+                // Replace equation references
+                for (const [id, eq] of state.equations) {
+                    const resultElement = document.getElementById(`equation-${id}`)?.querySelector('.equation-result');
+                    if (resultElement) {
+                        const result = resultElement.textContent;
+                        if (result === 'n/d' || result === 'Loading...') return 'n/d';
+                        evalStr = evalStr.replace(`${eq.name}_result`, result);
+                    }
+                }
+
+                // Replace pair values
+                for (const [key, pair] of state.pairs) {
+                    const element = document.getElementById(`pair-${key}`);
+                    if (element) {
+                        const bid = element.querySelector('.bid-value').textContent;
+                        const ask = element.querySelector('.ask-value').textContent;
+                        evalStr = evalStr.replace(`${pair.symbol}_${pair.exchange}_bid`, bid);
+                        evalStr = evalStr.replace(`${pair.symbol}_${pair.exchange}_ask`, ask);
+                    }
+                }
+
+                evalStr = evalStr.replace(/[^0-9+\-*/().]/g, '');
+                const result = eval(evalStr);
+                return isFinite(result) ? result.toFixed(8) : 'n/d';
+            } catch (e) {
+                return 'n/d';
+            }
+        }
+
+        // UI Event Handlers
+        function addPair() {
+            const symbol = document.getElementById('pairInput').value.trim().toUpperCase();
+            const exchange = document.getElementById('exchangeSelect').value;
+            const key = `${exchange}-${symbol}`;
+
+            if (state.pairs.has(key)) {
+                webapp.showAlert('This pair is already added');
+                return;
+            }
+
+            state.pairs.set(key, { symbol, exchange });
+            connectWebSocket(exchange);
+
+            const ws = state.websockets.get(exchange);
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(state.exchanges[exchange].subscribe_format(symbol)));
+            }
+
+            const pairList = document.getElementById('pairList');
+            const pairElement = document.createElement('div');
+            pairElement.id = `pair-${key}`;
+            pairElement.className = 'pair-item';
+            pairElement.innerHTML = `
+                <div class="pair-info">
+                    <div class="pair-symbol">${symbol} (${exchange})</div>
+                    <div class="pair-prices">
+                        <div class="price">
+                            <span class="price-label">Bid</span>
+                            <span class="price-value bid bid-value" onclick="addToEquation('${symbol}_${exchange}_bid')">Loading...</span>
+                        </div>
+                        <div class="price">
+                            <span class="price-label">Ask</span>
+                            <span class="price-value ask ask-value" onclick="addToEquation('${symbol}_${exchange}_ask')">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="button" onclick="removePair('${key}')">×</button>
+            `;
+            pairList.appendChild(pairElement);
+            document.getElementById('pairInput').value = '';
+        }
+
+        function removePair(key) {
+            const pair = state.pairs.get(key);
+            if (!pair) return;
+
+            // Remove from DOM
+            const element = document.getElementById(`pair-${key}`);
+            if (element) element.remove();
+
+            // Remove from state
+            state.pairs.delete(key);
+
+            // Check if we need to disconnect websocket
+            const hasOtherPairsForExchange = Array.from(state.pairs.values())
+                .some(p => p.exchange === pair.exchange);
+            
+            if (!hasOtherPairsForExchange) {
+                const ws = state.websockets.get(pair.exchange);
+                if (ws) {
+                    ws.close();
+                    state.websockets.delete(pair.exchange);
+                }
+            }
+
+            // Update equations that might use this pair
+            updateEquations();
+        }
+
+        function addEquation() {
+            const expression = document.getElementById('equationInput').value.trim();
+            if (!expression) return;
+
+            const id = Date.now().toString();
+            const name = `Equation_${state.equations.size + 1}`;
+            
+            state.equations.set(id, {
+                name,
+                expression
+            });
+
+            const equationList = document.getElementById('equationList');
+            const equationElement = document.createElement('div');
+            equationElement.id = `equation-${id}`;
+            equationElement.className = 'equation-item';
+            equationElement.innerHTML = `
+                <div class="equation-header">
+                    <input type="text" class="input equation-name" value="${name}" 
+                           onchange="updateEquationName('${id}', this.value)">
+                    <span class="equation-result" onclick="addToEquation('${name}_result')">Loading...</span>
+                    <button class="button" onclick="removeEquation('${id}')">×</button>
+                </div>
+                <div class="equation-expression">${expression}</div>
+            `;
+            equationList.appendChild(equationElement);
+            document.getElementById('equationInput').value = '';
+
+            updateEquations();
+        }
+
+        function updateEquationName(id, newName) {
+            const equation = state.equations.get(id);
+            if (!equation) return;
+
+            const oldName = equation.name;
+            equation.name = newName;
+
+            // Update other equations that might reference this one
+            for (const [eqId, eq] of state.equations) {
+                if (eq.expression.includes(`${oldName}_result`)) {
+                    eq.expression = eq.expression.replace(`${oldName}_result`, `${newName}_result`);
+                    const element = document.getElementById(`equation-${eqId}`);
+                    if (element) {
+                        element.querySelector('.equation-expression').textContent = eq.expression;
+                    }
+                }
+            }
+
+            updateEquations();
+        }
+
+        function removeEquation(id) {
+            const equation = state.equations.get(id);
+            if (!equation) return;
+
+            // Remove from DOM
+            const element = document.getElementById(`equation-${id}`);
+            if (element) element.remove();
+
+            // Remove from state
+            state.equations.delete(id);
+
+            // Update other equations that might reference this one
+            updateEquations();
+        }
+
+        function addToEquation(value) {
+            const input = document.getElementById('equationInput');
+            const cursorPos = input.selectionStart;
+            const currentValue = input.value;
+            input.value = currentValue.slice(0, cursorPos) + value + currentValue.slice(cursorPos);
+            input.focus();
+            input.setSelectionRange(cursorPos + value.length, cursorPos + value.length);
+        }
+
+        function applyFee() {
+            const feeInput = document.getElementById('feeInput');
+            const fee = parseFloat(feeInput.value);
+            if (isNaN(fee)) {
+                webapp.showAlert('Invalid fee value');
+                return;
+            }
+
+            const feeMultiplier = 1 - fee/100;
+            const input = document.getElementById('equationInput');
+            const cursorPos = input.selectionStart;
+            const currentText = input.value;
+
+            // Find nearest price reference to cursor
+            const bidMatch = /[A-Z]+_[A-Za-z]+_bid/.exec(currentText);
+            const askMatch = /[A-Z]+_[A-Za-z]+_ask/.exec(currentText);
+
+            let match;
+            if (bidMatch && askMatch) {
+                // Use the closest match to cursor
+                const bidDist = Math.abs(bidMatch.index - cursorPos);
+                const askDist = Math.abs(askMatch.index - cursorPos);
+                match = bidDist < askDist ? bidMatch : askMatch;
+            } else {
+                match = bidMatch || askMatch;
+            }
+
+            if (match) {
+                const isBid = match[0].endsWith('bid');
+                const replacement = isBid ? 
+                    `(${match[0]}*${feeMultiplier})` : 
+                    `(${match[0]}/${feeMultiplier})`;
+                
+                input.value = currentText.slice(0, match.index) + 
+                             replacement + 
+                             currentText.slice(match.index + match[0].length);
+            }
+        }
+
+        function switchPage(pageId) {
+            // Update pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.toggle('active', page.id === pageId);
+            });
+
+            // Update navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.toggle('active', item.getAttribute('href') === `#${pageId}`);
+            });
+        }
+
+        // Initialize default pairs
+        const defaultPairs = [
+            ['Mexc', 'BTCUSDT'], ['Bybit', 'BTCUSDT'], ['OKX', 'BTCUSDT'],
+            ['Mexc', 'ETHUSDT'], ['Bybit', 'ETHUSDT'], ['OKX', 'ETHUSDT'],
+            ['Mexc', 'ETHBTC'], ['Bybit', 'ETHBTC'], ['OKX', 'ETHBTC'],
+            ['Mexc', 'XRPUSDT'], ['Bybit', 'XRPUSDT'], ['OKX', 'XRPUSDT'],
+            ['Mexc', 'XUSDT'], ['Bybit', 'XUSDT'], ['OKX', 'XUSDT'],
+            ['Mexc', 'SOLUSDT'], ['Bybit', 'SOLUSDT'], ['OKX', 'SOLUSDT']
+        ];
+
+        window.onload = () => {
+            defaultPairs.forEach(([exchange, symbol]) => {
+                document.getElementById('exchangeSelect').value = exchange;
+                document.getElementById('pairInput').value = symbol;
+                addPair();
+            });
+
+            // Handle navigation based on URL hash
+            const hash = window.location.hash.slice(1) || 'pairs';
+            switchPage(hash);
+        };
+
+        // Event Listeners
+        document.getElementById('addPairBtn').addEventListener('click', addPair);
+        document.getElementById('addEquationBtn').addEventListener('click', addEquation);
+        document.getElementById('applyFeeBtn').addEventListener('click', applyFee);
+
+        document.getElementById('pairInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addPair();
+        });
+
+        document.getElementById('equationInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addEquation();
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            state.websockets.forEach(ws => ws.close());
         });
     </script>
 </body>
