@@ -35,16 +35,19 @@
             font-weight: bold;
         }
         .bid {
-            color: #28a745;
+            color: var(--tg-theme-button-color, #28a745);
         }
         .ask {
-            color: #dc3545;
+            color: var(--tg-theme-destructive-text-color, #dc3545);
         }
         .status {
             text-align: center;
             margin-top: 10px;
             font-size: 14px;
             color: var(--tg-theme-hint-color, #999);
+        }
+        .error {
+            color: var(--tg-theme-destructive-text-color, #dc3545);
         }
     </style>
 </head>
@@ -73,56 +76,88 @@
         let ws = null;
         let reconnectAttempts = 0;
         const maxReconnectAttempts = 5;
+        let pingInterval;
 
         function connect() {
-            ws = new WebSocket('wss://wbs.mexc.com/ws');
+            try {
+                ws = new WebSocket('wss://wbs.mexc.com/ws');
 
-            ws.onopen = function() {
-                statusElement.textContent = 'Connected';
-                reconnectAttempts = 0;
-                
-                // Subscribe to BTC/USDT order book
-                const subscribeMsg = {
-                    "method": "SUBSCRIPTION",
-                    "params": ["spot@public.bookTicker.v3.api@BTCUSDT"]
-                };
-                ws.send(JSON.stringify(subscribeMsg));
-            };
-
-            ws.onmessage = function(event) {
-                try {
-                    const data = JSON.parse(event.data);
+                ws.onopen = function() {
+                    console.log('WebSocket connected');
+                    statusElement.textContent = 'Connected';
+                    statusElement.classList.remove('error');
+                    reconnectAttempts = 0;
                     
-                    // Check if it's a price update message
-                    if (data.d) {
-                        const bid = new Decimal(data.d.bp).toFixed(2);
-                        const ask = new Decimal(data.d.ap).toFixed(2);
+                    // Subscribe to BTC/USDT order book
+                    const subscribeMsg = {
+                        "method": "SUBSCRIPTION",
+                        "params": ["spot@public.bookTicker.v3.api@BTCUSDT"]
+                    };
+                    ws.send(JSON.stringify(subscribeMsg));
+
+                    // Setup ping interval
+                    pingInterval = setInterval(() => {
+                        if (ws.readyState === WebSocket.OPEN) {
+                            ws.send(JSON.stringify({ "ping": Date.now() }));
+                        }
+                    }, 20000);
+                };
+
+                ws.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
                         
-                        bidElement.textContent = `$${bid}`;
-                        askElement.textContent = `$${ask}`;
+                        // Handle pong message
+                        if (data.pong) {
+                            return;
+                        }
+                        
+                        // Check if it's a price update message
+                        if (data.d && data.d.bp && data.d.ap) {
+                            const bid = new Decimal(data.d.bp).toFixed(2);
+                            const ask = new Decimal(data.d.ap).toFixed(2);
+                            
+                            bidElement.textContent = `$${bid}`;
+                            askElement.textContent = `$${ask}`;
+                            
+                            // Update status only on first price update
+                            if (bidElement.textContent === '---' || askElement.textContent === '---') {
+                                statusElement.textContent = 'Live prices';
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error processing message:', error);
+                        statusElement.textContent = 'Error processing data';
+                        statusElement.classList.add('error');
                     }
-                } catch (error) {
-                    console.error('Error processing message:', error);
-                }
-            };
+                };
 
-            ws.onclose = function() {
-                statusElement.textContent = 'Disconnected';
-                
-                // Implement reconnection logic
-                if (reconnectAttempts < maxReconnectAttempts) {
-                    reconnectAttempts++;
-                    statusElement.textContent = `Reconnecting (attempt ${reconnectAttempts}/${maxReconnectAttempts})...`;
-                    setTimeout(connect, 3000);
-                } else {
-                    statusElement.textContent = 'Connection failed. Please reload the page.';
-                }
-            };
+                ws.onclose = function(event) {
+                    console.log('WebSocket closed:', event);
+                    statusElement.textContent = 'Disconnected';
+                    statusElement.classList.add('error');
+                    clearInterval(pingInterval);
+                    
+                    // Implement reconnection logic
+                    if (reconnectAttempts < maxReconnectAttempts) {
+                        reconnectAttempts++;
+                        statusElement.textContent = `Reconnecting (attempt ${reconnectAttempts}/${maxReconnectAttempts})...`;
+                        setTimeout(connect, 3000);
+                    } else {
+                        statusElement.textContent = 'Connection failed. Please reload the page.';
+                    }
+                };
 
-            ws.onerror = function(error) {
-                console.error('WebSocket error:', error);
-                statusElement.textContent = 'Connection error';
-            };
+                ws.onerror = function(error) {
+                    console.error('WebSocket error:', error);
+                    statusElement.textContent = 'Connection error';
+                    statusElement.classList.add('error');
+                };
+            } catch (error) {
+                console.error('Connection error:', error);
+                statusElement.textContent = 'Failed to establish connection';
+                statusElement.classList.add('error');
+            }
         }
 
         // Start connection
@@ -131,6 +166,7 @@
         // Cleanup on page unload
         window.addEventListener('unload', () => {
             if (ws) {
+                clearInterval(pingInterval);
                 ws.close();
             }
         });
