@@ -29,7 +29,7 @@
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         margin: 0;
         padding: 0;
-        background: var(--tg-theme-bg-color);
+        background: #2c2e33;
         color: var(--tg-theme-text-color);
         min-height: 100vh;
         padding-bottom: 140px;
@@ -790,8 +790,22 @@
                 const bidButton = pairElement.querySelector('.bid');
                 const askButton = pairElement.querySelector('.ask');
                 
-                bidButton.textContent = parseFloat(bid).toFixed(8);
-                askButton.textContent = parseFloat(ask).toFixed(8);
+                // Функция для форматирования числа
+                const formatPrice = (price) => {
+                    const num = parseFloat(price);
+                    if (num < 0.001) {
+                        return num.toFixed(8);  // Для очень маленьких чисел оставляем 8 знаков
+                    } else if (num < 1) {
+                        return num.toFixed(6);  // Для чисел меньше 1 оставляем 6 знаков
+                    } else if (num < 100) {
+                        return num.toFixed(4);  // Для чисел от 1 до 100 оставляем 4 знака
+                    } else {
+                        return num.toFixed(2);  // Для больших чисел оставляем 2 знака
+                    }
+                };
+                
+                bidButton.textContent = formatPrice(bid);
+                askButton.textContent = formatPrice(ask);
                 
                 updateEquations();
             }
