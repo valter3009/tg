@@ -760,7 +760,8 @@
 
         // Event Listeners
         document.addEventListener('touchstart', (e) => {
-            if (!e.target.matches('input, select')) {
+            // Проверяем, что элемент не является input, select и кнопками подтверждения
+            if (!e.target.matches('input, select, .action-button')) {
                 document.activeElement?.blur();
             }
         });
