@@ -131,7 +131,7 @@
     .pairs-list {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 5px;
     }
 
     .pair-item {
@@ -152,24 +152,25 @@
     }
 
     .pair-name {
-        font-size: 13px;
+        font-size: 7px;
         font-weight: 600;
         color: var(--tg-theme-text-color);
+        margin-left: 16px;
     }
 
     .price-container {
         display: flex;
         gap: 8px;
         align-items: center;
-        width: 280px; /* Фиксированная ширина */
-        justify-content: flex-end; /* Выравнивание кнопок по правому краю */
+        min-width: 220px;  /* фиксированная минимальная ширина */
+        justify-content: flex-end;  /* выравнивание элементов по правому краю */
     }
 
     .price-button {
         border: none;
         border-radius: var(--border-radius);
         padding: 8px 16px;
-        width: 100px;
+        width: 100px;  /* фиксированная ширина для всех кнопок */
         height: 15px;
         font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
         font-size: 10px;
