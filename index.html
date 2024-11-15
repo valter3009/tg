@@ -760,20 +760,19 @@
 
         // Event Listeners
         document.addEventListener('touchstart', (e) => {
-    // Проверяем, является ли целевой элемент или его родитель кнопкой подтверждения
-    const isActionButton = e.target.closest('.action-button');
-    
-    // Если это не поле ввода/select И не кнопка подтверждения - закрываем клавиатуру
-    if (!e.target.matches('input, select') && !isActionButton) {
-        document.activeElement?.blur();
-    }
-});
+            if (!e.target.matches('input, select') && 
+                !e.target.matches('.action-button') && 
+                !e.target.matches('.price-button')) {
+                document.activeElement?.blur();
+            }
+        });
+
         const inputs = document.querySelectorAll('input, select');
         inputs.forEach(input => {
             input.addEventListener('focus', () => {
                 document.body.classList.add('keyboard-visible');
                 setTimeout(() => {
-                    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    input.scrollIntoView({ behavior: 'smooth', block: 'end' });
                 }, 100);
             });
             
