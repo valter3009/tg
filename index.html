@@ -7,252 +7,381 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/decimal.js/10.4.3/decimal.min.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root {
-            --tg-theme-bg-color: #9999c2;
-            --tg-theme-secondary-bg-color: #2C2C2E;
-            --tg-theme-text-color: #FFFFFF;
-            --tg-theme-hint-color: #8E8E93;
-            --tg-theme-button-color: #0A84FF;
-            --tg-theme-button-text-color: #FFFFFF;
-        }
+    :root {
+        --tg-theme-bg-color: #1a1b1e;
+        --tg-theme-secondary-bg-color: #2c2e33;
+        --tg-theme-text-color: #ffffff;
+        --tg-theme-hint-color: #9ca3af;
+        --tg-theme-button-color: #3b82f6;
+        --tg-theme-button-text-color: #ffffff;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        --border-radius: 12px;
+        --transition-base: all 0.2s ease-in-out;
+    }
 
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+    * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+    }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: #a79bc7;
-            color: var(--tg-theme-text-color);
-            min-height: 100vh;
-            padding-bottom: 140px;
-        }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: var(--tg-theme-bg-color);
+        color: var(--tg-theme-text-color);
+        min-height: 100vh;
+        padding-bottom: 140px;
+        line-height: 1.5;
+    }
 
-        input, select, button {
-            font-size: 16px;
-        }
+    input, select, button {
+        font-size: 16px;
+        font-family: inherit;
+        transition: var(--transition-base);
+    }
 
-        .container {
-            padding: 0;
-            padding-bottom: env(safe-area-inset-bottom);
-        }
+    .container {
+        padding: 0;
+        padding-bottom: env(safe-area-inset-bottom);
+        max-width: 768px;
+        margin: 0 auto;
+    }
 
-        .header {
-            padding: 16px;
-            display: grid;
-            grid-template-columns: 1fr auto auto;
-            gap: 8px;
-            background: var(--tg-theme-bg-color);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+    .header {
+        padding: 16px;
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 12px;
+        background: var(--tg-theme-bg-color);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
-        .symbol-input {
-            background: var(--tg-theme-secondary-bg-color);
-            border: none;
-            border-radius: 10px;
-            color: var(--tg-theme-text-color);
-            padding: 12px 16px;
-            width: 100%;
-            height: 44px;
-        }
+    .symbol-input {
+        background: var(--tg-theme-secondary-bg-color);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--border-radius);
+        color: var(--tg-theme-text-color);
+        padding: 12px 16px;
+        width: 100%;
+        height: 48px;
+        transition: var(--transition-base);
+    }
 
-        .exchange-select {
-            background: var(--tg-theme-secondary-bg-color);
-            border: none;
-            border-radius: 10px;
-            color: var(--tg-theme-text-color);
-            padding: 12px;
-            height: 44px;
-            width: 90px;
-        }
+    .symbol-input:focus {
+        border-color: var(--tg-theme-button-color);
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        outline: none;
+    }
 
-        .add-button {
-            background: var(--tg-theme-button-color);
-            border: none;
-            border-radius: 10px;
-            color: var(--tg-theme-button-text-color);
-            padding: 12px 20px;
-            height: 44px;
-        }
+    .exchange-select {
+        background: var(--tg-theme-secondary-bg-color);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--border-radius);
+        color: var(--tg-theme-text-color);
+        padding: 12px;
+        height: 48px;
+        width: 100px;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+        background-size: 16px;
+        padding-right: 32px;
+    }
 
-        .screen {
-            display: none;
-            padding: 0 16px;
-        }
+    .exchange-select:focus {
+        border-color: var(--tg-theme-button-color);
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        outline: none;
+    }
 
-        .screen.active {
-            display: block;
-        }
+    .add-button {
+        background: var(--tg-theme-button-color);
+        border: none;
+        border-radius: var(--border-radius);
+        color: var(--tg-theme-button-text-color);
+        padding: 12px 24px;
+        height: 48px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: var(--transition-base);
+    }
 
-        .pairs-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+    .add-button:active {
+        transform: scale(0.98);
+        background: #2563eb;
+    }
 
-        .pair-item {
-            background: var(--tg-theme-secondary-bg-color);
-            border-radius: 12px;
-            padding: 12px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    .screen {
+        display: none;
+        padding: 16px;
+    }
 
-        .pair-name {
-            font-size: 16px;
-            font-weight: 500;
-        }
+    .screen.active {
+        display: block;
+    }
 
-        .price-container {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
+    .pairs-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
 
-        .price-button {
-            border: none;
-            border-radius: 8px;
-            padding: 8px 12px;
-            min-width: 100px;
-            font-family: monospace;
-            font-size: 15px;
-        }
+    .pair-item {
+        background: var(--tg-theme-secondary-bg-color);
+        border-radius: var(--border-radius);
+        padding: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: var(--transition-base);
+    }
 
-        .bid { background: #34C759; color: white; }
-        .ask { background: #FF3B30; color: white; }
+    .pair-item:active {
+        transform: scale(0.995);
+    }
 
-        .remove-button {
-            background: none;
-            border: none;
-            color: var(--tg-theme-hint-color);
-            padding: 8px;
-            margin-left: 8px;
-            font-size: 18px;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+    .pair-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--tg-theme-text-color);
+    }
 
+    .price-container {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .price-button {
+        border: none;
+        border-radius: var(--border-radius);
+        padding: 8px 16px;
+        min-width: 120px;
+        font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+        font-size: 15px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: var(--transition-base);
+    }
+
+    .price-button:active {
+        transform: scale(0.98);
+    }
+
+    .bid {
+        background: #059669;
+        color: white;
+    }
+
+    .bid:active {
+        background: #047857;
+    }
+
+    .ask {
+        background: #dc2626;
+        color: white;
+    }
+
+    .ask:active {
+        background: #b91c1c;
+    }
+
+    .remove-button {
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: var(--tg-theme-hint-color);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        cursor: pointer;
+        transition: var(--transition-base);
+        margin-left: 8px;
+    }
+
+    .remove-button:active {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(0.95);
+    }
+
+    .bottom-panel {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--tg-theme-bg-color);
+        padding: 16px;
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+    }
+
+    .bottom-controls {
+        display: grid;
+        grid-template-columns: 80px 48px 1fr 48px;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .fee-input {
+        background: var(--tg-theme-secondary-bg-color);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--border-radius);
+        color: var(--tg-theme-text-color);
+        padding: 12px;
+        height: 48px;
+        text-align: center;
+        font-weight: 500;
+    }
+
+    .fee-input:focus {
+        border-color: var(--tg-theme-button-color);
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        outline: none;
+    }
+
+    .equation-input {
+        background: var(--tg-theme-secondary-bg-color);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--border-radius);
+        color: var(--tg-theme-text-color);
+        padding: 12px 16px;
+        height: 48px;
+    }
+
+    .equation-input:focus {
+        border-color: var(--tg-theme-button-color);
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        outline: none;
+    }
+
+    .action-button {
+        background: var(--tg-theme-button-color);
+        border: none;
+        border-radius: var(--border-radius);
+        color: white;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        cursor: pointer;
+        transition: var(--transition-base);
+    }
+
+    .action-button:active {
+        transform: scale(0.95);
+        background: #2563eb;
+    }
+
+    .nav {
+        display: flex;
+        justify-content: space-around;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 12px;
+        margin-top: 8px;
+    }
+
+    .nav-button {
+        background: none;
+        border: none;
+        color: var(--tg-theme-hint-color);
+        padding: 8px 24px;
+        font-size: 15px;
+        font-weight: 500;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: var(--transition-base);
+    }
+
+    .nav-button.active {
+        color: var(--tg-theme-button-color);
+        background: rgba(59, 130, 246, 0.1);
+    }
+
+    .equation-item {
+        background: var(--tg-theme-secondary-bg-color);
+        border-radius: var(--border-radius);
+        padding: 16px;
+        margin-bottom: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: var(--shadow-sm);
+        transition: var(--transition-base);
+    }
+
+    .equation-name {
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 16px;
+        color: var(--tg-theme-text-color);
+    }
+
+    .equation-text {
+        color: var(--tg-theme-hint-color);
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+    }
+
+    .result {
+        font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+        font-size: 15px;
+        font-weight: 500;
+        color: #10b981;
+    }
+
+    .error {
+        color: #ef4444;
+    }
+
+    .keyboard-visible {
+        padding-bottom: 0;
+    }
+
+    .keyboard-visible .bottom-panel {
+        position: static;
+        border-top: none;
+    }
+
+    @supports (padding: max(0px)) {
         .bottom-panel {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--tg-theme-bg-color);
-            padding: 12px 16px;
-            padding-bottom: max(12px, env(safe-area-inset-bottom));
-            border-top: 1px solid var(--tg-theme-secondary-bg-color);
+            padding-bottom: max(16px, env(safe-area-inset-bottom));
         }
+    }
 
-        .bottom-controls {
-            display: grid;
-            grid-template-columns: 70px 44px 180px 44px;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
+    /* Dark scrollbar for WebKit browsers */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
 
-        .fee-input {
-            background: var(--tg-theme-secondary-bg-color);
-            border: none;
-            border-radius: 10px;
-            color: var(--tg-theme-text-color);
-            padding: 12px;
-            height: 44px;
-            text-align: center;
-        }
+    ::-webkit-scrollbar-track {
+        background: var(--tg-theme-bg-color);
+    }
 
-        .equation-input {
-            background: var(--tg-theme-secondary-bg-color);
-            border: none;
-            border-radius: 10px;
-            color: var(--tg-theme-text-color);
-            padding: 12px 16px;
-            height: 44px;
-        }
+    ::-webkit-scrollbar-thumb {
+        background: var(--tg-theme-secondary-bg-color);
+        border-radius: 4px;
+    }
 
-        .action-button {
-            background: var(--tg-theme-button-color);
-            border: none;
-            border-radius: 10px;
-            color: white;
-            width: 44px;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
-
-        .nav {
-            display: flex;
-            justify-content: space-around;
-            border-top: 1px solid var(--tg-theme-secondary-bg-color);
-            padding-top: 8px;
-        }
-
-        .nav-button {
-            background: none;
-            border: none;
-            color: var(--tg-theme-hint-color);
-            padding: 8px 24px;
-            font-size: 15px;
-        }
-
-        .nav-button.active {
-            color: var(--tg-theme-button-color);
-        }
-
-        .equation-item {
-            background: var(--tg-theme-secondary-bg-color);
-            border-radius: 12px;
-            padding: 12px 16px;
-            margin-bottom: 8px;
-        }
-
-        .equation-name {
-            font-weight: 500;
-            margin-bottom: 4px;
-            font-size: 16px;
-        }
-
-        .equation-text {
-            color: var(--tg-theme-hint-color);
-            margin-bottom: 4px;
-            font-size: 14px;
-        }
-
-        .result {
-            font-family: monospace;
-            font-size: 15px;
-        }
-
-        .error {
-            color: #FF3B30;
-        }
-
-        .keyboard-visible {
-            padding-bottom: 0;
-        }
-
-        .keyboard-visible .bottom-panel {
-            position: static;
-            border-top: none;
-        }
-
-        @supports (padding: max(0px)) {
-            .bottom-panel {
-                padding-bottom: max(12px, env(safe-area-inset-bottom));
-            }
-        }
-    </style>
+    ::-webkit-scrollbar-thumb:hover {
+        background: #4b5563;
+    }
+</style>
 </head>
 <body>
     <div class="container">
