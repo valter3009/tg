@@ -688,13 +688,14 @@
                     op: 'subscribe',
                     args: [{
                         channel: 'tickers',
-                        instId: symbol.replace('USDT', '-USDT').replace('BTC', '-BTC')
+                        instId: `${symbol.slice(0, -4)}-${symbol.slice(-4)}`  // Преобразование BTCUSDT в BTC-USDT
                     }]
                 }),
                 parseMessage: (data) => {
                     if (data.data && data.data[0]) {
+                        const symbol = data.data[0].instId.replace('-', '');
                         return {
-                            symbol: data.data[0].instId.replace('-', ''),
+                            symbol: symbol,
                             bid: data.data[0].bidPx,
                             ask: data.data[0].askPx
                         };
