@@ -67,10 +67,12 @@
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: var(--border-radius);
         color: var(--tg-theme-text-color);
-        padding: 12px 16px;
+        padding: 0 16px; /* Изменили padding для вертикального центрирования */
         width: 100%;
-        height: 48px;
+        height: 30px;
         transition: var(--transition-base);
+        font-size: 14px; /* Добавили размер шрифта */
+        line-height: 30px; /* Добавили line-height равный height для центрирования */
     }
 
     .symbol-input:focus {
@@ -84,8 +86,8 @@
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: var(--border-radius);
         color: var(--tg-theme-text-color);
-        padding: 12px;
-        height: 48px;
+        padding: 0 32px 0 12px; /* Изменили padding для вертикального центрирования */
+        height: 30px;
         width: 100px;
         cursor: pointer;
         appearance: none;
@@ -93,7 +95,8 @@
         background-repeat: no-repeat;
         background-position: right 8px center;
         background-size: 16px;
-        padding-right: 32px;
+        font-size: 14px; /* Добавили размер шрифта */
+        line-height: 30px; /* Добавили line-height равный height для центрирования */
     }
 
     .exchange-select:focus {
@@ -107,11 +110,13 @@
         border: none;
         border-radius: var(--border-radius);
         color: var(--tg-theme-button-text-color);
-        padding: 12px 24px;
-        height: 48px;
+        padding: 0 24px; /* Изменили padding для вертикального центрирования */
+        height: 30px;
         font-weight: 500;
         cursor: pointer;
         transition: var(--transition-base);
+        font-size: 14px; /* Добавили размер шрифта */
+        line-height: 30px; /* Добавили line-height равный height для центрирования */
     }
 
     .add-button:active {
@@ -171,7 +176,7 @@
         border-radius: var(--border-radius);
         padding: 8px 16px;
         width: 100px;
-        height: 22px;
+        height: 15px;
         font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
         font-size: 10px;
         font-weight: 500;
