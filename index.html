@@ -162,15 +162,15 @@
         display: flex;
         gap: 8px;
         align-items: center;
-        min-width: 220px;  /* фиксированная минимальная ширина */
-        justify-content: flex-end;  /* выравнивание элементов по правому краю */
+        min-width: 220px;
+        justify-content: flex-end;
     }
 
     .price-button {
         border: none;
         border-radius: var(--border-radius);
         padding: 8px 16px;
-        width: 100px;  /* фиксированная ширина для всех кнопок */
+        width: 100px;
         height: 15px;
         font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
         font-size: 10px;
@@ -374,7 +374,6 @@
         }
     }
 
-    /* Dark scrollbar for WebKit browsers */
     ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
@@ -392,7 +391,7 @@
     ::-webkit-scrollbar-thumb:hover {
         background: #4b5563;
     }
-</style>
+    </style>
 </head>
 <body>
     <div class="container">
@@ -421,8 +420,7 @@
             <input type="text" id="equation-input-bottom" class="equation-input" placeholder="Введите связку...">
             <button class="action-button" onclick="addEquationFromBottom()">✓</button>
         </div>
-        <div class="nav">
-            <button class="nav-button active" onclick="showScreen('pairs')">Пары</button>
+        <div class="nav"><button class="nav-button active" onclick="showScreen('pairs')">Пары</button>
             <button class="nav-button" onclick="showScreen('equations')">Связки</button>
         </div>
     </div>
@@ -741,6 +739,44 @@
             return ws;
         }
 
+        // Add new function for default pairs
+        function addDefaultPairs() {
+            const defaultPairs = [
+                { symbol: 'BTCUSDT', exchange: 'Mexc' },
+                { symbol: 'BTCUSDT', exchange: 'Bybit' },
+                { symbol: 'BTCUSDT', exchange: 'OKX' },
+                { symbol: 'ETHUSDT', exchange: 'Mexc' },
+                { symbol: 'ETHUSDT', exchange: 'Bybit' },
+                { symbol: 'ETHUSDT', exchange: 'OKX' }
+            ];
+
+            for (const pair of defaultPairs) {
+                const pairKey = `${pair.exchange}_${pair.symbol}`;
+                
+                // Skip if pair already exists
+                if (pairs[pairKey]) continue;
+
+                const pairElement = document.createElement('div');
+                pairElement.className = 'pair-item';
+                pairElement.setAttribute('data-pair', pairKey);
+                pairElement.innerHTML = `
+                    <div class="pair-name">${pair.symbol} ${pair.exchange}</div>
+                    <div class="price-container">
+                        <button class="price-button bid" onclick="addToEquation('${pair.symbol}_${pair.exchange}_bid')">Загрузка...</button>
+                        <button class="price-button ask" onclick="addToEquation('${pair.symbol}_${pair.exchange}_ask')">Загрузка...</button>
+                        <button class="remove-button" onclick="removePair('${pairKey}')">×</button>
+                    </div>
+                `;
+                
+                document.getElementById('pairs-list').appendChild(pairElement);
+                pairs[pairKey] = pairElement;
+                
+                connectWebSocket(pair.exchange, pair.symbol).then(ws => {
+                    connections[pairKey] = ws;
+                });
+            }
+        }
+
         function addPair() {
             const symbol = document.getElementById('pair-symbol').value.toUpperCase();
             const exchange = document.getElementById('exchange-select').value;
@@ -951,6 +987,9 @@
         document.addEventListener('gesturestart', (e) => {
             e.preventDefault();
         });
+
+        // Call addDefaultPairs after the page loads
+        document.addEventListener('DOMContentLoaded', addDefaultPairs);
 
         // Update equations periodically
         setInterval(updateEquations, 1000);
