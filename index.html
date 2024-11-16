@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>IDTrade Test</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/decimal.js/10.4.3/decimal.min.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -18,13 +18,14 @@
         --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         --border-radius: 12px;
         --transition-base: all 0.2s ease-in-out;
+        --bottom-safe-area: env(safe-area-inset-bottom);
         --keyboard-height: 0px;
     }
 
     * {
         box-sizing: border-box;
         -webkit-tap-highlight-color: transparent;
-        -webkit-overflow-scrolling: touch;
+        -webkit-touch-callout: none;
     }
 
     body {
@@ -34,10 +35,14 @@
         background: #2c2e33;
         color: var(--tg-theme-text-color);
         min-height: 100vh;
-        height: 100vh;
+        min-height: -webkit-fill-available;
+        padding-bottom: calc(140px + var(--bottom-safe-area));
+        line-height: 1.5;
         position: fixed;
         width: 100%;
-        overflow: hidden;
+        height: 100%;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     input, select, button {
@@ -46,19 +51,15 @@
         transition: var(--transition-base);
     }
 
-    .app-container {
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-    }
-
     .container {
-        flex: 1;
+        padding: 0;
+        padding-bottom: env(safe-area-inset-bottom);
+        max-width: 768px;
+        margin: 0 auto;
+        height: 100%;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         position: relative;
-        padding-bottom: env(safe-area-inset-bottom);
     }
 
     .header {
@@ -84,6 +85,8 @@
         width: 100%;
         height: 48px;
         font-size: 16px;
+        -webkit-appearance: none;
+        appearance: none;
     }
 
     .symbol-input:focus {
@@ -101,6 +104,7 @@
         height: 48px;
         width: 100px;
         cursor: pointer;
+        -webkit-appearance: none;
         appearance: none;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
         background-repeat: no-repeat;
@@ -124,6 +128,8 @@
         height: 48px;
         font-weight: 500;
         cursor: pointer;
+        -webkit-appearance: none;
+        appearance: none;
     }
 
     .add-button:active {
@@ -133,19 +139,21 @@
 
     .screen {
         display: none;
-        height: 100%;
+        padding: 16px;
+        padding-bottom: calc(140px + var(--bottom-safe-area) + var(--keyboard-height));
+        min-height: 100%;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .screen.active {
-        display: flex;
-        flex-direction: column;
+        display: block;
     }
 
     .pairs-list {
-        padding: 16px;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 5px;
     }
 
     .pair-item {
@@ -190,6 +198,8 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        -webkit-appearance: none;
+        appearance: none;
     }
 
     .bid {
@@ -217,38 +227,37 @@
         margin-left: 8px;
         line-height: 1;
         padding: 0;
+        -webkit-appearance: none;
+        appearance: none;
     }
 
     .bottom-panel {
-        background: rgba(0, 0, 0, 0.8);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 16px;
-        padding-bottom: max(16px, env(safe-area-inset-bottom));
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        z-index: 1000;
-    }
-
-    .bottom-panel.keyboard-visible {
         position: fixed;
-        bottom: var(--keyboard-height);
+        bottom: 0;
         left: 0;
         right: 0;
-        transform: translateY(0);
+        background: rgba(44, 46, 51, 0.95);
+        padding: 16px;
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        transform: translateZ(0);
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1000;
     }
 
     .bottom-controls {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 8px;
     }
 
     .fee-controls {
         display: flex;
         align-items: center;
         gap: 8px;
+        margin-bottom: 0;
     }
 
     .fee-input {
@@ -256,12 +265,14 @@
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: var(--border-radius);
         color: var(--tg-theme-text-color);
-        padding: 8px;
+        padding: 6px;
         height: 36px;
-        width: 80px;
+        width: 60px;
         text-align: center;
         font-weight: 500;
         font-size: 14px;
+        -webkit-appearance: none;
+        appearance: none;
     }
 
     .fee-button {
@@ -269,9 +280,11 @@
         border: none;
         color: var(--tg-theme-text-color);
         font-size: 14px;
-        padding: 8px 16px;
+        padding: 8px 12px;
         cursor: pointer;
         opacity: 0.8;
+        -webkit-appearance: none;
+        appearance: none;
     }
 
     .equation-row {
@@ -283,17 +296,17 @@
 
     .done-button {
         position: absolute;
-        right: 8px;
-        top: 50%;
-        transform: translateY(-50%);
+        top: -32px;
+        right: 0;
         background: none;
         border: none;
-        color: var(--tg-theme-button-color);
+        color: var(--tg-theme-text-color);
         font-size: 14px;
-        font-weight: 500;
-        padding: 8px;
+        padding: 8px 16px;
         cursor: pointer;
-        z-index: 1;
+        opacity: 0.8;
+        -webkit-appearance: none;
+        appearance: none;
     }
 
     .equation-input {
@@ -302,10 +315,11 @@
         border-radius: var(--border-radius);
         color: var(--tg-theme-text-color);
         padding: 8px 12px;
-        padding-right: 70px;
         height: 36px;
-        width: 100%;
+        flex-grow: 1;
         font-size: 14px;
+        -webkit-appearance: none;
+        appearance: none;
     }
 
     .nav {
@@ -313,18 +327,20 @@
         justify-content: space-around;
         border-top: 1px solid rgba(255, 255, 255, 0.1);
         padding-top: 12px;
-        margin-top: 12px;
+        margin-top: 8px;
     }
 
     .nav-button {
         background: none;
         border: none;
         color: var(--tg-theme-hint-color);
-        padding: 8px 20px;
+        padding: 8px 16px;
         font-size: 14px;
         font-weight: 500;
         border-radius: var(--border-radius);
         cursor: pointer;
+        -webkit-appearance: none;
+        appearance: none;
     }
 
     .nav-button.active {
@@ -339,7 +355,6 @@
         margin-bottom: 12px;
         border: 1px solid rgba(255, 255, 255, 0.1);
         box-shadow: var(--shadow-sm);
-        position: relative;
     }
 
     .equation-name {
@@ -354,12 +369,11 @@
         margin-bottom: 8px;
         font-size: 14px;
         font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
-        word-break: break-all;
     }
 
     .result {
         font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 500;
         color: #10b981;
     }
@@ -368,49 +382,63 @@
         color: #ef4444;
     }
 
+    body.keyboard-visible {
+        height: 100%;
+        overflow: hidden;
+    }
+
+    body.keyboard-visible .bottom-panel {
+        position: absolute;
+        transform: translate3d(0, calc(-1 * var(--keyboard-height)), 0);
+    }
+
     @supports (padding: max(0px)) {
         .bottom-panel {
             padding-bottom: max(16px, env(safe-area-inset-bottom));
         }
     }
+
+    @media (orientation: landscape) {
+        .bottom-panel {
+            padding-bottom: 16px;
+        }
+    }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <div class="container">
-            <div id="pairs-screen" class="screen active">
-                <div class="header">
-                    <input type="text" id="pair-symbol" class="symbol-input" placeholder="Символ (например, BTCUSDT)">
-                    <select id="exchange-select" class="exchange-select">
-                        <option value="Mexc">Mexc</option>
-                        <option value="Bybit">Bybit</option>
-                        <option value="OKX">OKX</option>
-                    </select>
-                    <button onclick="addPair()" class="add-button">Добавить</button>
-                </div>
-                <div id="pairs-list" class="pairs-list"></div>
+    <div class="container">
+        <div id="pairs-screen" class="screen active">
+            <div class="header">
+                <input type="text" id="pair-symbol" class="symbol-input" placeholder="Символ (например, BTCUSDT)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                <select id="exchange-select" class="exchange-select">
+                    <option value="Mexc">Mexc</option>
+                    <option value="Bybit">Bybit</option>
+                    <option value="OKX">OKX</option>
+                </select>
+                <button onclick="addPair()" class="add-button">Добавить</button>
             </div>
-
-            <div id="equations-screen" class="screen">
-                <div id="equations-list" class="pairs-list"></div>
-            </div>
+            <div id="pairs-list" class="pairs-list"></div>
         </div>
 
-        <div class="bottom-panel">
-            <div class="bottom-controls">
-                <div class="fee-controls">
-                    <input type="number" id="fee-input-bottom" class="fee-input" placeholder="%" value="0.02" step="0.01">
-                    <button class="fee-button" onclick="applyFeeFromBottom()">Применить комиссию</button>
-                </div>
-                <div class="equation-row">
-                    <input type="text" id="equation-input-bottom" class="equation-input" placeholder="Введите связку...">
-                    <button class="done-button" onclick="addEquationFromBottom()">Готово</button>
-                </div>
+        <div id="equations-screen" class="screen">
+            <div id="equations-list" class="pairs-list"></div>
+        </div>
+    </div>
+
+    <div class="bottom-panel">
+        <div class="bottom-controls">
+            <div class="fee-controls">
+                <input type="number" id="fee-input-bottom" class="fee-input" placeholder="%" value="0.02" step="0.01" inputmode="decimal">
+                <button class="fee-button" onclick="applyFeeFromBottom()">Применить комиссию</button>
             </div>
-            <div class="nav">
-                <button class="nav-button active" onclick="showScreen('pairs')">Пары</button>
-                <button class="nav-button" onclick="showScreen('equations')">Связки</button>
+            <div class="equation-row">
+                <button class="done-button" onclick="addEquationFromBottom()">Готово</button>
+                <input type="text" id="equation-input-bottom" class="equation-input" placeholder="Введите связку..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
             </div>
+        </div>
+        <div class="nav">
+            <button class="nav-button active" onclick="showScreen('pairs')">Пары</button>
+            <button class="nav-button" onclick="showScreen('equations')">Связки</button>
         </div>
     </div>
 
@@ -419,58 +447,56 @@
         let pairs = {};
         let equations = {};
         let equationCount = 0;
-        let tg = window.Telegram.WebApp;
-        let pairs = {};
-        let equations = {};
-        let equationCount = 0;
-        let isKeyboardVisible = false;
         let keyboardHeight = 0;
+        let isKeyboardVisible = false;
         
         tg.expand();
         tg.ready();
 
-        // Обработка клавиатуры iOS
-        function handleKeyboardVisibility() {
+        // iOS keyboard handling
+        function setupKeyboardHandling() {
             const visualViewport = window.visualViewport;
             if (!visualViewport) return;
 
+            let lastHeight = visualViewport.height;
+
             visualViewport.addEventListener('resize', () => {
-                const bottomPanel = document.querySelector('.bottom-panel');
-                const container = document.querySelector('.container');
-                
-                // Определяем, видима ли клавиатура
-                const currentHeight = visualViewport.height;
-                const windowHeight = window.innerHeight;
-                isKeyboardVisible = currentHeight < windowHeight;
-                
-                if (isKeyboardVisible) {
-                    // Вычисляем высоту клавиатуры
-                    keyboardHeight = windowHeight - currentHeight;
+                if (visualViewport.height < lastHeight) {
+                    // Keyboard is showing
+                    keyboardHeight = lastHeight - visualViewport.height;
                     document.documentElement.style.setProperty('--keyboard-height', `${keyboardHeight}px`);
+                    document.body.classList.add('keyboard-visible');
+                    isKeyboardVisible = true;
                     
-                    bottomPanel.classList.add('keyboard-visible');
-                    container.style.height = `${visualViewport.height - bottomPanel.offsetHeight}px`;
-                    
-                    // Прокручиваем до активного элемента
-                    const activeElement = document.activeElement;
-                    if (activeElement.tagName === 'INPUT') {
-                        setTimeout(() => {
-                            activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }, 100);
-                    }
+                    // Scroll active element into view with a delay to ensure proper positioning
+                    setTimeout(() => {
+                        if (document.activeElement.tagName === 'INPUT') {
+                            document.activeElement.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center'
+                            });
+                        }
+                    }, 100);
                 } else {
-                    bottomPanel.classList.remove('keyboard-visible');
-                    container.style.height = '';
+                    // Keyboard is hiding
                     document.documentElement.style.setProperty('--keyboard-height', '0px');
+                    document.body.classList.remove('keyboard-visible');
+                    isKeyboardVisible = false;
+                    
+                    // Reset scroll position smoothly
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
                 }
+                lastHeight = visualViewport.height;
             });
         }
 
-        // Инициализация обработчиков клавиатуры
-        handleKeyboardVisibility();
-
         // Добавляем тестовые пары при загрузке
         document.addEventListener('DOMContentLoaded', () => {
+            setupKeyboardHandling();
+            
             const defaultPairs = [
                 { symbol: 'BTCUSDT', exchange: 'Mexc', bid: '45000.00', ask: '45100.00' },
                 { symbol: 'BTCUSDT', exchange: 'Bybit', bid: '44990.00', ask: '45110.00' },
@@ -478,9 +504,14 @@
                 { symbol: 'ETHUSDT', exchange: 'Bybit', bid: '2295.00', ask: '2315.00' },
                 { symbol: 'ETHUSDT', exchange: 'OKX', bid: '2298.00', ask: '2312.00' },
                 { symbol: 'SOLUSDT', exchange: 'Mexc', bid: '98.40', ask: '98.60' },
-            ];
-            
-            defaultPairs.forEach(pair => createPairElement(pair));
+            ].forEach(pair => createPairElement(pair));
+
+            // Prevent scroll to top on keyboard hide
+            window.addEventListener('scroll', (e) => {
+                if (isKeyboardVisible) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
         });
 
         function createPairElement(pair) {
@@ -504,7 +535,8 @@
         }
 
         function addPair() {
-            const symbol = document.getElementById('pair-symbol').value.toUpperCase();
+            const symbolInput = document.getElementById('pair-symbol');
+            const symbol = symbolInput.value.toUpperCase();
             const exchange = document.getElementById('exchange-select').value;
             
             if (!symbol) {
@@ -518,6 +550,7 @@
                 return;
             }
 
+            // Генерируем случайные цены для тестов
             const basePrice = 100 + Math.random() * 900;
             createPairElement({
                 symbol,
@@ -526,8 +559,16 @@
                 ask: (basePrice * 1.001).toFixed(2)
             });
             
-            document.getElementById('pair-symbol').value = '';
-            document.getElementById('pair-symbol').blur();
+            symbolInput.value = '';
+            symbolInput.blur();
+
+            // Плавная прокрутка к новой паре
+            setTimeout(() => {
+                const newPair = document.querySelector(`[data-pair="${pairKey}"]`);
+                if (newPair) {
+                    newPair.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }, 100);
         }
 
         function removePair(pairKey) {
@@ -545,6 +586,11 @@
             input.value = text.slice(0, pos) + value + text.slice(pos);
             input.focus();
             input.setSelectionRange(pos + value.length, pos + value.length);
+
+            // Прокрутка к полю ввода
+            setTimeout(() => {
+                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
         }
 
         function applyFeeFromBottom() {
@@ -584,30 +630,44 @@
 
             input.value = text;
             input.focus();
+
+            // Прокрутка к полю ввода
+            setTimeout(() => {
+                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
         }
 
         function addEquationFromBottom() {
-            const equation = document.getElementById('equation-input-bottom').value.trim();
+            const equationInput = document.getElementById('equation-input-bottom');
+            const equation = equationInput.value.trim();
             if (!equation) return;
 
             equationCount++;
             const el = document.createElement('div');
             el.className = 'equation-item';
             el.innerHTML = `
-                <div class="equation-name">Уравнение ${equationCount}</div>
-                <div class="equation-text">${equation}</div>
-                <div class="result">Вычисление...</div>
-                <button class="remove-button" onclick="removeEquation(${equationCount})" style="position: absolute; top: 12px; right: 12px;">×</button>
+                <div>
+                    <div class="equation-name">Уравнение ${equationCount}</div>
+                    <div class="equation-text">${equation}</div>
+                    <div class="result">Вычисление...</div>
+                </div>
+                <button class="remove-button" onclick="removeEquation(${equationCount})">×</button>
             `;
 
-            document.getElementById('equations-list').appendChild(el);
+            const equationsList = document.getElementById('equations-list');
+            equationsList.appendChild(el);
             equations[equationCount] = { element: el, expression: equation };
             
-            document.getElementById('equation-input-bottom').value = '';
-            calculateEquation(equationCount);
+            equationInput.value = '';
+            equationInput.blur();
 
-            // Скрываем клавиатуру после добавления
-            document.activeElement.blur();
+            // Переключаемся на экран уравнений и прокручиваем к новому уравнению
+            showScreen('equations');
+            setTimeout(() => {
+                el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+
+            calculateEquation(equationCount);
         }
 
         function removeEquation(id) {
@@ -647,32 +707,44 @@
             
             document.getElementById(`${screenName}-screen`).classList.add('active');
             document.querySelector(`.nav-button[onclick*="${screenName}"]`).classList.add('active');
+
+            // Reset scroll position when switching screens
+            window.scrollTo(0, 0);
         }
 
-        // Обработчики ввода
+        // Input event handlers
         document.getElementById('pair-symbol').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
+                e.preventDefault();
                 addPair();
             }
         });
 
         document.getElementById('equation-input-bottom').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
+                e.preventDefault();
                 addEquationFromBottom();
             }
         });
 
-        // Предотвращение масштабирования на iOS
-        document.addEventListener('gesturestart', (e) => {
-            e.preventDefault();
+        // Prevent iOS double-tap zoom
+        let lastTapTime = 0;
+        document.addEventListener('touchend', (e) => {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTapTime;
+            if (tapLength < 500 && tapLength > 0) {
+                e.preventDefault();
+            }
+            lastTapTime = currentTime;
         });
 
-        // Отключаем зум при двойном тапе
-        document.addEventListener('dblclick', (e) => {
+        // Prevent iOS bounce effect
+        document.body.addEventListener('touchmove', (e) => {
+            if (e.target.closest('.container')) return;
             e.preventDefault();
-        });
+        }, { passive: false });
 
-        // Обновление уравнений
+        // Update equations every second
         setInterval(() => {
             Object.keys(equations).forEach(calculateEquation);
         }, 1000);
