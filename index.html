@@ -1,8 +1,8 @@
-<!DOCTYPE html>
+<!DOCT<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>IDTrade Test</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/decimal.js/10.4.3/decimal.min.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -18,7 +18,7 @@
         --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         --border-radius: 12px;
         --transition-base: all 0.2s ease-in-out;
-        --keyboard-offset: 0px;
+        --keyboard-height: 0px;
     }
 
     * {
@@ -33,13 +33,12 @@
         background: #2c2e33;
         color: var(--tg-theme-text-color);
         min-height: 100vh;
-        padding-bottom: 140px;
-        line-height: 1.5;
+        height: 100vh;
+        width: 100vw;
         position: fixed;
-        width: 100%;
-        height: 100%;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        padding-bottom: env(safe-area-inset-bottom);
     }
 
     input, select, button {
@@ -50,9 +49,11 @@
 
     .container {
         padding: 0;
-        padding-bottom: env(safe-area-inset-bottom);
+        height: 100%;
         max-width: 768px;
         margin: 0 auto;
+        display: flex;
+        flex-direction: column;
     }
 
     .header {
@@ -126,7 +127,11 @@
 
     .screen {
         display: none;
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
         padding: 16px;
+        padding-bottom: calc(var(--keyboard-height) + 140px);
     }
 
     .screen.active {
@@ -215,15 +220,19 @@
         bottom: 0;
         left: 0;
         right: 0;
-        background: rgba(0, 0, 0, 0.1);
+        background: rgba(0, 0, 0, 0.9);
         padding: 16px;
         padding-bottom: max(16px, env(safe-area-inset-bottom));
         border-top: 1px solid rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
+        transform: translateY(0);
         transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        will-change: transform;
-        transform: translate3d(0, var(--keyboard-offset), 0);
+        z-index: 1000;
+    }
+
+    .bottom-panel.keyboard-visible {
+        transform: translateY(calc(-1 * var(--keyboard-height)));
     }
 
     .bottom-controls {
@@ -351,20 +360,13 @@
         color: #ef4444;
     }
 
-    body.keyboard-visible {
-        overflow: hidden;
-        height: 100%;
+    .focused {
+        margin-bottom: calc(var(--keyboard-height) + 140px);
     }
 
     @supports (padding: max(0px)) {
         .bottom-panel {
             padding-bottom: max(16px, env(safe-area-inset-bottom));
-        }
-    }
-
-    @media (orientation: landscape) {
-        .bottom-panel {
-            padding-bottom: 16px;
         }
     }
     </style>
@@ -373,7 +375,7 @@
     <div class="container">
         <div id="pairs-screen" class="screen active">
             <div class="header">
-                <input type="text" id="pair-symbol" class="symbol-input" placeholder="Символ (например, BTCUSDT)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                <input type="text" id="pair-symbol" class="symbol-input" placeholder="Символ (например, BTCUSDT)">
                 <select id="exchange-select" class="exchange-select">
                     <option value="Mexc">Mexc</option>
                     <option value="Bybit">Bybit</option>
@@ -397,7 +399,7 @@
             </div>
             <div class="equation-row">
                 <button class="done-button" onclick="addEquationFromBottom()">Готово</button>
-                <input type="text" id="equation-input-bottom" class="equation-input" placeholder="Введите связку..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                <input type="text" id="equation-input-bottom" class="equation-input" placeholder="Введите связку...">
             </div>
         </div>
         <div class="nav">
@@ -411,261 +413,231 @@
         let pairs = {};
         let equations = {};
         let equationCount = 0;
+        let visibleKeyboard = false;
+        let keyboardHeight = 0;
         
         tg.expand();
         tg.ready();
 
-        // iOS keyboard handling
-        function setupKeyboardHandling() {
-            const visualViewport = window.visualViewport;
-            if (!visualViewport) return;
-
-            let lastHeight = visualViewport.height;
-            const bottomPanel = document.querySelector('.bottom-panel');
-
-            visualViewport.addEventListener('resize', () => {
-                if (visualViewport.height < lastHeight) {
-                    // Клавиатура показывается
-                    const keyboardHeight = Math.max(0, lastHeight - visualViewport.height);
-                    document.documentElement.style.setProperty('--keyboard-offset', `-${keyboardHeight}px`);
-                    document.body.classList.add('keyboard-visible');
-
-                    // Прокрутка к активному элементу
-                    if (document.activeElement.tagName === 'INPUT') {
-                        setTimeout(() => {
-                            const rect = document.activeElement.getBoundingClientRect();
-                            const isVisible = rect.top >= 0 && 
-                                           rect.bottom <= visualViewport.height;
-                            
-                            if (!isVisible) {
-                                document.activeElement.scrollIntoView({
-                                    block: 'center'
-                                });
-                            }
-                        }, 100);
-                    }
-                } else {
-                    // Клавиатура скрывается
-                    document.documentElement.style.setProperty('--keyboard-offset', '0px');
-                    document.body.classList.remove('keyboard-visible');
-                }
-                lastHeight = visualViewport.height;
-            });
-        }
-
-        // Добавляем тестовые пары при загрузке
         document.addEventListener('DOMContentLoaded', () => {
-            setupKeyboardHandling();
-            
             const defaultPairs = [
-                { symbol: 'BTCUSDT', exchange: 'Mexc', bid: '45000.00', ask: '45100.00' },
-                { symbol: 'BTCUSDT', exchange: 'Bybit', bid: '44990.00', ask: '45110.00' },
-                { symbol: 'ETHUSDT', exchange: 'Mexc', bid: '2300.00', ask: '2310.00' },
-                { symbol: 'ETHUSDT', exchange: 'Bybit', bid: '2295.00', ask: '2315.00' },
-                { symbol: 'ETHUSDT', exchange: 'OKX', bid: '2298.00', ask: '2312.00' },
-                { symbol: 'SOLUSDT', exchange: 'Mexc', bid: '98.40', ask: '98.60' },
-            ].forEach(pair => createPairElement(pair));
+            { symbol: 'BTCUSDT', exchange: 'Mexc', bid: '45000.00', ask: '45100.00' },
+            { symbol: 'BTCUSDT', exchange: 'Bybit', bid: '44990.00', ask: '45110.00' },
+            { symbol: 'ETHUSDT', exchange: 'Mexc', bid: '2300.00', ask: '2310.00' },
+            { symbol: 'ETHUSDT', exchange: 'Bybit', bid: '2295.00', ask: '2315.00' },
+            { symbol: 'ETHUSDT', exchange: 'OKX', bid: '2298.00', ask: '2312.00' },
+            { symbol: 'SOLUSDT', exchange: 'Mexc', bid: '98.40', ask: '98.60' },
+        ].forEach(pair => createPairElement(pair));
+
+        window.visualViewport.addEventListener('resize', () => {
+            if (window.visualViewport.height < window.innerHeight) {
+                keyboardHeight = window.innerHeight - window.visualViewport.height;
+                document.documentElement.style.setProperty('--keyboard-height', `${keyboardHeight}px`);
+                document.querySelector('.bottom-panel').classList.add('keyboard-visible');
+                visibleKeyboard = true;
+            } else {
+                document.documentElement.style.setProperty('--keyboard-height', '0px');
+                document.querySelector('.bottom-panel').classList.remove('keyboard-visible');
+                visibleKeyboard = false;
+            }
         });
+    });
 
-        function createPairElement(pair) {
-            const pairKey = `${pair.exchange}_${pair.symbol}`;
-            if (pairs[pairKey]) return;
+    function createPairElement(pair) {
+        const pairKey = `${pair.exchange}_${pair.symbol}`;
+        if (pairs[pairKey]) return;
 
-            const el = document.createElement('div');
-            el.className = 'pair-item';
-            el.setAttribute('data-pair', pairKey);
-            el.innerHTML = `
-                <div class="pair-name">${pair.symbol} ${pair.exchange}</div>
-                <div class="price-container">
-                    <button class="price-button bid" onclick="addToEquation('${pair.symbol}_${pair.exchange}_bid')">${pair.bid}</button>
-                    <button class="price-button ask" onclick="addToEquation('${pair.symbol}_${pair.exchange}_ask')">${pair.ask}</button>
-                    <button class="remove-button" onclick="removePair('${pairKey}')">×</button>
-                </div>
-            `;
+        const el = document.createElement('div');
+        el.className = 'pair-item';
+        el.setAttribute('data-pair', pairKey);
+        el.innerHTML = `
+            <div class="pair-name">${pair.symbol} ${pair.exchange}</div>
+            <div class="price-container">
+                <button class="price-button bid" onclick="addToEquation('${pair.symbol}_${pair.exchange}_bid')">${pair.bid}</button>
+                <button class="price-button ask" onclick="addToEquation('${pair.symbol}_${pair.exchange}_ask')">${pair.ask}</button>
+                <button class="remove-button" onclick="removePair('${pairKey}')">×</button>
+            </div>
+        `;
 
-            document.getElementById('pairs-list').appendChild(el);
-            pairs[pairKey] = { element: el, ...pair };
+        document.getElementById('pairs-list').appendChild(el);
+        pairs[pairKey] = { element: el, ...pair };
+    }
+
+    function addPair() {
+        const symbol = document.getElementById('pair-symbol').value.toUpperCase();
+        const exchange = document.getElementById('exchange-select').value;
+        
+        if (!symbol) {
+            tg.showAlert('Введите символ пары');
+            return;
+        }
+        
+        const pairKey = `${exchange}_${symbol}`;
+        if (pairs[pairKey]) {
+            tg.showAlert('Эта пара уже добавлена');
+            return;
         }
 
-        function addPair() {
-            const symbolInput = document.getElementById('pair-symbol');
-            const symbol = symbolInput.value.toUpperCase();
-            const exchange = document.getElementById('exchange-select').value;
-            
-            if (!symbol) {
-                tg.showAlert('Введите символ пары');
-                return;
-            }
-            
-            const pairKey = `${exchange}_${symbol}`;
-            if (pairs[pairKey]) {
-                tg.showAlert('Эта пара уже добавлена');
-                return;
-            }
+        const basePrice = 100 + Math.random() * 900;
+        createPairElement({
+            symbol,
+            exchange,
+            bid: basePrice.toFixed(2),
+            ask: (basePrice * 1.001).toFixed(2)
+        });
+        
+        document.getElementById('pair-symbol').value = '';
+        document.getElementById('pair-symbol').blur();
+    }
 
-            const basePrice = 100 + Math.random() * 900;
-            createPairElement({
-                symbol,
-                exchange,
-                bid: basePrice.toFixed(2),
-                ask: (basePrice * 1.001).toFixed(2)
+    function removePair(pairKey) {
+        if (pairs[pairKey]) {
+            pairs[pairKey].element.remove();
+            delete pairs[pairKey];
+        }
+    }
+
+    function addToEquation(value) {
+        const input = document.getElementById('equation-input-bottom');
+        const pos = input.selectionStart;
+        const text = input.value;
+        
+        input.value = text.slice(0, pos) + value + text.slice(pos);
+        input.focus();
+        input.setSelectionRange(pos + value.length, pos + value.length);
+        
+        setTimeout(() => {
+            input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+    }
+
+    function applyFeeFromBottom() {
+        const fee = parseFloat(document.getElementById('fee-input-bottom').value);
+        const input = document.getElementById('equation-input-bottom');
+        
+        if (isNaN(fee)) {
+            tg.showAlert('Введите корректное значение комиссии');
+            return;
+        }
+        
+        const pos = input.selectionStart;
+        let text = input.value;
+        const feeMultiplier = 1 - fee/100;
+
+        const tokens = text.match(/[A-Z]+_[A-Za-z]+_(bid|ask)/g) || [];
+        let nearestToken = null;
+        let nearestDistance = Infinity;
+
+        tokens.forEach(token => {
+            const tokenPos = text.indexOf(token);
+            const distance = Math.abs(pos - tokenPos);
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearestToken = token;
+            }
+        });
+
+        if (nearestToken) {
+            const isBid = nearestToken.endsWith('_bid');
+            const newExpr = isBid ? 
+                `(${nearestToken}*${feeMultiplier})` : 
+                `(${nearestToken}/${feeMultiplier})`;
+            
+            text = text.replace(nearestToken, newExpr);
+        }
+
+        input.value = text;
+        input.focus();
+    }
+
+    function addEquationFromBottom() {
+        const equation = document.getElementById('equation-input-bottom').value.trim();
+        if (!equation) return;
+
+        equationCount++;
+        const el = document.createElement('div');
+        el.className = 'equation-item';
+        el.innerHTML = `
+            <div>
+                <div class="equation-name">Уравнение ${equationCount}</div>
+                <div class="equation-text">${equation}</div>
+                <div class="result">Вычисление...</div>
+            </div>
+            <button class="remove-button" onclick="removeEquation(${equationCount})">×</button>
+        `;
+
+        document.getElementById('equations-list').appendChild(el);
+        equations[equationCount] = { element: el, expression: equation };
+        
+        document.getElementById('equation-input-bottom').value = '';
+        calculateEquation(equationCount);
+    }
+
+    function removeEquation(id) {
+        if (equations[id]) {
+            equations[id].element.remove();
+            delete equations[id];
+        }
+    }
+
+    function calculateEquation(id) {
+        const eq = equations[id];
+        if (!eq) return;
+
+        try {
+            let evalStr = eq.expression;
+            
+            Object.entries(pairs).forEach(([key, pair]) => {
+                const [exchange, symbol] = key.split('_');
+                evalStr = evalStr
+                    .replace(`${symbol}_${exchange}_bid`, pair.bid)
+                    .replace(`${symbol}_${exchange}_ask`, pair.ask);
             });
+
+            const result = new Decimal(eval(evalStr));
+            eq.element.querySelector('.result').textContent = result.toFixed(8);
             
-            symbolInput.value = '';
-            symbolInput.blur();
+        } catch (error) {
+            eq.element.querySelector('.result').textContent = 'Ошибка вычисления';
+            eq.element.querySelector('.result').classList.add('error');
         }
+    }
 
-        function removePair(pairKey) {
-            if (pairs[pairKey]) {
-                pairs[pairKey].element.remove();
-                delete pairs[pairKey];
-            }
+    function showScreen(screenName) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-button').forEach(b => b.classList.remove('active'));
+        
+        document.getElementById(`${screenName}-screen`).classList.add('active');
+        document.querySelector(`.nav-button[onclick*="${screenName}"]`).classList.add('active');
+    }
+
+    document.getElementById('pair-symbol').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            addPair();
         }
+    });
 
-        function addToEquation(value) {
-            const input = document.getElementById('equation-input-bottom');
-            const pos = input.selectionStart;
-            const text = input.value;
-            
-            input.value = text.slice(0, pos) + value + text.slice(pos);
-            input.focus();
-            input.setSelectionRange(pos + value.length, pos + value.length);
+    document.getElementById('equation-input-bottom').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            addEquationFromBottom();
         }
+    });
 
-        function applyFeeFromBottom() {
-            const fee = parseFloat(document.getElementById('fee-input-bottom').value);
-            const input = document.getElementById('equation-input-bottom');
-            
-            if (isNaN(fee)) {
-                tg.showAlert('Введите корректное значение комиссии');
-                return;
-            }
-            
-            const pos = input.selectionStart;
-            let text = input.value;
-            const feeMultiplier = 1 - fee/100;
-
-            const tokens = text.match(/[A-Z]+_[A-Za-z]+_(bid|ask)/g) || [];
-            let nearestToken = null;
-            let nearestDistance = Infinity;
-
-            tokens.forEach(token => {
-                const tokenPos = text.indexOf(token);
-                const distance = Math.abs(pos - tokenPos);
-                if (distance < nearestDistance) {
-                    nearestDistance = distance;
-                    nearestToken = token;
-                }
-            });
-
-            if (nearestToken) {
-                const isBid = nearestToken.endsWith('_bid');
-                const newExpr = isBid ? 
-                    `(${nearestToken}*${feeMultiplier})` : 
-                    `(${nearestToken}/${feeMultiplier})`;
-                
-                text = text.replace(nearestToken, newExpr);
-            }
-
-            input.value = text;
-            input.focus();
-        }
-
-        function addEquationFromBottom() {
-            const equation = document.getElementById('equation-input-bottom').value.trim();
-            if (!equation) return;
-
-            equationCount++;
-            const el = document.createElement('div');
-            el.className = 'equation-item';
-            el.innerHTML = `
-                <div>
-                    <div class="equation-name">Уравнение ${equationCount}</div>
-                    <div class="equation-text">${equation}</div>
-                    <div class="result">Вычисление...</div>
-                </div>
-                <button class="remove-button" onclick="removeEquation(${equationCount})">×</button>
-            `;
-
-            document.getElementById('equations-list').appendChild(el);
-            equations[equationCount] = { element: el, expression: equation };
-            
-            document.getElementById('equation-input-bottom').value = '';
-            document.getElementById('equation-input-bottom').blur();
-
-            showScreen('equations');
-            calculateEquation(equationCount);
-        }
-
-        function removeEquation(id) {
-            if (equations[id]) {
-                equations[id].element.remove();
-                delete equations[id];
-            }
-        }
-
-        function calculateEquation(id) {
-            const eq = equations[id];
-            if (!eq) return;
-
-            try {
-                let evalStr = eq.expression;
-                
-                Object.entries(pairs).forEach(([key, pair]) => {
-                    const [exchange, symbol] = key.split('_');
-                    evalStr = evalStr
-                        .replace(`${symbol}_${exchange}_bid`, pair.bid)
-                        .replace(`${symbol}_${exchange}_ask`, pair.ask);
-                });
-
-                const result = new Decimal(eval(evalStr));
-                eq.element.querySelector('.result').textContent = result.toFixed(8);
-                eq.element.querySelector('.result').classList.remove('error');
-                
-            } catch (error) {
-                eq.element.querySelector('.result').textContent = 'Ошибка вычисления';
-                eq.element.querySelector('.result').classList.add('error');
-            }
-        }
-
-        function showScreen(screenName) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-button').forEach(b => b.classList.remove('active'));
-            
-            document.getElementById(`${screenName}-screen`).classList.add('active');
-            document.querySelector(`.nav-button[onclick*="${screenName}"]`).classList.add('active');
-        }
-
-        // Input event handlers
-        document.getElementById('pair-symbol').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addPair();
-            }
+    document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('focus', () => {
+            setTimeout(() => {
+                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
         });
+    });
 
-        document.getElementById('equation-input-bottom').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addEquationFromBottom();
-            }
-        });
+    document.addEventListener('gesturestart', (e) => {
+        e.preventDefault();
+    });
 
-        // Prevent iOS double-tap zoom
-        document.addEventListener('touchend', (e) => {
-            e.preventDefault();
-        }, { passive: false });
-
-        // Prevent iOS bounce effect
-        document.body.addEventListener('touchmove', (e) => {
-            if (e.target.closest('.container')) return;
-            e.preventDefault();
-        }, { passive: false });
-
-        // Update equations every second
-        setInterval(() => {
-            Object.keys(equations).forEach(calculateEquation);
-        }, 1000);
-    </script>
+    setInterval(() => {
+        Object.keys(equations).forEach(calculateEquation);
+    }, 1000);
+</script>
 </body>
 </html>
