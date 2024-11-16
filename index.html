@@ -26,6 +26,50 @@
             padding: 20px;
         }
 
+        .pair-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .pair-item {
+            background: #1a1b1e;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .pair-name {
+            font-size: 14px;
+            color: white;
+        }
+
+        .price-container {
+            display: flex;
+            gap: 8px;
+        }
+
+        .price-button {
+            width: 100px;
+            height: 32px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .bid {
+            background: #059669;
+        }
+
+        .ask {
+            background: #dc2626;
+        }
+
         .bottom-panel {
             background: rgba(0, 0, 0, 0.3);
             padding: 16px;
@@ -104,10 +148,78 @@
 </head>
 <body>
     <div class="content">
-        <h1>Test Content</h1>
-        <p>Scroll down to test bottom panel with keyboard.</p>
-        <!-- Добавим немного контента для скролла -->
-        <div style="height: 120vh"></div>
+        <div class="pair-list">
+            <div class="pair-item">
+                <div class="pair-name">BTC-USDT Binance</div>
+                <div class="price-container">
+                    <button class="price-button bid" onclick="addToEquation('BTC_Binance_bid')">45123.50</button>
+                    <button class="price-button ask" onclick="addToEquation('BTC_Binance_ask')">45125.40</button>
+                </div>
+            </div>
+            <div class="pair-item">
+                <div class="pair-name">ETH-USDT Binance</div>
+                <div class="price-container">
+                    <button class="price-button bid" onclick="addToEquation('ETH_Binance_bid')">2341.20</button>
+                    <button class="price-button ask" onclick="addToEquation('ETH_Binance_ask')">2341.80</button>
+                </div>
+            </div>
+            <div class="pair-item">
+                <div class="pair-name">BTC-USDT Bybit</div>
+                <div class="price-container">
+                    <button class="price-button bid" onclick="addToEquation('BTC_Bybit_bid')">45122.80</button>
+                    <button class="price-button ask" onclick="addToEquation('BTC_Bybit_ask')">45124.60</button>
+                </div>
+            </div>
+            <div class="pair-item">
+                <div class="pair-name">ETH-USDT Bybit</div>
+                <div class="price-container">
+                    <button class="price-button bid" onclick="addToEquation('ETH_Bybit_bid')">2340.90</button>
+                    <button class="price-button ask" onclick="addToEquation('ETH_Bybit_ask')">2342.10</button>
+                </div>
+            </div>
+            <div class="pair-item">
+                <div class="pair-name">SOL-USDT Binance</div>
+                <div class="price-container">
+                    <button class="price-button bid" onclick="addToEquation('SOL_Binance_bid')">98.45</button>
+                    <button class="price-button ask" onclick="addToEquation('SOL_Binance_ask')">98.52</button>
+                </div>
+            </div>
+            <div class="pair-item">
+                <div class="pair-name">SOL-USDT Bybit</div>
+                <div class="price-container">
+                    <button class="price-button bid" onclick="addToEquation('SOL_Bybit_bid')">98.43</button>
+                    <button class="price-button ask" onclick="addToEquation('SOL_Bybit_ask')">98.54</button>
+                </div>
+            </div>
+            <div class="pair-item">
+                <div class="pair-name">DOGE-USDT Binance</div>
+                <div class="price-container">
+                    <button class="price-button bid" onclick="addToEquation('DOGE_Binance_bid')">0.0812</button>
+                    <button class="price-button ask" onclick="addToEquation('DOGE_Binance_ask')">0.0813</button>
+                </div>
+            </div>
+            <div class="pair-item">
+                <div class="pair-name">DOGE-USDT Bybit</div>
+                <div class="price-container">
+                    <button class="price-button bid" onclick="addToEquation('DOGE_Bybit_bid')">0.0811</button>
+                    <button class="price-button ask" onclick="addToEquation('DOGE_Bybit_ask')">0.0814</button>
+                </div>
+            </div>
+            <div class="pair-item">
+                <div class="pair-name">XRP-USDT Binance</div>
+                <div class="price-container">
+                    <button class="price-button bid" onclick="addToEquation('XRP_Binance_bid')">0.5423</button>
+                    <button class="price-button ask" onclick="addToEquation('XRP_Binance_ask')">0.5425</button>
+                </div>
+            </div>
+            <div class="pair-item">
+                <div class="pair-name">XRP-USDT Bybit</div>
+                <div class="price-container">
+                    <button class="price-button bid" onclick="addToEquation('XRP_Bybit_bid')">0.5422</button>
+                    <button class="price-button ask" onclick="addToEquation('XRP_Bybit_ask')">0.5426</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="bottom-panel">
@@ -128,6 +240,23 @@
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
+
+        function addToEquation(value) {
+            const equationInput = document.querySelector('.equation-input');
+            const cursorPosition = equationInput.selectionStart;
+            const currentText = equationInput.value;
+            
+            const newText = currentText.slice(0, cursorPosition) + 
+                           value + 
+                           currentText.slice(cursorPosition);
+            
+            equationInput.value = newText;
+            equationInput.focus();
+            equationInput.setSelectionRange(
+                cursorPosition + value.length,
+                cursorPosition + value.length
+            );
+        }
 
         function applyFee() {
             const input = document.querySelector('.equation-input');
