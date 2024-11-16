@@ -238,12 +238,14 @@
         border-top: 1px solid rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
+        z-index: 1000;
     }
 
     .bottom-controls {
         display: flex;
         flex-direction: column;
         gap: 5px;
+        position: relative;
     }
 
     .fee-controls {
@@ -251,6 +253,7 @@
         align-items: center;
         gap: 8px;
         margin-bottom: 0;
+        position: relative;
     }
 
     .fee-input {
@@ -270,10 +273,16 @@
         background: none;
         border: none;
         color: var(--tg-theme-text-color);
-        font-size: 10px;
-        padding: 0;
+        font-size: 12px;
+        padding: 4px 8px;
         cursor: pointer;
         opacity: 0.8;
+        position: relative;
+        z-index: 1001;
+        min-height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .fee-button:hover {
@@ -285,25 +294,9 @@
         gap: 8px;
         width: 100%;
         position: relative;
+        margin-top: 8px;
     }
 
-    .done-button {
-        position: absolute;
-        top: -31px;  /* Было -20px, подняли выше */
-        right: 10px; /* Было right: 0, сместили влево на 50px */
-        background: none;
-        border: none;
-        color: var(--tg-theme-text-color);
-        font-size: 14px;
-        padding: 0;
-        cursor: pointer;
-        opacity: 0.8;
-    }
-
-    .done-button:hover {
-        opacity: 1;
-    }
-        
     .equation-input {
         background: var(--tg-theme-secondary-bg-color);
         border: 1px solid rgba(255, 255, 255, 0.1);
@@ -313,6 +306,28 @@
         height: 30px;
         flex-grow: 1;
         font-size: 12px;
+    }
+
+    .done-button {
+        position: absolute;
+        top: -31px;
+        right: 10px;
+        background: none;
+        border: none;
+        color: var(--tg-theme-text-color);
+        font-size: 14px;
+        padding: 4px 8px;
+        cursor: pointer;
+        opacity: 0.8;
+        z-index: 1001;
+        min-height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .done-button:hover {
+        opacity: 1;
     }
 
     .nav {
@@ -378,8 +393,19 @@
     }
 
     .keyboard-visible .bottom-panel {
-        position: static;
+        position: relative;
         border-top: none;
+        padding-bottom: 16px;
+    }
+
+    .keyboard-visible .bottom-controls {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .keyboard-visible .fee-button,
+    .keyboard-visible .done-button {
+        position: relative;
+        z-index: 1001;
     }
 
     @supports (padding: max(0px)) {
@@ -416,8 +442,8 @@
                 <button class="fee-button" onclick="applyFeeFromBottom()">Применить комиссию</button>
             </div>
             <div class="equation-row">
-                <button class="done-button" onclick="addEquationFromBottom()">Готово</button>
                 <input type="text" id="equation-input-bottom" class="equation-input" placeholder="Введите связку...">
+                <button class="done-button" onclick="addEquationFromBottom()">Готово</button>
             </div>
         </div>
         <div class="nav">
@@ -931,6 +957,7 @@
             );
             
             equationInput.value = newEquation;
+            equationInput.focus();
             equationInput.setSelectionRange(cursorPosition, cursorPosition);
         }
 
