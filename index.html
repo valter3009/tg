@@ -19,6 +19,7 @@
         --safe-area-inset-bottom: env(safe-area-inset-bottom);
         --viewport-height: 100vh;
         --keyboard-height: 0px;
+        --bottom-offset: 0px;
     }
 
     * {
@@ -46,6 +47,11 @@
         padding-bottom: var(--safe-area-inset-bottom);
     }
 
+    input, select, button {
+        font-size: 16px;
+        font-family: inherit;
+    }
+
     .app-wrapper {
         position: fixed;
         top: 0;
@@ -71,11 +77,146 @@
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         position: relative;
-        padding-bottom: calc(var(--bottom-offset, 0px) + 16px);
+        padding-bottom: calc(var(--bottom-offset) + 16px);
     }
 
-    /* Остальные стили остаются теми же, за исключением .bottom-panel */
-    
+    .header {
+        padding: 16px;
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 12px;
+        background: #2c2e33;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .symbol-input {
+        background: var(--tg-theme-secondary-bg-color);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--border-radius);
+        color: var(--tg-theme-text-color);
+        padding: 12px 16px;
+        width: 100%;
+        height: 48px;
+        font-size: 16px;
+    }
+
+    .symbol-input:focus {
+        border-color: var(--tg-theme-button-color);
+        outline: none;
+    }
+
+    .exchange-select {
+        background: var(--tg-theme-secondary-bg-color);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--border-radius);
+        color: var(--tg-theme-text-color);
+        padding: 12px;
+        height: 48px;
+        width: 100px;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+        background-size: 16px;
+        padding-right: 32px;
+    }
+
+    .exchange-select:focus {
+        border-color: var(--tg-theme-button-color);
+        outline: none;
+    }
+
+    .add-button {
+        background: var(--tg-theme-button-color);
+        border: none;
+        border-radius: var(--border-radius);
+        color: var(--tg-theme-button-text-color);
+        padding: 12px 24px;
+        height: 48px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    .screen {
+        display: none;
+        height: 100%;
+    }
+
+    .screen.active {
+        display: block;
+    }
+
+    .pairs-list {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .pair-item {
+        background: var(--tg-theme-secondary-bg-color);
+        border-radius: var(--border-radius);
+        padding: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .pair-name {
+        font-size: 16px;
+        font-weight: 500;
+    }
+
+    .price-container {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .price-button {
+        border: none;
+        border-radius: var(--border-radius);
+        padding: 8px 16px;
+        font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        min-width: 100px;
+        text-align: center;
+    }
+
+    .bid {
+        background: #059669;
+        color: white;
+    }
+
+    .ask {
+        background: #dc2626;
+        color: white;
+    }
+
+    .remove-button {
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: var(--tg-theme-hint-color);
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        cursor: pointer;
+        margin-left: 8px;
+    }
+
     .bottom-panel {
         position: absolute;
         bottom: 0;
@@ -89,10 +230,130 @@
         transform: translateZ(0);
         will-change: transform;
         z-index: 1000;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     [data-keyboard="visible"] .bottom-panel {
         position: fixed;
+    }
+
+    .bottom-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .fee-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .fee-input {
+        background: var(--tg-theme-secondary-bg-color);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--border-radius);
+        color: var(--tg-theme-text-color);
+        padding: 8px;
+        width: 80px;
+        text-align: center;
+        font-size: 16px;
+    }
+
+    .fee-button {
+        background: none;
+        border: none;
+        color: var(--tg-theme-text-color);
+        font-size: 14px;
+        padding: 8px 16px;
+        cursor: pointer;
+    }
+
+    .equation-row {
+        display: flex;
+        gap: 8px;
+        position: relative;
+    }
+
+    .done-button {
+        position: absolute;
+        top: -32px;
+        right: 0;
+        background: none;
+        border: none;
+        color: var(--tg-theme-text-color);
+        font-size: 14px;
+        padding: 8px;
+        cursor: pointer;
+    }
+
+    .equation-input {
+        background: var(--tg-theme-secondary-bg-color);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--border-radius);
+        color: var(--tg-theme-text-color);
+        padding: 12px;
+        flex-grow: 1;
+        font-size: 16px;
+        min-height: 48px;
+    }
+
+    .nav {
+        display: flex;
+        justify-content: space-around;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        margin-top: 16px;
+        padding-top: 16px;
+    }
+
+    .nav-button {
+        background: none;
+        border: none;
+        color: var(--tg-theme-hint-color);
+        padding: 8px 24px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+    }
+
+    .nav-button.active {
+        color: var(--tg-theme-button-color);
+        background: rgba(59, 130, 246, 0.1);
+    }
+
+    .equation-item {
+        background: var(--tg-theme-secondary-bg-color);
+        border-radius: var(--border-radius);
+        padding: 16px;
+        margin-bottom: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .equation-name {
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .equation-text {
+        color: var(--tg-theme-hint-color);
+        margin-bottom: 8px;
+        font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+    }
+
+    .result {
+        font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+        font-size: 16px;
+        font-weight: 500;
+        color: #10b981;
+    }
+
+    .error {
+        color: #ef4444;
+    }
+
+    .disable-interactions {
+        pointer-events: none;
     }
 
     @supports (padding: max(0px)) {
@@ -100,13 +361,6 @@
             padding-bottom: max(16px, calc(16px + var(--safe-area-inset-bottom)));
         }
     }
-
-    /* Стили для предотвращения взаимодействия во время анимаций */
-    .disable-interactions {
-        pointer-events: none;
-    }
-
-    /* Остальные стили без изменений */
     </style>
 </head>
 <body>
@@ -114,150 +368,381 @@
         <div class="app-container">
             <div class="scroll-container">
                 <div id="pairs-screen" class="screen active">
-                    <!-- Содержимое то же самое -->
+                    <div class="header">
+                        <input type="text" id="pair-symbol" class="symbol-input" placeholder="Символ (например, BTCUSDT)" autocomplete="off">
+                        <select id="exchange-select" class="exchange-select">
+                            <option value="Mexc">Mexc</option>
+                            <option value="Bybit">Bybit</option>
+                            <option value="OKX">OKX</option>
+                        </select>
+                        <button onclick="addPair()" class="add-button">Добавить</button>
+                    </div>
+                    <div id="pairs-list" class="pairs-list"></div>
                 </div>
 
                 <div id="equations-screen" class="screen">
-                    <!-- Содержимое то же самое -->
+                    <div id="equations-list" class="pairs-list"></div>
                 </div>
             </div>
         </div>
 
         <div class="bottom-panel" id="bottom-panel">
-            <!-- Содержимое то же самое -->
+            <div class="bottom-controls">
+                <div class="fee-controls">
+                    <input type="number" id="fee-input-bottom" class="fee-input" placeholder="%" value="0.02" step="0.01" autocomplete="off">
+                    <button class="fee-button" onclick="applyFeeFromBottom()">Применить комиссию</button>
+                </div>
+                <div class="equation-row">
+                    <button class="done-button" onclick="addEquationFromBottom()">Готово</button>
+                    <input type="text" id="equation-input-bottom" class="equation-input" placeholder="Введите связку..." autocomplete="off">
+                </div>
+            </div>
+            <div class="nav">
+                <button class="nav-button active" onclick="showScreen('pairs')">Пары</button>
+                <button class="nav-button" onclick="showScreen('equations')">Связки</button>
+            </div>
         </div>
     </div>
 
-    <script>
-        let tg = window.Telegram.WebApp;
-        let pairs = {};
-        let equations = {};
-        let equationCount = 0;
-        
-        // Новая система управления клавиатурой и viewport
-        const KeyboardManager = {
-            isKeyboardVisible: false,
-            keyboardHeight: 0,
-            initialViewportHeight: window.innerHeight,
-            safeAreaInset: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-bottom')) || 0,
-            
-            init() {
-                if ('visualViewport' in window) {
-                    window.visualViewport.addEventListener('resize', this.handleViewportChange.bind(this));
-                    window.visualViewport.addEventListener('scroll', this.handleViewportChange.bind(this));
-                }
-
-                window.addEventListener('resize', this.handleWindowResize.bind(this));
-                
-                // Обработчики для инпутов
-                document.querySelectorAll('input').forEach(input => {
-                    input.addEventListener('focus', this.handleInputFocus.bind(this));
-                    input.addEventListener('blur', this.handleInputBlur.bind(this));
-                });
-            },
-
-            handleViewportChange(event) {
-                if (!window.visualViewport) return;
-
-                requestAnimationFrame(() => {
-                    const viewport = window.visualViewport;
-                    const newKeyboardHeight = Math.max(0, this.initialViewportHeight - viewport.height);
-                    
-                    if (newKeyboardHeight > 0) {
-                        this.showKeyboard(newKeyboardHeight);
-                    } else {
-                        this.hideKeyboard();
-                    }
-                });
-            },
-
-            handleWindowResize() {
-                // Обновляем базовую высоту только если клавиатура скрыта
-                if (!this.isKeyboardVisible) {
-                    this.initialViewportHeight = window.innerHeight;
-                }
-            },
-
-            handleInputFocus(event) {
-                document.body.setAttribute('data-keyboard', 'visible');
-                // Прокручиваем к активному элементу с задержкой
-                setTimeout(() => {
-                    event.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 100);
-            },
-
-            handleInputBlur(event) {
-                // Проверяем, что следующий активный элемент не инпут
-                setTimeout(() => {
-                    if (!document.activeElement.matches('input')) {
-                        document.body.removeAttribute('data-keyboard');
-                        this.hideKeyboard();
-                    }
-                }, 100);
-            },
-
-            showKeyboard(height) {
-                this.isKeyboardVisible = true;
-                this.keyboardHeight = height;
-
-                const bottomPanel = document.getElementById('bottom-panel');
-                document.documentElement.style.setProperty('--keyboard-height', `${height}px`);
-                bottomPanel.style.transform = `translateY(-${height}px)`;
-
-                // Устанавливаем нижний отступ для контента
-                document.documentElement.style.setProperty('--bottom-offset', `${bottomPanel.offsetHeight}px`);
-                
-                // Добавляем класс для блокировки взаимодействия во время анимации
-                document.body.classList.add('disable-interactions');
-                setTimeout(() => {
-                    document.body.classList.remove('disable-interactions');
-                }, 300);
-            },
-
-            hideKeyboard() {
-                if (!this.isKeyboardVisible) return;
-
-                this.isKeyboardVisible = false;
-                this.keyboardHeight = 0;
-
-                const bottomPanel = document.getElementById('bottom-panel');
-                document.documentElement.style.setProperty('--keyboard-height', '0px');
-                bottomPanel.style.transform = 'translateY(0)';
-
-                // Сбрасываем нижний отступ
-                document.documentElement.style.setProperty('--bottom-offset', `${bottomPanel.offsetHeight}px`);
-                
-                // Добавляем класс для блокировки взаимодействия во время анимации
-                document.body.classList.add('disable-interactions');
-                setTimeout(() => {
-                    document.body.classList.remove('disable-interactions');
-                }, 300);
-
-                // Прокручиваем контент наверх с задержкой
-                setTimeout(() => {
-                    window.scrollTo(0, 0);
-                }, 50);
-            }
-        };
-
-        // Инициализация при загрузке
-        document.addEventListener('DOMContentLoaded', () => {
-            tg.expand();
-            KeyboardManager.init();
-            
-            // Загрузка тестовых данных...
-            // Остальной код инициализации остается без изменений
-        });
-
-        // Предотвращение скролла на iOS
-        document.addEventListener('touchmove', (e) => {
-            if (KeyboardManager.isKeyboardVisible && !e.target.closest('.scroll-container')) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-
-        // Остальной функционал остается тем же
-        // Функции addPair, removePair, addToEquation и т.д. остаются без изменений
-    </script>
 </body>
 </html>
+<script>
+    let tg = window.Telegram.WebApp;
+    let pairs = {};
+    let equations = {};
+    let equationCount = 0;
+
+    const KeyboardManager = {
+        isKeyboardVisible: false,
+        keyboardHeight: 0,
+        initialViewportHeight: window.innerHeight,
+        safeAreaInset: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-bottom')) || 0,
+        
+        init() {
+            if ('visualViewport' in window) {
+                window.visualViewport.addEventListener('resize', this.handleViewportChange.bind(this));
+                window.visualViewport.addEventListener('scroll', this.handleViewportChange.bind(this));
+            }
+
+            window.addEventListener('resize', this.handleWindowResize.bind(this));
+            
+            document.querySelectorAll('input').forEach(input => {
+                input.addEventListener('focus', this.handleInputFocus.bind(this));
+                input.addEventListener('blur', this.handleInputBlur.bind(this));
+                input.addEventListener('touchstart', (e) => {
+                    e.target.focus();
+                });
+            });
+        },
+
+        handleViewportChange(event) {
+            if (!window.visualViewport) return;
+
+            requestAnimationFrame(() => {
+                const viewport = window.visualViewport;
+                const newKeyboardHeight = Math.max(0, this.initialViewportHeight - viewport.height);
+                
+                if (newKeyboardHeight > 0 && Math.abs(newKeyboardHeight - this.keyboardHeight) > 50) {
+                    this.showKeyboard(newKeyboardHeight);
+                } else if (newKeyboardHeight === 0 && this.keyboardHeight > 0) {
+                    this.hideKeyboard();
+                }
+            });
+        },
+
+        handleWindowResize() {
+            if (!this.isKeyboardVisible) {
+                this.initialViewportHeight = window.innerHeight;
+            }
+            this.updateLayout();
+        },
+
+        handleInputFocus(event) {
+            document.body.setAttribute('data-keyboard', 'visible');
+            
+            // Даем время для появления клавиатуры
+            setTimeout(() => {
+                this.scrollToElement(event.target);
+            }, 300);
+        },
+
+        handleInputBlur(event) {
+            setTimeout(() => {
+                if (!document.activeElement.matches('input')) {
+                    document.body.removeAttribute('data-keyboard');
+                    this.hideKeyboard();
+                }
+            }, 100);
+        },
+
+        scrollToElement(element) {
+            const scrollContainer = document.querySelector('.scroll-container');
+            const elementRect = element.getBoundingClientRect();
+            const containerRect = scrollContainer.getBoundingClientRect();
+            const bottomPanel = document.getElementById('bottom-panel');
+            const bottomPanelHeight = bottomPanel.offsetHeight;
+            
+            const targetScroll = elementRect.top + scrollContainer.scrollTop - 
+                               (containerRect.height - bottomPanelHeight - elementRect.height) / 2;
+            
+            scrollContainer.scrollTo({
+                top: targetScroll,
+                behavior: 'smooth'
+            });
+        },
+
+        showKeyboard(height) {
+            this.isKeyboardVisible = true;
+            this.keyboardHeight = height;
+
+            const bottomPanel = document.getElementById('bottom-panel');
+            document.documentElement.style.setProperty('--keyboard-height', `${height}px`);
+            bottomPanel.style.transform = `translateY(-${height}px)`;
+
+            this.updateLayout();
+            
+            document.body.classList.add('disable-interactions');
+            setTimeout(() => {
+                document.body.classList.remove('disable-interactions');
+            }, 300);
+        },
+
+        hideKeyboard() {
+            this.isKeyboardVisible = false;
+            this.keyboardHeight = 0;
+
+            const bottomPanel = document.getElementById('bottom-panel');
+            document.documentElement.style.setProperty('--keyboard-height', '0px');
+            bottomPanel.style.transform = 'translateY(0)';
+
+            this.updateLayout();
+            
+            document.body.classList.add('disable-interactions');
+            setTimeout(() => {
+                document.body.classList.remove('disable-interactions');
+                window.scrollTo(0, 0);
+            }, 300);
+        },
+
+        updateLayout() {
+            const bottomPanel = document.getElementById('bottom-panel');
+            const panelHeight = bottomPanel.offsetHeight;
+            document.documentElement.style.setProperty('--bottom-offset', `${panelHeight}px`);
+        }
+    };
+
+    // Основные функции приложения
+    function createPairElement(pair) {
+        const pairKey = `${pair.exchange}_${pair.symbol}`;
+        if (pairs[pairKey]) return;
+
+        const el = document.createElement('div');
+        el.className = 'pair-item';
+        el.setAttribute('data-pair', pairKey);
+        el.innerHTML = `
+            <div class="price-container">
+                <button class="price-button bid" onclick="addToEquation('${pair.symbol}_${pair.exchange}_bid')">${pair.bid}</button>
+                <button class="price-button ask" onclick="addToEquation('${pair.symbol}_${pair.exchange}_ask')">${pair.ask}</button>
+                <button class="remove-button" onclick="removePair('${pairKey}')">×</button>
+            </div>
+            <div class="pair-name">${pair.symbol} ${pair.exchange}</div>
+        `;
+
+        document.getElementById('pairs-list').appendChild(el);
+        pairs[pairKey] = { element: el, ...pair };
+    }
+
+    function addPair() {
+        const symbol = document.getElementById('pair-symbol').value.toUpperCase();
+        const exchange = document.getElementById('exchange-select').value;
+        
+        if (!symbol) {
+            tg.showAlert('Введите символ пары');
+            return;
+        }
+        
+        const pairKey = `${exchange}_${symbol}`;
+        if (pairs[pairKey]) {
+            tg.showAlert('Эта пара уже добавлена');
+            return;
+        }
+
+        const basePrice = 100 + Math.random() * 900;
+        createPairElement({
+            symbol,
+            exchange,
+            bid: basePrice.toFixed(2),
+            ask: (basePrice * 1.001).toFixed(2)
+        });
+        
+        document.getElementById('pair-symbol').value = '';
+        document.getElementById('pair-symbol').blur();
+    }
+
+    function removePair(pairKey) {
+        if (pairs[pairKey]) {
+            pairs[pairKey].element.remove();
+            delete pairs[pairKey];
+        }
+    }
+
+    function addToEquation(value) {
+        const input = document.getElementById('equation-input-bottom');
+        const pos = input.selectionStart;
+        const text = input.value;
+        
+        input.value = text.slice(0, pos) + value + text.slice(pos);
+        input.focus();
+        input.setSelectionRange(pos + value.length, pos + value.length);
+    }
+
+    function applyFeeFromBottom() {
+        const fee = parseFloat(document.getElementById('fee-input-bottom').value);
+        const input = document.getElementById('equation-input-bottom');
+        
+        if (isNaN(fee)) {
+            tg.showAlert('Введите корректное значение комиссии');
+            return;
+        }
+        
+        const pos = input.selectionStart;
+        let text = input.value;
+        const feeMultiplier = 1 - fee/100;
+
+        // Находим ближайший токен к курсору
+        const tokens = text.match(/[A-Z]+_[A-Za-z]+_(bid|ask)/g) || [];
+        let nearestToken = null;
+        let nearestDistance = Infinity;
+
+        tokens.forEach(token => {
+            const tokenPos = text.indexOf(token);
+            const distance = Math.abs(pos - tokenPos);
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearestToken = token;
+            }
+        });
+
+        if (nearestToken) {
+            const isBid = nearestToken.endsWith('_bid');
+            const newExpr = isBid ? 
+                `(${nearestToken}*${feeMultiplier})` : 
+                `(${nearestToken}/${feeMultiplier})`;
+            
+            text = text.replace(nearestToken, newExpr);
+        }
+
+        input.value = text;
+        input.focus();
+    }
+
+    function addEquationFromBottom() {
+        const equation = document.getElementById('equation-input-bottom').value.trim();
+        if (!equation) return;
+
+        equationCount++;
+        const el = document.createElement('div');
+        el.className = 'equation-item';
+        el.innerHTML = `
+            <div class="equation-name">Уравнение ${equationCount}</div>
+            <div class="equation-text">${equation}</div>
+            <div class="result">Вычисление...</div>
+            <button class="remove-button" onclick="removeEquation(${equationCount})">×</button>
+        `;
+
+        document.getElementById('equations-list').appendChild(el);
+        equations[equationCount] = { element: el, expression: equation };
+        
+        document.getElementById('equation-input-bottom').value = '';
+        calculateEquation(equationCount);
+        
+        showScreen('equations');
+    }
+
+    function removeEquation(id) {
+        if (equations[id]) {
+            equations[id].element.remove();
+            delete equations[id];
+        }
+    }
+
+    function calculateEquation(id) {
+        const eq = equations[id];
+        if (!eq) return;
+
+        try {
+            let evalStr = eq.expression;
+            
+            Object.entries(pairs).forEach(([key, pair]) => {
+                const [exchange, symbol] = key.split('_');
+                evalStr = evalStr
+                    .replace(`${symbol}_${exchange}_bid`, pair.bid)
+                    .replace(`${symbol}_${exchange}_ask`, pair.ask);
+            });
+
+            const result = new Decimal(eval(evalStr));
+            eq.element.querySelector('.result').textContent = result.toFixed(8);
+            
+        } catch (error) {
+            eq.element.querySelector('.result').textContent = 'Ошибка вычисления';
+            eq.element.querySelector('.result').classList.add('error');
+        }
+    }
+
+    function showScreen(screenName) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-button').forEach(b => b.classList.remove('active'));
+        
+        document.getElementById(`${screenName}-screen`).classList.add('active');
+        document.querySelector(`.nav-button[onclick*="${screenName}"]`).classList.add('active');
+    }
+
+    // Инициализация
+    document.addEventListener('DOMContentLoaded', () => {
+        tg.expand();
+        KeyboardManager.init();
+        
+        // Загружаем тестовые данные
+        const defaultPairs = [
+            { symbol: 'BTCUSDT', exchange: 'Mexc', bid: '45000.00', ask: '45100.00' },
+            { symbol: 'BTCUSDT', exchange: 'Bybit', bid: '44990.00', ask: '45110.00' },
+            { symbol: 'ETHUSDT', exchange: 'Mexc', bid: '2300.00', ask: '2310.00' },
+            { symbol: 'ETHUSDT', exchange: 'Bybit', bid: '2295.00', ask: '2315.00' },
+            { symbol: 'ETHUSDT', exchange: 'OKX', bid: '2298.00', ask: '2312.00' },
+            { symbol: 'SOLUSDT', exchange: 'Mexc', bid: '98.40', ask: '98.60' },
+        ];
+
+        defaultPairs.forEach(pair => createPairElement(pair));
+    });
+
+    // Обработчики Enter для инпутов
+    document.getElementById('pair-symbol')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addPair();
+        }
+    });
+
+    document.getElementById('equation-input-bottom')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addEquationFromBottom();
+        }
+    });
+
+    // Предотвращение зума и нежелательных взаимодействий
+    document.addEventListener('gesturestart', (e) => {
+        e.preventDefault();
+    });
+
+    document.addEventListener('touchmove', (e) => {
+        if (KeyboardManager.isKeyboardVisible && !e.target.closest('.scroll-container')) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // Обновляем уравнения каждую секунду
+    setInterval(() => {
+        Object.keys(equations).forEach(calculateEquation);
+    }, 1000);
+</script>
