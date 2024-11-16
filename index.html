@@ -25,27 +25,16 @@
         -webkit-tap-highlight-color: transparent;
     }
 
-    html {
-        min-height: 100%;
-        height: 100%;
-    }
-
     body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         margin: 0;
         padding: 0;
         background: #2c2e33;
         color: var(--tg-theme-text-color);
-        min-height: 100%;
-        height: 100%;
+        min-height: 100vh;
         line-height: 1.5;
         display: flex;
         flex-direction: column;
-    }
-
-    body.keyboard-visible {
-        height: auto;
-        padding-bottom: 0;
     }
 
     input, select, button {
@@ -55,11 +44,13 @@
     }
 
     .container {
-        padding: 0;
         flex: 1;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
+        padding: 0;
         padding-bottom: env(safe-area-inset-bottom);
+        max-width: 768px;
+        margin: 0 auto;
+        width: 100%;
+        position: relative;
     }
 
     .header {
@@ -134,6 +125,7 @@
     .screen {
         display: none;
         padding: 16px;
+        padding-bottom: 140px;
     }
 
     .screen.active {
@@ -241,7 +233,7 @@
     }
 
     .bottom-panel {
-        position: sticky;
+        position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
@@ -252,12 +244,11 @@
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
         z-index: 1000;
-        margin-top: auto;
     }
 
-    .keyboard-visible .bottom-panel {
-        position: sticky;
-        padding-bottom: 16px;
+    body.keyboard-visible .bottom-panel {
+        position: relative;
+        margin-top: 20px;
     }
 
     .bottom-controls {
@@ -389,6 +380,25 @@
         color: #ef4444;
     }
 
+    body.keyboard-visible {
+        min-height: 100%;
+        height: auto;
+    }
+
+    body.keyboard-visible .container {
+        padding-bottom: 0;
+    }
+
+    body.keyboard-visible .screen {
+        padding-bottom: 0;
+    }
+
+    .content-wrapper {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
     @supports (padding: max(0px)) {
         .bottom-panel {
             padding-bottom: max(16px, env(safe-area-inset-bottom));
@@ -397,39 +407,41 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div id="pairs-screen" class="screen active">
-            <div class="header">
-                <input type="text" id="pair-symbol" class="symbol-input" placeholder="Символ (например, BTCUSDT)">
-                <select id="exchange-select" class="exchange-select">
-                    <option value="Mexc">Mexc</option>
-                    <option value="Bybit">Bybit</option>
-                    <option value="OKX">OKX</option>
-                </select>
-                <button onclick="addPair()" class="add-button">Добавить</button>
+    <div class="content-wrapper">
+        <div class="container">
+            <div id="pairs-screen" class="screen active">
+                <div class="header">
+                    <input type="text" id="pair-symbol" class="symbol-input" placeholder="Символ (например, BTCUSDT)">
+                    <select id="exchange-select" class="exchange-select">
+                        <option value="Mexc">Mexc</option>
+                        <option value="Bybit">Bybit</option>
+                        <option value="OKX">OKX</option>
+                    </select>
+                    <button onclick="addPair()" class="add-button">Добавить</button>
+                </div>
+                <div id="pairs-list" class="pairs-list"></div>
             </div>
-            <div id="pairs-list" class="pairs-list"></div>
+
+            <div id="equations-screen" class="screen">
+                <div id="equations-list" class="pairs-list"></div>
+            </div>
         </div>
 
-        <div id="equations-screen" class="screen">
-            <div id="equations-list" class="pairs-list"></div>
-        </div>
-    </div>
-
-    <div class="bottom-panel">
-        <div class="bottom-controls">
-            <div class="fee-controls">
-                <input type="number" id="fee-input-bottom" class="fee-input" placeholder="%" value="0.02" step="0.01">
-                <button class="fee-button" onclick="applyFeeFromBottom()">Применить комиссию</button>
+        <div class="bottom-panel">
+            <div class="bottom-controls">
+                <div class="fee-controls">
+                    <input type="number" id="fee-input-bottom" class="fee-input" placeholder="%" value="0.02" step="0.01">
+                    <button class="fee-button" onclick="applyFeeFromBottom()">Применить комиссию</button>
+                </div>
+                <div class="equation-row">
+                    <input type="text" id="equation-input-bottom" class="equation-input" placeholder="Введите связку...">
+                    <button class="done-button" onclick="addEquationFromBottom()">Готово</button>
+                </div>
             </div>
-            <div class="equation-row">
-                <input type="text" id="equation-input-bottom" class="equation-input" placeholder="Введите связку...">
-                <button class="done-button" onclick="addEquationFromBottom()">Готово</button>
+            <div class="nav">
+                <button class="nav-button active" onclick="showScreen('pairs')">Пары</button>
+                <button class="nav-button" onclick="showScreen('equations')">Связки</button>
             </div>
-        </div>
-        <div class="nav">
-            <button class="nav-button active" onclick="showScreen('pairs')">Пары</button>
-            <button class="nav-button" onclick="showScreen('equations')">Связки</button>
         </div>
     </div>
 
@@ -759,14 +771,45 @@
             ];
 
             for (const pair of defaultPairs) {
-                addPairToList(pair.symbol, pair.exchange);
+                const pairKey = `${pair.exchange}_${pair.symbol}`;
+                
+                if (pairs[pairKey]) continue;
+
+                const pairElement = document.createElement('div');
+                pairElement.className = 'pair-item';
+                pairElement.setAttribute('data-pair', pairKey);
+                pairElement.innerHTML = `
+                    <div class="pair-name">${pair.symbol} ${pair.exchange}</div>
+                    <div class="price-container">
+                        <button class="price-button bid" onclick="addToEquation('${pair.symbol}_${pair.exchange}_bid')">Загрузка...</button>
+                        <button class="price-button ask" onclick="addToEquation('${pair.symbol}_${pair.exchange}_ask')">Загрузка...</button>
+                        <button class="remove-button" onclick="removePair('${pairKey}')">×</button>
+                    </div>
+                `;
+                
+                document.getElementById('pairs-list').appendChild(pairElement);
+                pairs[pairKey] = pairElement;
+                
+                connectWebSocket(pair.exchange, pair.symbol).then(ws => {
+                    connections[pairKey] = ws;
+                });
             }
         }
 
-        function addPairToList(symbol, exchange) {
-            const pairKey = `${exchange}_${symbol}`;
+        function addPair() {
+            const symbol = document.getElementById('pair-symbol').value.toUpperCase();
+            const exchange = document.getElementById('exchange-select').value;
             
-            if (pairs[pairKey]) return;
+            if (!symbol) {
+                tg.showAlert('Введите символ пары');
+                return;
+            }
+            
+            const pairKey = `${exchange}_${symbol}`;
+            if (pairs[pairKey]) {
+                tg.showAlert('Эта пара уже добавлена');
+                return;
+            }
 
             const pairElement = document.createElement('div');
             pairElement.className = 'pair-item';
@@ -786,24 +829,7 @@
             connectWebSocket(exchange, symbol).then(ws => {
                 connections[pairKey] = ws;
             });
-        }
-
-        function addPair() {
-            const symbol = document.getElementById('pair-symbol').value.toUpperCase();
-            const exchange = document.getElementById('exchange-select').value;
             
-            if (!symbol) {
-                tg.showAlert('Введите символ пары');
-                return;
-            }
-            
-            const pairKey = `${exchange}_${symbol}`;
-            if (pairs[pairKey]) {
-                tg.showAlert('Эта пара уже добавлена');
-                return;
-            }
-
-            addPairToList(symbol, exchange);
             document.getElementById('pair-symbol').value = '';
             document.getElementById('pair-symbol').blur();
         }
@@ -867,26 +893,6 @@
             );
         }
 
-        function applyFeeFromBottom() {
-            const fee = parseFloat(document.getElementById('fee-input-bottom').value);
-            const equationInput = document.getElementById('equation-input-bottom');
-            
-            if (isNaN(fee)) {
-                tg.showAlert('Введите корректное значение комиссии');
-                return;
-            }
-            
-            const cursorPosition = equationInput.selectionStart;
-            const newEquation = equationManager.applyFee(
-                equationInput.value,
-                cursorPosition,
-                fee
-            );
-            
-            equationInput.value = newEquation;
-            equationInput.focus();
-        }
-
         function addEquationFromBottom() {
             const equation = document.getElementById('equation-input-bottom').value.trim();
             if (!equation) return;
@@ -926,6 +932,27 @@
             }
         }
 
+        function applyFeeFromBottom() {
+            const fee = parseFloat(document.getElementById('fee-input-bottom').value);
+            const equationInput = document.getElementById('equation-input-bottom');
+            
+            if (isNaN(fee)) {
+                tg.showAlert('Введите корректное значение комиссии');
+                return;
+            }
+            
+            const cursorPosition = equationInput.selectionStart;
+            const newEquation = equationManager.applyFee(
+                equationInput.value,
+                cursorPosition,
+                fee
+            );
+            
+            equationInput.value = newEquation;
+            equationInput.focus();
+            equationInput.setSelectionRange(cursorPosition, cursorPosition);
+        }
+
         function updateEquations() {
             for (const [equation, element] of Object.entries(equations)) {
                 const result = equationManager.evaluateEquation(equation);
@@ -939,42 +966,58 @@
             }
         }
 
-        // Event Listeners
-        const inputFields = document.querySelectorAll('input, select');
-        inputFields.forEach(input => {
-            input.addEventListener('focus', () => {
+        // Event Listeners для обработки клавиатуры
+        let isKeyboardVisible = false;
+        let originalScrollPosition = 0;
+
+        function handleFocus(e) {
+            if (!isKeyboardVisible) {
+                isKeyboardVisible = true;
                 document.body.classList.add('keyboard-visible');
-            });
+                originalScrollPosition = window.scrollY;
+            }
             
-            input.addEventListener('blur', (e) => {
-                // Проверяем, не получил ли фокус другой input
-                setTimeout(() => {
-                    const activeElement = document.activeElement;
-                    if (!activeElement.matches('input, select')) {
-                        document.body.classList.remove('keyboard-visible');
-                    }
-                }, 100);
-            });
+            // Прокручиваем к элементу с небольшой задержкой
+            setTimeout(() => {
+                e.target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }, 200);
+        }
+
+        function handleBlur() {
+            // Задержка перед удалением класса для плавного перехода
+            setTimeout(() => {
+                if (!document.activeElement.matches('input, select, textarea')) {
+                    isKeyboardVisible = false;
+                    document.body.classList.remove('keyboard-visible');
+                    
+                    // Плавно возвращаем к исходной позиции прокрутки
+                    window.scrollTo({
+                        top: originalScrollPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            }, 100);
+        }
+
+        document.querySelectorAll('input, select, textarea').forEach(element => {
+            element.addEventListener('focus', handleFocus);
+            element.addEventListener('blur', handleBlur);
         });
 
-        document.addEventListener('touchstart', (e) => {
-            if (e.target.matches('.fee-button') || e.target.matches('.done-button')) {
-                e.preventDefault(); // Предотвращаем скрытие клавиатуры
-            } else if (!e.target.matches('input, select')) {
-                document.activeElement?.blur();
-            }
+        // Обработчики для предотвращения закрытия клавиатуры
+        document.querySelector('.fee-button').addEventListener('click', (e) => {
+            e.preventDefault();
+            applyFeeFromBottom();
+            document.getElementById('equation-input-bottom').focus();
         });
 
-        document.getElementById('pair-symbol').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                addPair();
-            }
-        });
-
-        document.getElementById('equation-input-bottom').addEventListener('keydocument.getElementById('equation-input-bottom').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                addEquationFromBottom();
-            }
+        document.querySelector('.done-button').addEventListener('click', (e) => {
+            e.preventDefault();
+            addEquationFromBottom();
+            document.getElementById('equation-input-bottom').focus();
         });
 
         // Prevent zoom on iOS
@@ -982,40 +1025,11 @@
             e.preventDefault();
         });
 
-        // Обработчик изменения размера окна (для правильной работы с клавиатурой)
-        window.addEventListener('resize', () => {
-            const activeElement = document.activeElement;
-            if (activeElement.matches('input, select')) {
-                document.body.classList.add('keyboard-visible');
-            } else {
-                document.body.classList.remove('keyboard-visible');
-            }
-        });
+        // Call addDefaultPairs after the page loads
+        document.addEventListener('DOMContentLoaded', addDefaultPairs);
 
-        // Добавляем обработчик для предотвращения скролла на iOS
-        document.body.addEventListener('touchmove', (e) => {
-            if (document.body.classList.contains('keyboard-visible')) {
-                if (!e.target.closest('.bottom-panel') && !e.target.closest('.pairs-list')) {
-                    e.preventDefault();
-                }
-            }
-        }, { passive: false });
-
-        // Обработчик для кнопок bottom panel
-        const bottomButtons = document.querySelectorAll('.fee-button, .done-button');
-        bottomButtons.forEach(button => {
-            button.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                button.click();
-            });
-        });
-
-        // Инициализация приложения
-        document.addEventListener('DOMContentLoaded', () => {
-            addDefaultPairs();
-            setInterval(updateEquations, 1000);
-        });
+        // Update equations periodically
+        setInterval(updateEquations, 1000);
     </script>
 </body>
 </html>
