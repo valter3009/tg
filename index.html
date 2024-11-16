@@ -3,244 +3,437 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Simple Trade App</title>
+    <title>IDTrade Test</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/decimal.js/10.4.3/decimal.min.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+    :root {
+        --tg-theme-bg-color: #1a1b1e;
+        --tg-theme-secondary-bg-color: #2c2e33;
+        --tg-theme-text-color: #ffffff;
+        --tg-theme-hint-color: #9ca3af;
+        --tg-theme-button-color: #3b82f6;
+        --tg-theme-button-text-color: #ffffff;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        --border-radius: 12px;
+        --transition-base: all 0.2s ease-in-out;
+    }
 
-        body {
-            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto;
-            background: #2c2e33;
-            color: white;
-            min-height: 100vh;
-            padding-bottom: 140px;
-        }
+    * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+    }
 
-        .header {
-            padding: 16px;
-            display: grid;
-            grid-template-columns: 1fr auto auto;
-            gap: 12px;
-            background: #2c2e33;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #2c2e33;
+        color: var(--tg-theme-text-color);
+        min-height: 100vh;
+        padding-bottom: 140px;
+        line-height: 1.5;
+    }
 
-        input, select, button {
-            height: 36px;
-            background: #1a1b1e;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            color: white;
-            padding: 0 12px;
-            font-size: 14px;
-        }
+    input, select, button {
+        font-size: 16px;
+        font-family: inherit;
+        transition: var(--transition-base);
+    }
 
-        select {
-            width: 100px;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 8px center;
-            background-size: 16px;
-            padding-right: 32px;
-        }
+    .container {
+        padding: 0;
+        padding-bottom: env(safe-area-inset-bottom);
+        max-width: 768px;
+        margin: 0 auto;
+    }
 
-        button {
-            background: #3b82f6;
-            border: none;
-            font-weight: 500;
-            cursor: pointer;
-        }
+    .header {
+        padding: 16px;
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 12px;
+        background: #2c2e33;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
-        .screen {
-            display: none;
-            padding: 16px;
-        }
+    .symbol-input {
+        background: var(--tg-theme-secondary-bg-color);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--border-radius);
+        color: var(--tg-theme-text-color);
+        padding: 12px 16px;
+        width: 100%;
+        height: 48px;
+        font-size: 9px;
+    }
 
-        .screen.active {
-            display: block;
-        }
+    .symbol-input:focus {
+        border-color: var(--tg-theme-button-color);
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        outline: none;
+    }
 
-        .pairs-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+    .exchange-select {
+        background: var(--tg-theme-secondary-bg-color);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--border-radius);
+        color: var(--tg-theme-text-color);
+        padding: 12px;
+        height: 48px;
+        width: 100px;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+        background-size: 16px;
+        padding-right: 32px;
+    }
 
-        .pair-item {
-            background: #1a1b1e;
-            border-radius: 12px;
-            padding: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
+    .exchange-select:focus {
+        border-color: var(--tg-theme-button-color);
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        outline: none;
+    }
 
-        .pair-name {
-            font-size: 14px;
-        }
+    .add-button {
+        background: var(--tg-theme-button-color);
+        border: none;
+        border-radius: var(--border-radius);
+        color: var(--tg-theme-button-text-color);
+        padding: 12px 24px;
+        height: 48px;
+        font-weight: 500;
+        cursor: pointer;
+    }
 
-        .price-container {
-            display: flex;
-            gap: 8px;
-        }
+    .add-button:active {
+        transform: scale(0.98);
+        background: #2563eb;
+    }
 
-        .price-button {
-            width: 100px;
-            height: 32px;
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-size: 14px;
-        }
+    .screen {
+        display: none;
+        padding: 16px;
+    }
 
-        .bid { background: #059669; }
-        .ask { background: #dc2626; }
+    .screen.active {
+        display: block;
+    }
 
-        .equation-item {
-            background: #1a1b1e;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
+    .pairs-list {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
 
-        .equation-name {
-            font-size: 16px;
-            font-weight: 500;
-            margin-bottom: 8px;
-        }
+    .pair-item {
+        background: var(--tg-theme-secondary-bg-color);
+        border-radius: var(--border-radius);
+        padding: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: var(--transition-base);
+        flex-direction: row-reverse;
+    }
 
+    .pair-name {
+        font-size: 7px;
+        font-weight: 600;
+        color: var(--tg-theme-text-color);
+        margin-left: 16px;
+    }
+
+    .price-container {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        min-width: 220px;
+        justify-content: flex-end;
+    }
+
+    .price-button {
+        border: none;
+        border-radius: var(--border-radius);
+        padding: 8px 16px;
+        width: 100px;
+        height: 22px;
+        font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+        font-size: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .bid {
+        background: #059669;
+        color: white;
+    }
+
+    .ask {
+        background: #dc2626;
+        color: white;
+    }
+
+    .remove-button {
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: var(--tg-theme-hint-color);
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        cursor: pointer;
+        margin-left: 8px;
+        line-height: 1;
+        padding: 0;
+    }
+
+    .bottom-panel {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.1);
+        padding: 16px;
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+
+    .bottom-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .fee-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 0;
+    }
+
+    .fee-input {
+        background: var(--tg-theme-secondary-bg-color);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--border-radius);
+        color: var(--tg-theme-text-color);
+        padding: 6px;
+        height: 30px;
+        width: 45px;
+        text-align: center;
+        font-weight: 500;
+        font-size: 12px;
+    }
+
+    .fee-button {
+        background: none;
+        border: none;
+        color: var(--tg-theme-text-color);
+        font-size: 10px;
+        padding: 0;
+        cursor: pointer;
+        opacity: 0.8;
+    }
+
+    .equation-row {
+        display: flex;
+        gap: 8px;
+        width: 100%;
+        position: relative;
+    }
+
+    .done-button {
+        position: absolute;
+        top: -25px;
+        right: 50px;
+        background: none;
+        border: none;
+        color: var(--tg-theme-text-color);
+        font-size: 10px;
+        padding: 0;
+        cursor: pointer;
+        opacity: 0.8;
+    }
+
+    .equation-input {
+        background: var(--tg-theme-secondary-bg-color);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--border-radius);
+        color: var(--tg-theme-text-color);
+        padding: 6px 12px;
+        height: 30px;
+        flex-grow: 1;
+        font-size: 12px;
+    }
+
+    .nav {
+        display: flex;
+        justify-content: space-around;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 12px;
+        margin-top: 8px;
+    }
+
+    .nav-button {
+        background: none;
+        border: none;
+        color: var(--tg-theme-hint-color);
+        padding: 6px 16px;
+        font-size: 12px;
+        font-weight: 500;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+    }
+
+    .nav-button.active {
+        color: var(--tg-theme-button-color);
+        background: rgba(59, 130, 246, 0.1);
+    }
+
+    .equation-item {
+        background: var(--tg-theme-secondary-bg-color);
+        border-radius: var(--border-radius);
+        padding: 16px;
+        margin-bottom: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .equation-name {
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 16px;
+        color: var(--tg-theme-text-color);
+    }
+
+    .equation-text {
+        color: var(--tg-theme-hint-color);
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+    }
+
+    .result {
+        font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+        font-size: 15px;
+        font-weight: 500;
+        color: #10b981;
+    }
+
+    .error {
+        color: #ef4444;
+    }
+
+    .keyboard-visible {
+        padding-bottom: 0;
+    }
+
+    .keyboard-visible .bottom-panel {
+        position: static;
+        border-top: none;
+    }
+
+    @supports (padding: max(0px)) {
         .bottom-panel {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 16px;
             padding-bottom: max(16px, env(safe-area-inset-bottom));
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
         }
-
-        .fee-row, .equation-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .fee-input {
-            width: 60px;
-            text-align: center;
-        }
-
-        .equation-input {
-            flex: 1;
-        }
-
-        .nav {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .nav-button {
-            background: none;
-            color: #9ca3af;
-        }
-
-        .nav-button.active {
-            color: #3b82f6;
-            background: rgba(59, 130, 246, 0.1);
-        }
+    }
     </style>
 </head>
 <body>
-    <div id="pairs-screen" class="screen active">
-        <div class="header">
-            <input type="text" id="pair-symbol" placeholder="Symbol (e.g. BTCUSDT)">
-            <select id="exchange-select">
-                <option>Binance</option>
-                <option>Bybit</option>
-                <option>Mexc</option>
-            </select>
-            <button onclick="addPair()">Add</button>
+    <div class="container">
+        <div id="pairs-screen" class="screen active">
+            <div class="header">
+                <input type="text" id="pair-symbol" class="symbol-input" placeholder="Символ (например, BTCUSDT)">
+                <select id="exchange-select" class="exchange-select">
+                    <option value="Mexc">Mexc</option>
+                    <option value="Bybit">Bybit</option>
+                    <option value="OKX">OKX</option>
+                </select>
+                <button onclick="addPair()" class="add-button">Добавить</button>
+            </div>
+            <div id="pairs-list" class="pairs-list"></div>
         </div>
-        <div id="pairs-list" class="pairs-list"></div>
-    </div>
 
-    <div id="equations-screen" class="screen">
-        <div id="equations-list"></div>
+        <div id="equations-screen" class="screen">
+            <div id="equations-list" class="pairs-list"></div>
+        </div>
     </div>
 
     <div class="bottom-panel">
-        <div class="fee-row">
-            <input type="number" class="fee-input" value="0.02" step="0.01">
-            <button onclick="applyFee()">Apply Fee</button>
-        </div>
-        <div class="equation-row">
-            <input type="text" class="equation-input" placeholder="Enter equation...">
-            <button onclick="addEquation()">Done</button>
+        <div class="bottom-controls">
+            <div class="fee-controls">
+                <input type="number" id="fee-input-bottom" class="fee-input" placeholder="%" value="0.02" step="0.01">
+                <button class="fee-button" onclick="applyFeeFromBottom()">Применить комиссию</button>
+            </div>
+            <div class="equation-row">
+                <button class="done-button" onclick="addEquationFromBottom()">Готово</button>
+                <input type="text" id="equation-input-bottom" class="equation-input" placeholder="Введите связку...">
+            </div>
         </div>
         <div class="nav">
-            <button class="nav-button active" onclick="showScreen('pairs')">Pairs</button>
-            <button class="nav-button" onclick="showScreen('equations')">Equations</button>
+            <button class="nav-button active" onclick="showScreen('pairs')">Пары</button>
+            <button class="nav-button" onclick="showScreen('equations')">Связки</button>
         </div>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp;
-        tg.expand();
-
         let pairs = {};
         let equations = {};
         let equationCount = 0;
+        
+        tg.expand();
+        tg.ready();
 
-        // Добавляем дефолтные пары при загрузке
+        // Добавляем тестовые пары при загрузке
         document.addEventListener('DOMContentLoaded', () => {
-            addDefaultPairs();
+            const defaultPairs = [
+                { symbol: 'BTCUSDT', exchange: 'Mexc', bid: '45000.00', ask: '45100.00' },
+                { symbol: 'BTCUSDT', exchange: 'Bybit', bid: '44990.00', ask: '45110.00' },
+                { symbol: 'ETHUSDT', exchange: 'Mexc', bid: '2300.00', ask: '2310.00' },
+                { symbol: 'ETHUSDT', exchange: 'Bybit', bid: '2295.00', ask: '2315.00' },
+                { symbol: 'ETHUSDT', exchange: 'OKX', bid: '2298.00', ask: '2312.00' },
+                { symbol: 'SOLUSDT', exchange: 'Mexc', bid: '98.40', ask: '98.60' },
+            ].forEach(pair => createPairElement(pair));
         });
 
-        function addDefaultPairs() {
-            const defaultPairs = [
-                { symbol: 'BTCUSDT', exchange: 'Binance', bid: '45000.00', ask: '45100.00' },
-                { symbol: 'BTCUSDT', exchange: 'Bybit', bid: '44990.00', ask: '45110.00' },
-                { symbol: 'ETHUSDT', exchange: 'Binance', bid: '2300.00', ask: '2310.00' },
-                { symbol: 'ETHUSDT', exchange: 'Bybit', bid: '2295.00', ask: '2315.00' },
-            ];
-
-            defaultPairs.forEach(pair => {
-                createPairElement(pair.symbol, pair.exchange, pair.bid, pair.ask);
-            });
-        }
-
-        function createPairElement(symbol, exchange, bid, ask) {
-            const pairKey = `${exchange}_${symbol}`;
+        function createPairElement(pair) {
+            const pairKey = `${pair.exchange}_${pair.symbol}`;
             if (pairs[pairKey]) return;
 
             const el = document.createElement('div');
             el.className = 'pair-item';
+            el.setAttribute('data-pair', pairKey);
             el.innerHTML = `
-                <div class="pair-name">${symbol} ${exchange}</div>
+                <div class="pair-name">${pair.symbol} ${pair.exchange}</div>
                 <div class="price-container">
-                    <button class="price-button bid" onclick="addToEquation('${symbol}_${exchange}_bid')">${bid}</button>
-                    <button class="price-button ask" onclick="addToEquation('${symbol}_${exchange}_ask')">${ask}</button>
+                    <button class="price-button bid" onclick="addToEquation('${pair.symbol}_${pair.exchange}_bid')">${pair.bid}</button>
+                    <button class="price-button ask" onclick="addToEquation('${pair.symbol}_${pair.exchange}_ask')">${pair.ask}</button>
+                    <button class="remove-button" onclick="removePair('${pairKey}')">×</button>
                 </div>
             `;
 
             document.getElementById('pairs-list').appendChild(el);
-            pairs[pairKey] = { element: el, bid, ask };
+            pairs[pairKey] = { element: el, ...pair };
         }
 
         function addPair() {
@@ -248,21 +441,38 @@
             const exchange = document.getElementById('exchange-select').value;
             
             if (!symbol) {
-                tg.showAlert('Enter symbol');
+                tg.showAlert('Введите символ пары');
+                return;
+            }
+            
+            const pairKey = `${exchange}_${symbol}`;
+            if (pairs[pairKey]) {
+                tg.showAlert('Эта пара уже добавлена');
                 return;
             }
 
             // Генерируем случайные цены для тестов
             const basePrice = 100 + Math.random() * 900;
-            const bid = basePrice.toFixed(2);
-            const ask = (basePrice * 1.001).toFixed(2);
-
-            createPairElement(symbol, exchange, bid, ask);
+            createPairElement({
+                symbol,
+                exchange,
+                bid: basePrice.toFixed(2),
+                ask: (basePrice * 1.001).toFixed(2)
+            });
+            
             document.getElementById('pair-symbol').value = '';
+            document.getElementById('pair-symbol').blur();
+        }
+
+        function removePair(pairKey) {
+            if (pairs[pairKey]) {
+                pairs[pairKey].element.remove();
+                delete pairs[pairKey];
+            }
         }
 
         function addToEquation(value) {
-            const input = document.querySelector('.equation-input');
+            const input = document.getElementById('equation-input-bottom');
             const pos = input.selectionStart;
             const text = input.value;
             
@@ -271,57 +481,97 @@
             input.setSelectionRange(pos + value.length, pos + value.length);
         }
 
-        function applyFee() {
-            const fee = parseFloat(document.querySelector('.fee-input').value);
-            const input = document.querySelector('.equation-input');
+        function applyFeeFromBottom() {
+            const fee = parseFloat(document.getElementById('fee-input-bottom').value);
+            const input = document.getElementById('equation-input-bottom');
+            
+            if (isNaN(fee)) {
+                tg.showAlert('Введите корректное значение комиссии');
+                return;
+            }
+            
             const pos = input.selectionStart;
             let text = input.value;
+            const feeMultiplier = 1 - fee/100;
 
-            if (text.includes('_bid')) {
-                text = `(${text}*(1-${fee}/100))`;
-            } else if (text.includes('_ask')) {
-                text = `(${text}/(1-${fee}/100))`;
+            // Находим ближайший токен к курсору
+            const tokens = text.match(/[A-Z]+_[A-Za-z]+_(bid|ask)/g) || [];
+            let nearestToken = null;
+            let nearestDistance = Infinity;
+
+            tokens.forEach(token => {
+                const tokenPos = text.indexOf(token);
+                const distance = Math.abs(pos - tokenPos);
+                if (distance < nearestDistance) {
+                    nearestDistance = distance;
+                    nearestToken = token;
+                }
+            });
+
+            if (nearestToken) {
+                const isBid = nearestToken.endsWith('_bid');
+                const newExpr = isBid ? 
+                    `(${nearestToken}*${feeMultiplier})` : 
+                    `(${nearestToken}/${feeMultiplier})`;
+                
+                text = text.replace(nearestToken, newExpr);
             }
 
             input.value = text;
             input.focus();
         }
 
-        function addEquation() {
-            const equation = document.querySelector('.equation-input').value.trim();
+        function addEquationFromBottom() {
+            const equation = document.getElementById('equation-input-bottom').value.trim();
             if (!equation) return;
 
             equationCount++;
             const el = document.createElement('div');
             el.className = 'equation-item';
             el.innerHTML = `
-                <div class="equation-name">Equation ${equationCount}</div>
-                <div>${equation}</div>
-                <div class="result">Calculating...</div>
+                <div>
+                    <div class="equation-name">Уравнение ${equationCount}</div>
+                    <div class="equation-text">${equation}</div>
+                    <div class="result">Вычисление...</div>
+                </div>
+                <button class="remove-button" onclick="removeEquation(${equationCount})">×</button>
             `;
 
             document.getElementById('equations-list').appendChild(el);
-            equations[equation] = el;
+            equations[equationCount] = { element: el, expression: equation };
             
-            document.querySelector('.equation-input').value = '';
-            calculateEquation(equation, el);
+            document.getElementById('equation-input-bottom').value = '';
+            calculateEquation(equationCount);
         }
 
-        function calculateEquation(equation, element) {
+        function removeEquation(id) {
+            if (equations[id]) {
+                equations[id].element.remove();
+                delete equations[id];
+            }
+        }
+
+        function calculateEquation(id) {
+            const eq = equations[id];
+            if (!eq) return;
+
             try {
-                let evalStr = equation;
-                for (const [key, pair] of Object.entries(pairs)) {
+                let evalStr = eq.expression;
+                
+                // Заменяем все токены на их значения
+                Object.entries(pairs).forEach(([key, pair]) => {
                     const [exchange, symbol] = key.split('_');
                     evalStr = evalStr
                         .replace(`${symbol}_${exchange}_bid`, pair.bid)
                         .replace(`${symbol}_${exchange}_ask`, pair.ask);
-                }
+                });
+
+                const result = new Decimal(eval(evalStr));
+                eq.element.querySelector('.result').textContent = result.toFixed(8);
                 
-                const result = eval(evalStr);
-                element.querySelector('.result').textContent = 
-                    result ? Number(result).toFixed(8) : 'Error';
-            } catch (e) {
-                element.querySelector('.result').textContent = 'Error';
+            } catch (error) {
+                eq.element.querySelector('.result').textContent = 'Ошибка вычисления';
+                eq.element.querySelector('.result').classList.add('error');
             }
         }
 
@@ -333,12 +583,43 @@
             document.querySelector(`.nav-button[onclick*="${screenName}"]`).classList.add('active');
         }
 
+        document.getElementById('pair-symbol').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addPair();
+            }
+        });
+
+        document.getElementById('equation-input-bottom').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addEquationFromBottom();
+            }
+        });
+
+        // Обработчики для работы с клавиатурой
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('focus', () => {
+                document.body.classList.add('keyboard-visible');
+            });
+            
+            input.addEventListener('blur', () => {
+                setTimeout(() => {
+                    if (!document.activeElement.matches('input')) {
+                        document.body.classList.remove('keyboard-visible');
+                    }
+                }, 100);
+            });
+        });
+
+        // Prevent zoom on iOS
+        document.addEventListener('gesturestart', (e) => {
+            e.preventDefault();
+        });
+
         // Обновляем уравнения каждую секунду
         setInterval(() => {
-            for (const [eq, el] of Object.entries(equations)) {
-                calculateEquation(eq, el);
-            }
+            Object.keys(equations).forEach(calculateEquation);
         }, 1000);
+
     </script>
 </body>
 </html>
