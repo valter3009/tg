@@ -11,11 +11,16 @@
             --tg-theme-button-color: #3b82f6;
             --tg-theme-button-text-color: #ffffff;
             --border-radius: 12px;
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
         }
 
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            height: -webkit-fill-available;
         }
 
         body {
@@ -25,11 +30,10 @@
             background: var(--tg-theme-secondary-bg-color);
             color: var(--tg-theme-text-color);
             min-height: 100vh;
-            padding-bottom: 140px;
-        }
-
-        body.keyboard-visible {
-            padding-bottom: 0;
+            min-height: -webkit-fill-available;
+            position: fixed;
+            width: 100%;
+            padding-bottom: calc(92px + var(--safe-area-bottom));
         }
 
         .bottom-panel {
@@ -39,16 +43,12 @@
             right: 0;
             background: rgba(0, 0, 0, 0.1);
             padding: 16px;
-            padding-bottom: max(16px, env(safe-area-inset-bottom));
+            padding-bottom: calc(16px + var(--safe-area-bottom));
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-        }
-
-        .keyboard-visible .bottom-panel {
-            position: static;
-            padding-bottom: 16px;
-            margin-top: 20px;
+            transform: translateZ(0);
+            will-change: transform;
         }
 
         .input {
@@ -58,9 +58,16 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: var(--border-radius);
             color: var(--tg-theme-text-color);
-            font-size: 12px;
+            font-size: 16px;
             padding: 0 8px;
             margin-bottom: 12px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--tg-theme-button-color);
         }
 
         .buttons {
@@ -78,20 +85,35 @@
             font-size: 12px;
             cursor: pointer;
             white-space: nowrap;
+            flex: 1;
         }
 
         .button:active {
             background: #2563eb;
         }
 
-        @supports (padding: max(0px)) {
-            .bottom-panel {
-                padding-bottom: max(16px, env(safe-area-inset-bottom));
-            }
+        .content {
+            height: 100%;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 16px;
+        }
+
+        body.keyboard-visible {
+            height: 100vh;
+            position: relative;
+        }
+
+        body.keyboard-visible .bottom-panel {
+            position: absolute;
         }
     </style>
 </head>
 <body>
+    <div class="content">
+        <!-- Здесь будет основной контент -->
+    </div>
+
     <div class="bottom-panel">
         <input type="text" class="input" id="textInput" placeholder="Введите текст">
         <div class="buttons">
@@ -101,6 +123,8 @@
     </div>
 
     <script>
+        let isKeyboardVisible = false;
+
         function addText(text) {
             const input = document.getElementById('textInput');
             const cursorPos = input.selectionStart;
@@ -113,25 +137,44 @@
             input.focus();
         }
 
-        // Обработка появления клавиатуры
-        const input = document.querySelector('input');
-        input.addEventListener('focus', () => {
-            document.body.classList.add('keyboard-visible');
-            setTimeout(() => {
-                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 100);
-        });
+        const visualViewport = window.visualViewport;
         
-        input.addEventListener('blur', () => {
-            setTimeout(() => {
-                document.body.classList.remove('keyboard-visible');
-            }, 100);
+        if (visualViewport) {
+            visualViewport.addEventListener('resize', () => {
+                if (visualViewport.height < window.innerHeight) {
+                    // Клавиатура открыта
+                    document.body.classList.add('keyboard-visible');
+                    document.querySelector('.bottom-panel').style.bottom = '0px';
+                    isKeyboardVisible = true;
+                } else {
+                    // Клавиатура закрыта
+                    document.body.classList.remove('keyboard-visible');
+                    document.querySelector('.bottom-panel').style.bottom = '0px';
+                    isKeyboardVisible = false;
+                }
+            });
+        }
+
+        document.addEventListener('touchstart', (e) => {
+            if (!e.target.matches('input') && isKeyboardVisible) {
+                document.activeElement?.blur();
+            }
         });
 
-        // Запрещаем зум на iOS
+        // Запрещаем зум
         document.addEventListener('gesturestart', (e) => {
             e.preventDefault();
         });
+
+        // Запрещаем двойной тап для зума
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (e) => {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
     </script>
 </body>
 </html>
