@@ -3,30 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bottom Panel Test</title>
+    <title>Simple Trade App</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/decimal.js/10.4.3/decimal.min.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
 
         body {
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto;
             background: #2c2e33;
             color: white;
-            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            padding-bottom: 140px;
         }
 
-        .content {
-            flex: 1;
-            padding: 20px;
+        .header {
+            padding: 16px;
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 12px;
+            background: #2c2e33;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .pair-list {
+        input, select, button {
+            height: 36px;
+            background: #1a1b1e;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            padding: 0 12px;
+            font-size: 14px;
+        }
+
+        select {
+            width: 100px;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 16px;
+            padding-right: 32px;
+        }
+
+        button {
+            background: #3b82f6;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .screen {
+            display: none;
+            padding: 16px;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .pairs-list {
             display: flex;
             flex-direction: column;
             gap: 8px;
@@ -44,7 +87,6 @@
 
         .pair-name {
             font-size: 14px;
-            color: white;
         }
 
         .price-container {
@@ -59,83 +101,62 @@
             border-radius: 8px;
             color: white;
             font-size: 14px;
-            cursor: pointer;
         }
 
-        .bid {
-            background: #059669;
+        .bid { background: #059669; }
+        .ask { background: #dc2626; }
+
+        .equation-item {
+            background: #1a1b1e;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .ask {
-            background: #dc2626;
+        .equation-name {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
         }
 
         .bottom-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
             background: rgba(0, 0, 0, 0.3);
             padding: 16px;
             padding-bottom: max(16px, env(safe-area-inset-bottom));
             border-top: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
         }
 
-        .fee-row {
+        .fee-row, .equation-row {
             display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .equation-row {
-            display: flex;
-            align-items: center;
             gap: 8px;
             margin-bottom: 12px;
         }
 
         .fee-input {
             width: 60px;
-            height: 36px;
-            background: #1a1b1e;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            color: white;
             text-align: center;
-            font-size: 14px;
-            padding: 0 8px;
         }
 
         .equation-input {
             flex: 1;
-            height: 36px;
-            background: #1a1b1e;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            color: white;
-            font-size: 14px;
-            padding: 0 12px;
-        }
-
-        button {
-            height: 36px;
-            padding: 0 16px;
-            background: #3b82f6;
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-size: 14px;
-            font-weight: 500;
         }
 
         .nav {
             display: flex;
-            justify-content: center;
-            gap: 16px;
+            justify-content: space-around;
+            margin-top: 12px;
             padding-top: 12px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .nav-button {
             background: none;
-            padding: 8px 16px;
             color: #9ca3af;
         }
 
@@ -143,97 +164,38 @@
             color: #3b82f6;
             background: rgba(59, 130, 246, 0.1);
         }
-
     </style>
 </head>
 <body>
-    <div class="content">
-        <div class="pair-list">
-            <div class="pair-item">
-                <div class="pair-name">BTC-USDT Binance</div>
-                <div class="price-container">
-                    <button class="price-button bid" onclick="addToEquation('BTC_Binance_bid')">45123.50</button>
-                    <button class="price-button ask" onclick="addToEquation('BTC_Binance_ask')">45125.40</button>
-                </div>
-            </div>
-            <div class="pair-item">
-                <div class="pair-name">ETH-USDT Binance</div>
-                <div class="price-container">
-                    <button class="price-button bid" onclick="addToEquation('ETH_Binance_bid')">2341.20</button>
-                    <button class="price-button ask" onclick="addToEquation('ETH_Binance_ask')">2341.80</button>
-                </div>
-            </div>
-            <div class="pair-item">
-                <div class="pair-name">BTC-USDT Bybit</div>
-                <div class="price-container">
-                    <button class="price-button bid" onclick="addToEquation('BTC_Bybit_bid')">45122.80</button>
-                    <button class="price-button ask" onclick="addToEquation('BTC_Bybit_ask')">45124.60</button>
-                </div>
-            </div>
-            <div class="pair-item">
-                <div class="pair-name">ETH-USDT Bybit</div>
-                <div class="price-container">
-                    <button class="price-button bid" onclick="addToEquation('ETH_Bybit_bid')">2340.90</button>
-                    <button class="price-button ask" onclick="addToEquation('ETH_Bybit_ask')">2342.10</button>
-                </div>
-            </div>
-            <div class="pair-item">
-                <div class="pair-name">SOL-USDT Binance</div>
-                <div class="price-container">
-                    <button class="price-button bid" onclick="addToEquation('SOL_Binance_bid')">98.45</button>
-                    <button class="price-button ask" onclick="addToEquation('SOL_Binance_ask')">98.52</button>
-                </div>
-            </div>
-            <div class="pair-item">
-                <div class="pair-name">SOL-USDT Bybit</div>
-                <div class="price-container">
-                    <button class="price-button bid" onclick="addToEquation('SOL_Bybit_bid')">98.43</button>
-                    <button class="price-button ask" onclick="addToEquation('SOL_Bybit_ask')">98.54</button>
-                </div>
-            </div>
-            <div class="pair-item">
-                <div class="pair-name">DOGE-USDT Binance</div>
-                <div class="price-container">
-                    <button class="price-button bid" onclick="addToEquation('DOGE_Binance_bid')">0.0812</button>
-                    <button class="price-button ask" onclick="addToEquation('DOGE_Binance_ask')">0.0813</button>
-                </div>
-            </div>
-            <div class="pair-item">
-                <div class="pair-name">DOGE-USDT Bybit</div>
-                <div class="price-container">
-                    <button class="price-button bid" onclick="addToEquation('DOGE_Bybit_bid')">0.0811</button>
-                    <button class="price-button ask" onclick="addToEquation('DOGE_Bybit_ask')">0.0814</button>
-                </div>
-            </div>
-            <div class="pair-item">
-                <div class="pair-name">XRP-USDT Binance</div>
-                <div class="price-container">
-                    <button class="price-button bid" onclick="addToEquation('XRP_Binance_bid')">0.5423</button>
-                    <button class="price-button ask" onclick="addToEquation('XRP_Binance_ask')">0.5425</button>
-                </div>
-            </div>
-            <div class="pair-item">
-                <div class="pair-name">XRP-USDT Bybit</div>
-                <div class="price-container">
-                    <button class="price-button bid" onclick="addToEquation('XRP_Bybit_bid')">0.5422</button>
-                    <button class="price-button ask" onclick="addToEquation('XRP_Bybit_ask')">0.5426</button>
-                </div>
-            </div>
+    <div id="pairs-screen" class="screen active">
+        <div class="header">
+            <input type="text" id="pair-symbol" placeholder="Symbol (e.g. BTCUSDT)">
+            <select id="exchange-select">
+                <option>Binance</option>
+                <option>Bybit</option>
+                <option>Mexc</option>
+            </select>
+            <button onclick="addPair()">Add</button>
         </div>
+        <div id="pairs-list" class="pairs-list"></div>
+    </div>
+
+    <div id="equations-screen" class="screen">
+        <div id="equations-list"></div>
     </div>
 
     <div class="bottom-panel">
         <div class="fee-row">
-            <input type="number" class="fee-input" placeholder="%" value="0.02" step="0.01">
-            <button onclick="applyFee()">Применить комиссию</button>
+            <input type="number" class="fee-input" value="0.02" step="0.01">
+            <button onclick="applyFee()">Apply Fee</button>
         </div>
         <div class="equation-row">
-            <input type="text" class="equation-input" placeholder="Введите связку...">
-            <button onclick="addEquation()">Готово</button>
+            <input type="text" class="equation-input" placeholder="Enter equation...">
+            <button onclick="addEquation()">Done</button>
         </div>
         <div class="nav">
-            <button class="nav-button active">Пары</button>
-            <button class="nav-button">Связки</button>
+            <button class="nav-button active" onclick="showScreen('pairs')">Pairs</button>
+            <button class="nav-button" onclick="showScreen('equations')">Equations</button>
         </div>
     </div>
 
@@ -241,32 +203,142 @@
         let tg = window.Telegram.WebApp;
         tg.expand();
 
+        let pairs = {};
+        let equations = {};
+        let equationCount = 0;
+
+        // Добавляем дефолтные пары при загрузке
+        document.addEventListener('DOMContentLoaded', () => {
+            addDefaultPairs();
+        });
+
+        function addDefaultPairs() {
+            const defaultPairs = [
+                { symbol: 'BTCUSDT', exchange: 'Binance', bid: '45000.00', ask: '45100.00' },
+                { symbol: 'BTCUSDT', exchange: 'Bybit', bid: '44990.00', ask: '45110.00' },
+                { symbol: 'ETHUSDT', exchange: 'Binance', bid: '2300.00', ask: '2310.00' },
+                { symbol: 'ETHUSDT', exchange: 'Bybit', bid: '2295.00', ask: '2315.00' },
+            ];
+
+            defaultPairs.forEach(pair => {
+                createPairElement(pair.symbol, pair.exchange, pair.bid, pair.ask);
+            });
+        }
+
+        function createPairElement(symbol, exchange, bid, ask) {
+            const pairKey = `${exchange}_${symbol}`;
+            if (pairs[pairKey]) return;
+
+            const el = document.createElement('div');
+            el.className = 'pair-item';
+            el.innerHTML = `
+                <div class="pair-name">${symbol} ${exchange}</div>
+                <div class="price-container">
+                    <button class="price-button bid" onclick="addToEquation('${symbol}_${exchange}_bid')">${bid}</button>
+                    <button class="price-button ask" onclick="addToEquation('${symbol}_${exchange}_ask')">${ask}</button>
+                </div>
+            `;
+
+            document.getElementById('pairs-list').appendChild(el);
+            pairs[pairKey] = { element: el, bid, ask };
+        }
+
+        function addPair() {
+            const symbol = document.getElementById('pair-symbol').value.toUpperCase();
+            const exchange = document.getElementById('exchange-select').value;
+            
+            if (!symbol) {
+                tg.showAlert('Enter symbol');
+                return;
+            }
+
+            // Генерируем случайные цены для тестов
+            const basePrice = 100 + Math.random() * 900;
+            const bid = basePrice.toFixed(2);
+            const ask = (basePrice * 1.001).toFixed(2);
+
+            createPairElement(symbol, exchange, bid, ask);
+            document.getElementById('pair-symbol').value = '';
+        }
+
         function addToEquation(value) {
-            const equationInput = document.querySelector('.equation-input');
-            const cursorPosition = equationInput.selectionStart;
-            const currentText = equationInput.value;
+            const input = document.querySelector('.equation-input');
+            const pos = input.selectionStart;
+            const text = input.value;
             
-            const newText = currentText.slice(0, cursorPosition) + 
-                           value + 
-                           currentText.slice(cursorPosition);
-            
-            equationInput.value = newText;
-            equationInput.focus();
-            equationInput.setSelectionRange(
-                cursorPosition + value.length,
-                cursorPosition + value.length
-            );
+            input.value = text.slice(0, pos) + value + text.slice(pos);
+            input.focus();
+            input.setSelectionRange(pos + value.length, pos + value.length);
         }
 
         function applyFee() {
+            const fee = parseFloat(document.querySelector('.fee-input').value);
             const input = document.querySelector('.equation-input');
+            const pos = input.selectionStart;
+            let text = input.value;
+
+            if (text.includes('_bid')) {
+                text = `(${text}*(1-${fee}/100))`;
+            } else if (text.includes('_ask')) {
+                text = `(${text}/(1-${fee}/100))`;
+            }
+
+            input.value = text;
             input.focus();
         }
 
         function addEquation() {
-            const input = document.querySelector('.equation-input');
-            input.focus();
+            const equation = document.querySelector('.equation-input').value.trim();
+            if (!equation) return;
+
+            equationCount++;
+            const el = document.createElement('div');
+            el.className = 'equation-item';
+            el.innerHTML = `
+                <div class="equation-name">Equation ${equationCount}</div>
+                <div>${equation}</div>
+                <div class="result">Calculating...</div>
+            `;
+
+            document.getElementById('equations-list').appendChild(el);
+            equations[equation] = el;
+            
+            document.querySelector('.equation-input').value = '';
+            calculateEquation(equation, el);
         }
+
+        function calculateEquation(equation, element) {
+            try {
+                let evalStr = equation;
+                for (const [key, pair] of Object.entries(pairs)) {
+                    const [exchange, symbol] = key.split('_');
+                    evalStr = evalStr
+                        .replace(`${symbol}_${exchange}_bid`, pair.bid)
+                        .replace(`${symbol}_${exchange}_ask`, pair.ask);
+                }
+                
+                const result = eval(evalStr);
+                element.querySelector('.result').textContent = 
+                    result ? Number(result).toFixed(8) : 'Error';
+            } catch (e) {
+                element.querySelector('.result').textContent = 'Error';
+            }
+        }
+
+        function showScreen(screenName) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-button').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(`${screenName}-screen`).classList.add('active');
+            document.querySelector(`.nav-button[onclick*="${screenName}"]`).classList.add('active');
+        }
+
+        // Обновляем уравнения каждую секунду
+        setInterval(() => {
+            for (const [eq, el] of Object.entries(equations)) {
+                calculateEquation(eq, el);
+            }
+        }, 1000);
     </script>
 </body>
 </html>
