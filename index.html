@@ -18,14 +18,12 @@
         --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         --border-radius: 12px;
         --transition-base: all 0.2s ease-in-out;
-        --bottom-safe-area: env(safe-area-inset-bottom);
-        --keyboard-height: 0px;
+        --keyboard-offset: 0px;
     }
 
     * {
         box-sizing: border-box;
         -webkit-tap-highlight-color: transparent;
-        -webkit-touch-callout: none;
     }
 
     body {
@@ -35,8 +33,7 @@
         background: #2c2e33;
         color: var(--tg-theme-text-color);
         min-height: 100vh;
-        min-height: -webkit-fill-available;
-        padding-bottom: calc(140px + var(--bottom-safe-area));
+        padding-bottom: 140px;
         line-height: 1.5;
         position: fixed;
         width: 100%;
@@ -56,10 +53,6 @@
         padding-bottom: env(safe-area-inset-bottom);
         max-width: 768px;
         margin: 0 auto;
-        height: 100%;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        position: relative;
     }
 
     .header {
@@ -72,7 +65,6 @@
         top: 0;
         z-index: 100;
         backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
@@ -84,9 +76,7 @@
         padding: 12px 16px;
         width: 100%;
         height: 48px;
-        font-size: 16px;
-        -webkit-appearance: none;
-        appearance: none;
+        font-size: 9px;
     }
 
     .symbol-input:focus {
@@ -104,7 +94,6 @@
         height: 48px;
         width: 100px;
         cursor: pointer;
-        -webkit-appearance: none;
         appearance: none;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
         background-repeat: no-repeat;
@@ -128,8 +117,6 @@
         height: 48px;
         font-weight: 500;
         cursor: pointer;
-        -webkit-appearance: none;
-        appearance: none;
     }
 
     .add-button:active {
@@ -140,10 +127,6 @@
     .screen {
         display: none;
         padding: 16px;
-        padding-bottom: calc(140px + var(--bottom-safe-area) + var(--keyboard-height));
-        min-height: 100%;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
     }
 
     .screen.active {
@@ -170,7 +153,7 @@
     }
 
     .pair-name {
-        font-size: 14px;
+        font-size: 7px;
         font-weight: 600;
         color: var(--tg-theme-text-color);
         margin-left: 16px;
@@ -189,17 +172,15 @@
         border-radius: var(--border-radius);
         padding: 8px 16px;
         width: 100px;
-        height: 32px;
+        height: 22px;
         font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
-        font-size: 14px;
+        font-size: 10px;
         font-weight: 500;
         cursor: pointer;
         text-align: center;
         display: flex;
         justify-content: center;
         align-items: center;
-        -webkit-appearance: none;
-        appearance: none;
     }
 
     .bid {
@@ -216,19 +197,17 @@
         background: rgba(255, 255, 255, 0.1);
         border: none;
         color: var(--tg-theme-hint-color);
-        width: 28px;
-        height: 28px;
+        width: 20px;
+        height: 20px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 18px;
+        font-size: 15px;
         cursor: pointer;
         margin-left: 8px;
         line-height: 1;
         padding: 0;
-        -webkit-appearance: none;
-        appearance: none;
     }
 
     .bottom-panel {
@@ -236,21 +215,21 @@
         bottom: 0;
         left: 0;
         right: 0;
-        background: rgba(44, 46, 51, 0.95);
+        background: rgba(0, 0, 0, 0.1);
         padding: 16px;
         padding-bottom: max(16px, env(safe-area-inset-bottom));
         border-top: 1px solid rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
-        transform: translateZ(0);
         transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        z-index: 1000;
+        will-change: transform;
+        transform: translate3d(0, var(--keyboard-offset), 0);
     }
 
     .bottom-controls {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 5px;
     }
 
     .fee-controls {
@@ -266,25 +245,21 @@
         border-radius: var(--border-radius);
         color: var(--tg-theme-text-color);
         padding: 6px;
-        height: 36px;
-        width: 60px;
+        height: 30px;
+        width: 45px;
         text-align: center;
         font-weight: 500;
-        font-size: 14px;
-        -webkit-appearance: none;
-        appearance: none;
+        font-size: 12px;
     }
 
     .fee-button {
         background: none;
         border: none;
         color: var(--tg-theme-text-color);
-        font-size: 14px;
-        padding: 8px 12px;
+        font-size: 10px;
+        padding: 0;
         cursor: pointer;
         opacity: 0.8;
-        -webkit-appearance: none;
-        appearance: none;
     }
 
     .equation-row {
@@ -296,17 +271,15 @@
 
     .done-button {
         position: absolute;
-        top: -32px;
-        right: 0;
+        top: -25px;
+        right: 50px;
         background: none;
         border: none;
         color: var(--tg-theme-text-color);
-        font-size: 14px;
-        padding: 8px 16px;
+        font-size: 10px;
+        padding: 0;
         cursor: pointer;
         opacity: 0.8;
-        -webkit-appearance: none;
-        appearance: none;
     }
 
     .equation-input {
@@ -314,12 +287,10 @@
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: var(--border-radius);
         color: var(--tg-theme-text-color);
-        padding: 8px 12px;
-        height: 36px;
+        padding: 6px 12px;
+        height: 30px;
         flex-grow: 1;
-        font-size: 14px;
-        -webkit-appearance: none;
-        appearance: none;
+        font-size: 12px;
     }
 
     .nav {
@@ -334,13 +305,11 @@
         background: none;
         border: none;
         color: var(--tg-theme-hint-color);
-        padding: 8px 16px;
-        font-size: 14px;
+        padding: 6px 16px;
+        font-size: 12px;
         font-weight: 500;
         border-radius: var(--border-radius);
         cursor: pointer;
-        -webkit-appearance: none;
-        appearance: none;
     }
 
     .nav-button.active {
@@ -383,13 +352,8 @@
     }
 
     body.keyboard-visible {
-        height: 100%;
         overflow: hidden;
-    }
-
-    body.keyboard-visible .bottom-panel {
-        position: absolute;
-        transform: translate3d(0, calc(-1 * var(--keyboard-height)), 0);
+        height: 100%;
     }
 
     @supports (padding: max(0px)) {
@@ -428,7 +392,7 @@
     <div class="bottom-panel">
         <div class="bottom-controls">
             <div class="fee-controls">
-                <input type="number" id="fee-input-bottom" class="fee-input" placeholder="%" value="0.02" step="0.01" inputmode="decimal">
+                <input type="number" id="fee-input-bottom" class="fee-input" placeholder="%" value="0.02" step="0.01">
                 <button class="fee-button" onclick="applyFeeFromBottom()">Применить комиссию</button>
             </div>
             <div class="equation-row">
@@ -447,8 +411,6 @@
         let pairs = {};
         let equations = {};
         let equationCount = 0;
-        let keyboardHeight = 0;
-        let isKeyboardVisible = false;
         
         tg.expand();
         tg.ready();
@@ -459,35 +421,33 @@
             if (!visualViewport) return;
 
             let lastHeight = visualViewport.height;
+            const bottomPanel = document.querySelector('.bottom-panel');
 
             visualViewport.addEventListener('resize', () => {
                 if (visualViewport.height < lastHeight) {
-                    // Keyboard is showing
-                    keyboardHeight = lastHeight - visualViewport.height;
-                    document.documentElement.style.setProperty('--keyboard-height', `${keyboardHeight}px`);
+                    // Клавиатура показывается
+                    const keyboardHeight = Math.max(0, lastHeight - visualViewport.height);
+                    document.documentElement.style.setProperty('--keyboard-offset', `-${keyboardHeight}px`);
                     document.body.classList.add('keyboard-visible');
-                    isKeyboardVisible = true;
-                    
-                    // Scroll active element into view with a delay to ensure proper positioning
-                    setTimeout(() => {
-                        if (document.activeElement.tagName === 'INPUT') {
-                            document.activeElement.scrollIntoView({
-                                behavior: 'smooth',
-                                block: 'center'
-                            });
-                        }
-                    }, 100);
+
+                    // Прокрутка к активному элементу
+                    if (document.activeElement.tagName === 'INPUT') {
+                        setTimeout(() => {
+                            const rect = document.activeElement.getBoundingClientRect();
+                            const isVisible = rect.top >= 0 && 
+                                           rect.bottom <= visualViewport.height;
+                            
+                            if (!isVisible) {
+                                document.activeElement.scrollIntoView({
+                                    block: 'center'
+                                });
+                            }
+                        }, 100);
+                    }
                 } else {
-                    // Keyboard is hiding
-                    document.documentElement.style.setProperty('--keyboard-height', '0px');
+                    // Клавиатура скрывается
+                    document.documentElement.style.setProperty('--keyboard-offset', '0px');
                     document.body.classList.remove('keyboard-visible');
-                    isKeyboardVisible = false;
-                    
-                    // Reset scroll position smoothly
-                    window.scrollTo({
-                        top: 0,
-                        behavior: 'smooth'
-                    });
                 }
                 lastHeight = visualViewport.height;
             });
@@ -505,13 +465,6 @@
                 { symbol: 'ETHUSDT', exchange: 'OKX', bid: '2298.00', ask: '2312.00' },
                 { symbol: 'SOLUSDT', exchange: 'Mexc', bid: '98.40', ask: '98.60' },
             ].forEach(pair => createPairElement(pair));
-
-            // Prevent scroll to top on keyboard hide
-            window.addEventListener('scroll', (e) => {
-                if (isKeyboardVisible) {
-                    e.preventDefault();
-                }
-            }, { passive: false });
         });
 
         function createPairElement(pair) {
@@ -550,7 +503,6 @@
                 return;
             }
 
-            // Генерируем случайные цены для тестов
             const basePrice = 100 + Math.random() * 900;
             createPairElement({
                 symbol,
@@ -561,14 +513,6 @@
             
             symbolInput.value = '';
             symbolInput.blur();
-
-            // Плавная прокрутка к новой паре
-            setTimeout(() => {
-                const newPair = document.querySelector(`[data-pair="${pairKey}"]`);
-                if (newPair) {
-                    newPair.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }
-            }, 100);
         }
 
         function removePair(pairKey) {
@@ -586,11 +530,6 @@
             input.value = text.slice(0, pos) + value + text.slice(pos);
             input.focus();
             input.setSelectionRange(pos + value.length, pos + value.length);
-
-            // Прокрутка к полю ввода
-            setTimeout(() => {
-                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 100);
         }
 
         function applyFeeFromBottom() {
@@ -630,16 +569,10 @@
 
             input.value = text;
             input.focus();
-
-            // Прокрутка к полю ввода
-            setTimeout(() => {
-                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 100);
         }
 
         function addEquationFromBottom() {
-            const equationInput = document.getElementById('equation-input-bottom');
-            const equation = equationInput.value.trim();
+            const equation = document.getElementById('equation-input-bottom').value.trim();
             if (!equation) return;
 
             equationCount++;
@@ -654,19 +587,13 @@
                 <button class="remove-button" onclick="removeEquation(${equationCount})">×</button>
             `;
 
-            const equationsList = document.getElementById('equations-list');
-            equationsList.appendChild(el);
+            document.getElementById('equations-list').appendChild(el);
             equations[equationCount] = { element: el, expression: equation };
             
-            equationInput.value = '';
-            equationInput.blur();
+            document.getElementById('equation-input-bottom').value = '';
+            document.getElementById('equation-input-bottom').blur();
 
-            // Переключаемся на экран уравнений и прокручиваем к новому уравнению
             showScreen('equations');
-            setTimeout(() => {
-                el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }, 100);
-
             calculateEquation(equationCount);
         }
 
@@ -707,9 +634,6 @@
             
             document.getElementById(`${screenName}-screen`).classList.add('active');
             document.querySelector(`.nav-button[onclick*="${screenName}"]`).classList.add('active');
-
-            // Reset scroll position when switching screens
-            window.scrollTo(0, 0);
         }
 
         // Input event handlers
@@ -728,15 +652,9 @@
         });
 
         // Prevent iOS double-tap zoom
-        let lastTapTime = 0;
         document.addEventListener('touchend', (e) => {
-            const currentTime = new Date().getTime();
-            const tapLength = currentTime - lastTapTime;
-            if (tapLength < 500 && tapLength > 0) {
-                e.preventDefault();
-            }
-            lastTapTime = currentTime;
-        });
+            e.preventDefault();
+        }, { passive: false });
 
         // Prevent iOS bounce effect
         document.body.addEventListener('touchmove', (e) => {
@@ -748,7 +666,6 @@
         setInterval(() => {
             Object.keys(equations).forEach(calculateEquation);
         }, 1000);
-
     </script>
 </body>
 </html>
