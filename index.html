@@ -1,260 +1,394 @@
-import React, { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Timer, Users, Trophy, Settings, PlayCircle, PauseCircle, Crown } from 'lucide-react';
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Alias Game</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --tg-theme-bg-color: #1a1b1e;
+            --tg-theme-text-color: #ffffff;
+            --tg-theme-button-color: #3b82f6;
+            --tg-theme-button-text-color: #ffffff;
+            --tg-theme-secondary-bg-color: #2c2c2c;
+        }
 
-// Базовые наборы слов по категориям
-const wordSets = {
-  easy: [
-    'кошка', 'собака', 'дом', 'солнце', 'дерево', 'книга', 'телефон', 'стол', 'вода', 'хлеб',
-    'машина', 'школа', 'мяч', 'цветок', 'птица', 'рыба', 'море', 'гора', 'снег', 'дождь',
-  ],
-  medium: [
-    'архитектура', 'велосипед', 'гитара', 'динозавр', 'живопись', 'интернет', 'календарь',
-    'микроскоп', 'небоскреб', 'олимпиада', 'парашют', 'революция', 'телескоп', 'фестиваль',
-  ],
-  hard: [
-    'амбивалентность', 'бюрократия', 'витализм', 'гносеология', 'диссертация', 'эклектика',
-    'интеграция', 'каламбур', 'метафизика', 'нумизматика', 'оптимизация', 'парадигма',
-  ],
-};
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-const ROUND_TIME = 60; // время раунда в секундах
+        body {
+            background-color: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 16px;
+            min-height: 100vh;
+        }
 
-const AliasGame = () => {
-  // Состояния игры
-  const [gameState, setGameState] = useState('menu'); // menu, setup, game, results
-  const [teams, setTeams] = useState([
-    { id: 1, name: 'Команда 1', score: 0, players: [] },
-    { id: 2, name: 'Команда 2', score: 0, players: [] },
-  ]);
-  const [currentTeam, setCurrentTeam] = useState(0);
-  const [currentWord, setCurrentWord] = useState('');
-  const [usedWords, setUsedWords] = useState([]);
-  const [roundWords, setRoundWords] = useState([]);
-  const [timeLeft, setTimeLeft] = useState(ROUND_TIME);
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [difficulty, setDifficulty] = useState('easy');
-  const [winScore, setWinScore] = useState(50);
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
 
-  // Эффект для таймера
-  useEffect(() => {
-    let timer;
-    if (isTimerRunning && timeLeft > 0) {
-      timer = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (timeLeft === 0) {
-      endRound();
-    }
-    return () => clearInterval(timer);
-  }, [isTimerRunning, timeLeft]);
+        .card {
+            background-color: var(--tg-theme-secondary-bg-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
 
-  // Начало новой игры
-  const startGame = () => {
-    setGameState('game');
-    setUsedWords([]);
-    teams.forEach(team => team.score = 0);
-    startRound();
-  };
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+        }
 
-  // Начало нового раунда
-  const startRound = () => {
-    setTimeLeft(ROUND_TIME);
-    setRoundWords([]);
-    setIsTimerRunning(true);
-    getNextWord();
-  };
+        .button {
+            background-color: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: 16px;
+            width: 100%;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
 
-  // Получение следующего слова
-  const getNextWord = () => {
-    const availableWords = wordSets[difficulty].filter(
-      word => !usedWords.includes(word)
-    );
-    if (availableWords.length === 0) {
-      // Если слова закончились, очищаем использованные
-      setUsedWords([]);
-      const word = wordSets[difficulty][Math.floor(Math.random() * wordSets[difficulty].length)];
-      setCurrentWord(word);
-    } else {
-      const word = availableWords[Math.floor(Math.random() * availableWords.length)];
-      setCurrentWord(word);
-      setUsedWords([...usedWords, word]);
-    }
-  };
+        .button-outline {
+            background-color: transparent;
+            border: 2px solid var(--tg-theme-button-color);
+        }
 
-  // Обработка угаданного слова
-  const handleCorrect = () => {
-    setRoundWords([...roundWords, { word: currentWord, correct: true }]);
-    getNextWord();
-  };
+        .word-card {
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-  // Обработка пропущенного слова
-  const handleSkip = () => {
-    setRoundWords([...roundWords, { word: currentWord, correct: false }]);
-    getNextWord();
-  };
+        .timer {
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
 
-  // Завершение раунда
-  const endRound = () => {
-    setIsTimerRunning(false);
-    const correctWords = roundWords.filter(w => w.correct).length;
-    const newTeams = [...teams];
-    newTeams[currentTeam].score += correctWords;
-    setTeams(newTeams);
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
 
-    if (newTeams[currentTeam].score >= winScore) {
-      setGameState('results');
-    } else {
-      setCurrentTeam((currentTeam + 1) % teams.length);
-    }
-  };
+        .team-score {
+            text-align: center;
+        }
 
-  // Рендер меню
-  const renderMenu = () => (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold text-center mb-4">Alias</h1>
-      <Button 
-        className="w-full" 
-        onClick={() => setGameState('setup')}
-      >
-        <PlayCircle className="mr-2 h-4 w-4" />
-        Новая игра
-      </Button>
-      <Button 
-        className="w-full"
-        variant="outline"
-        onClick={() => setGameState('settings')}
-      >
-        <Settings className="mr-2 h-4 w-4" />
-        Настройки
-      </Button>
-    </div>
-  );
+        .team-name {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
 
-  // Рендер настроек игры
-  const renderSetup = () => (
-    <div className="flex flex-col gap-4">
-      <h2 className="text-xl font-bold">Настройка игры</h2>
-      <div className="flex flex-col gap-2">
-        <label className="font-medium">Сложность:</label>
-        <select 
-          className="p-2 rounded bg-gray-700"
-          value={difficulty} 
-          onChange={(e) => setDifficulty(e.target.value)}
-        >
-          <option value="easy">Легкая</option>
-          <option value="medium">Средняя</option>
-          <option value="hard">Сложная</option>
-        </select>
-      </div>
-      <Button onClick={startGame}>Начать игру</Button>
-      <Button variant="outline" onClick={() => setGameState('menu')}>Назад</Button>
-    </div>
-  );
+        .score {
+            font-size: 24px;
+            font-weight: bold;
+        }
 
-  // Рендер игрового процесса
-  const renderGame = () => (
-    <div className="flex flex-col gap-4">
-      <div className="flex justify-between items-center">
-        <div className="text-xl font-bold">
-          {teams[currentTeam].name}
+        .word-history {
+            margin-top: 20px;
+        }
+
+        .word-item {
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+        }
+
+        .word-correct {
+            background-color: rgba(34, 197, 94, 0.2);
+        }
+
+        .word-incorrect {
+            background-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .settings {
+            margin-bottom: 20px;
+        }
+
+        .select {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--tg-theme-secondary-bg-color);
+            color: var(--tg-theme-text-color);
+            border: 1px solid var(--tg-theme-button-color);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Меню -->
+        <div id="menu" class="card">
+            <div class="title">Alias</div>
+            <button class="button" onclick="showScreen('setup')">Новая игра</button>
+            <button class="button button-outline" onclick="showScreen('settings')">Настройки</button>
         </div>
-        <div className="flex items-center gap-2">
-          <Timer className="h-5 w-5" />
-          <span className="text-xl">{timeLeft}с</span>
-        </div>
-      </div>
 
-      <Card className="p-6 text-center">
-        <h1 className="text-3xl font-bold mb-4">{currentWord}</h1>
-        <div className="flex gap-2">
-          <Button 
-            className="flex-1" 
-            variant="outline"
-            onClick={handleSkip}
-          >
-            Пропустить
-          </Button>
-          <Button 
-            className="flex-1"
-            onClick={handleCorrect}
-          >
-            Угадали!
-          </Button>
-        </div>
-      </Card>
-
-      <div className="flex justify-between">
-        {teams.map((team, index) => (
-          <div key={team.id} className="text-center">
-            <div className="font-medium">{team.name}</div>
-            <div className={`text-xl font-bold ${index === currentTeam ? 'text-blue-500' : ''}`}>
-              {team.score}
+        <!-- Настройки -->
+        <div id="setup" class="card hidden">
+            <div class="title">Настройки игры</div>
+            <div class="settings">
+                <select id="difficulty" class="select">
+                    <option value="easy">Легкий уровень</option>
+                    <option value="medium">Средний уровень</option>
+                    <option value="hard">Сложный уровень</option>
+                </select>
+                <select id="winScore" class="select">
+                    <option value="30">До 30 очков</option>
+                    <option value="50">До 50 очков</option>
+                    <option value="100">До 100 очков</option>
+                </select>
             </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-4">
-        <h3 className="font-medium mb-2">Слова в этом раунде:</h3>
-        <div className="flex flex-col gap-1">
-          {roundWords.map((item, index) => (
-            <div 
-              key={index}
-              className={`px-2 py-1 rounded ${
-                item.correct ? 'bg-green-900/20' : 'bg-red-900/20'
-              }`}
-            >
-              {item.word}
-            </div>
-          ))}
+            <button class="button" onclick="startGame()">Начать игру</button>
+            <button class="button button-outline" onclick="showScreen('menu')">Назад</button>
         </div>
-      </div>
+
+        <!-- Игра -->
+        <div id="game" class="card hidden">
+            <div class="timer" id="timer">60</div>
+            <div class="score-board">
+                <div class="team-score">
+                    <div class="team-name">Команда 1</div>
+                    <div class="score" id="team1-score">0</div>
+                </div>
+                <div class="team-score">
+                    <div class="team-name">Команда 2</div>
+                    <div class="score" id="team2-score">0</div>
+                </div>
+            </div>
+            <div class="word-card" id="current-word"></div>
+            <div class="controls">
+                <button class="button" onclick="handleCorrect()">Угадали!</button>
+                <button class="button button-outline" onclick="handleSkip()">Пропустить</button>
+            </div>
+            <div class="word-history" id="word-history"></div>
+        </div>
+
+        <!-- Результаты -->
+        <div id="results" class="card hidden">
+            <div class="title">Игра окончена!</div>
+            <div id="winner" class="title"></div>
+            <div class="score-board">
+                <div class="team-score">
+                    <div class="team-name">Команда 1</div>
+                    <div class="score" id="final-team1-score">0</div>
+                </div>
+                <div class="team-score">
+                    <div class="team-name">Команда 2</div>
+                    <div class="score" id="final-team2-score">0</div>
+                </div>
+            </div>
+            <button class="button" onclick="showScreen('menu')">В главное меню</button>
+        </div>
     </div>
-  );
 
-  // Рендер результатов
-  const renderResults = () => {
-    const winner = teams.reduce((prev, current) => 
-      (prev.score > current.score) ? prev : current
-    );
+    <script>
+        // Инициализация Telegram WebApp
+        let tg = window.Telegram.WebApp;
+        tg.expand();
 
-    return (
-      <div className="flex flex-col items-center gap-4">
-        <Trophy className="h-16 w-16 text-yellow-500" />
-        <h2 className="text-2xl font-bold">Игра окончена!</h2>
-        <div className="text-xl">Победитель: {winner.name}</div>
-        <div className="w-full mt-4">
-          {teams.map(team => (
-            <div key={team.id} className="flex justify-between items-center py-2">
-              <div className="flex items-center gap-2">
-                {team.id === winner.id && <Crown className="h-5 w-5 text-yellow-500" />}
-                {team.name}
-              </div>
-              <div className="font-bold">{team.score}</div>
-            </div>
-          ))}
-        </div>
-        <Button 
-          className="w-full mt-4" 
-          onClick={() => setGameState('menu')}
-        >
-          Вернуться в меню
-        </Button>
-      </div>
-    );
-  };
+        // Наборы слов
+        const words = {
+            easy: [
+                'кошка', 'собака', 'дом', 'солнце', 'дерево', 'книга', 'телефон',
+                'стол', 'вода', 'хлеб', 'машина', 'школа', 'мяч', 'цветок',
+                'птица', 'рыба', 'море', 'гора', 'снег', 'дождь'
+            ],
+            medium: [
+                'архитектура', 'велосипед', 'гитара', 'динозавр', 'живопись',
+                'интернет', 'календарь', 'микроскоп', 'небоскреб', 'олимпиада',
+                'парашют', 'революция', 'телескоп', 'фестиваль'
+            ],
+            hard: [
+                'амбивалентность', 'бюрократия', 'витализм', 'гносеология',
+                'диссертация', 'эклектика', 'интеграция', 'каламбур',
+                'метафизика', 'нумизматика', 'оптимизация', 'парадигма'
+            ]
+        };
 
-  // Основной рендер
-  return (
-    <Card className="w-full max-w-md mx-auto p-6 bg-gray-900">
-      {gameState === 'menu' && renderMenu()}
-      {gameState === 'setup' && renderSetup()}
-      {gameState === 'game' && renderGame()}
-      {gameState === 'results' && renderResults()}
-    </Card>
-  );
-};
+        // Состояние игры
+        let gameState = {
+            currentTeam: 0,
+            teams: [
+                { score: 0 },
+                { score: 0 }
+            ],
+            currentWord: '',
+            usedWords: [],
+            roundWords: [],
+            timer: 60,
+            timerInterval: null,
+            difficulty: 'easy',
+            winScore: 50
+        };
 
-export default AliasGame;
+        // Показ экрана
+        function showScreen(screenId) {
+            ['menu', 'setup', 'game', 'results'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        // Начало игры
+        function startGame() {
+            gameState.difficulty = document.getElementById('difficulty').value;
+            gameState.winScore = parseInt(document.getElementById('winScore').value);
+            gameState.teams[0].score = 0;
+            gameState.teams[1].score = 0;
+            gameState.usedWords = [];
+            gameState.currentTeam = 0;
+            updateScores();
+            startRound();
+            showScreen('game');
+        }
+
+        // Начало раунда
+        function startRound() {
+            gameState.timer = 60;
+            gameState.roundWords = [];
+            updateTimer();
+            getNextWord();
+            updateWordHistory();
+            
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+            }
+            
+            gameState.timerInterval = setInterval(() => {
+                gameState.timer--;
+                updateTimer();
+                if (gameState.timer <= 0) {
+                    endRound();
+                }
+            }, 1000);
+        }
+
+        // Получение следующего слова
+        function getNextWord() {
+            const availableWords = words[gameState.difficulty].filter(
+                word => !gameState.usedWords.includes(word)
+            );
+            
+            if (availableWords.length === 0) {
+                gameState.usedWords = [];
+                gameState.currentWord = words[gameState.difficulty][
+                    Math.floor(Math.random() * words[gameState.difficulty].length)
+                ];
+            } else {
+                gameState.currentWord = availableWords[
+                    Math.floor(Math.random() * availableWords.length)
+                ];
+            }
+            
+            gameState.usedWords.push(gameState.currentWord);
+            document.getElementById('current-word').textContent = gameState.currentWord;
+        }
+
+        // Обработка угаданного слова
+        function handleCorrect() {
+            gameState.roundWords.push({
+                word: gameState.currentWord,
+                correct: true
+            });
+            getNextWord();
+            updateWordHistory();
+        }
+
+        // Обработка пропущенного слова
+        function handleSkip() {
+            gameState.roundWords.push({
+                word: gameState.currentWord,
+                correct: false
+            });
+            getNextWord();
+            updateWordHistory();
+        }
+
+        // Завершение раунда
+        function endRound() {
+            clearInterval(gameState.timerInterval);
+            const correctWords = gameState.roundWords.filter(w => w.correct).length;
+            gameState.teams[gameState.currentTeam].score += correctWords;
+            updateScores();
+
+            if (gameState.teams[gameState.currentTeam].score >= gameState.winScore) {
+                endGame();
+            } else {
+                gameState.currentTeam = (gameState.currentTeam + 1) % 2;
+                startRound();
+            }
+        }
+
+        // Завершение игры
+        function endGame() {
+            document.getElementById('final-team1-score').textContent = 
+                gameState.teams[0].score;
+            document.getElementById('final-team2-score').textContent = 
+                gameState.teams[1].score;
+            
+            const winner = gameState.teams[0].score > gameState.teams[1].score ? 1 : 2;
+            document.getElementById('winner').textContent = 
+                `Победила команда ${winner}!`;
+            
+            showScreen('results');
+        }
+
+        // Обновление таймера
+        function updateTimer() {
+            document.getElementById('timer').textContent = 
+                `${gameState.timer} сек`;
+        }
+
+        // Обновление счета
+        function updateScores() {
+            document.getElementById('team1-score').textContent = 
+                gameState.teams[0].score;
+            document.getElementById('team2-score').textContent = 
+                gameState.teams[1].score;
+        }
+
+        // Обновление истории слов
+        function updateWordHistory() {
+            const historyElement = document.getElementById('word-history');
+            historyElement.innerHTML = '';
+            
+            gameState.roundWords.forEach(wordObj => {
+                const wordElement = document.createElement('div');
+                wordElement.className = `word-item ${
+                    wordObj.correct ? 'word-correct' : 'word-incorrect'
+                }`;
+                wordElement.textContent = wordObj.word;
+                historyElement.appendChild(wordElement);
+            });
+        }
+
+        // Показываем начальный экран
+        showScreen('menu');
+    </script>
+</body>
+</html>
