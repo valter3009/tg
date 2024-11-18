@@ -213,6 +213,7 @@
         transition: var(--transition-base);
         flex-direction: row-reverse;
     }
+
     .pair-item:active {
         transform: scale(0.995);
     }
@@ -428,10 +429,6 @@
                         <span>OKX</span>
                         <input type="number" value="0.1" step="0.01" class="exchange-fee" data-exchange="okx">
                     </div>
-                    <div class="custom-select-option" data-value="KuCoin">
-                        <span>KuCoin</span>
-                        <input type="number" value="0.1" step="0.01" class="exchange-fee" data-exchange="kucoin">
-                    </div>
                 </div>
             </div>
             <button onclick="addPair()" class="add-button">Добавить</button>
@@ -447,6 +444,8 @@
             <div id="equations-list" class="pairs-list"></div>
         </div>
     </div>
+
+    <script>
     class EquationManager {
         constructor() {
             this.equations = {};
@@ -595,13 +594,16 @@
         }
     }
 
+    // Global variables
     let tg = window.Telegram.WebApp;
     let pairs = {};
     let equations = {};
     let connections = {};
-    let wsReconnectTimers = {};
-    let pingIntervals = {};
     const equationManager = new EquationManager();
+
+    tg.expand();
+    tg.ready();
+
     const exchangeConfigs = {
         'Mexc': {
             wsUrl: 'wss://wbs.mexc.com/ws',
@@ -657,209 +659,10 @@
                 }
                 return null;
             }
-        },
-        'KuCoin': {
-            wsUrl: 'wss://push1.kucoin.com/endpoint',
-            subscribeFormat: (symbol) => ({
-                id: Date.now(),
-                type: 'subscribe',
-                topic: `/market/ticker:${symbol.slice(0, -4)}-${symbol.slice(-4)}`,
-                privateChannel: false,
-                response: true
-            }),
-            parseMessage: (data) => {
-                if (data.type === 'message' && data.subject === 'trade.ticker') {
-                    try {
-                        const symbolParts = data.topic.split(':')[1];
-                        const symbol = symbolParts.replace('-', '');
-                        return {
-                            symbol: symbol,
-                            bid: data.data.bestBid,
-                            ask: data.data.bestAsk
-                        };
-                    } catch (e) {
-                        console.error('Error parsing KuCoin message:', e);
-                        return null;
-                    }
-                }
-                return null;
-            }
         }
     };
 
-    tg.expand();
-    tg.ready();
-
-    async function getKuCoinWsToken() {
-        try {
-            const response = await fetch('https://api.kucoin.com/api/v1/bullet-public', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            const data = await response.json();
-            
-            if (data.code === '200000' && data.data) {
-                const serverInfo = data.data.instanceServers[0];
-                return `${serverInfo.endpoint}?token=${data.data.token}`;
-            }
-            throw new Error('Failed to get KuCoin WebSocket token');
-        } catch (error) {
-            console.error('KuCoin WebSocket token error:', error);
-            throw error;
-        }
-    }
-
-    function startKucoinPing(ws, pairKey) {
-        console.log(`Starting ping for ${pairKey}`);
-        const pingInterval = setInterval(() => {
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
-                    id: Date.now(),
-                    type: 'ping'
-                }));
-            } else {
-                clearInterval(pingInterval);
-                console.log(`Clearing ping interval for ${pairKey} due to closed connection`);
-            }
-        }, 20000);
-
-        pingIntervals[pairKey] = pingInterval;
-
-        ws.addEventListener('close', () => {
-            clearInterval(pingInterval);
-            delete pingIntervals[pairKey];
-            console.log(`WebSocket closed for ${pairKey}, ping interval cleared`);
-        });
-    }
-
-    async function connectWebSocket(exchange, symbol) {
-        const config = exchangeConfigs[exchange];
-        let wsUrl = config.wsUrl;
-        const pairKey = `${exchange}_${symbol}`;
-
-        console.log(`Connecting to ${exchange} for ${symbol}`);
-        
-        if (exchange === 'KuCoin') {
-            try {
-                wsUrl = await getKuCoinWsToken();
-                console.log('KuCoin token received, connecting to:', wsUrl);
-            } catch (error) {
-                console.error('Failed to connect to KuCoin:', error);
-                return;
-            }
-        }
-
-        const ws = new WebSocket(wsUrl);
-        
-        ws.onopen = () => {
-            console.log(`WebSocket connected for ${exchange}`);
-            let subscribeSymbol = symbol;
-            
-            if (exchange === 'KuCoin') {
-                startKucoinPing(ws, pairKey);
-            }
-            
-            const subscribeMsg = config.subscribeFormat(subscribeSymbol);
-            console.log(`Sending subscribe message for ${exchange}:`, subscribeMsg);
-            ws.send(JSON.stringify(subscribeMsg));
-            
-            if (wsReconnectTimers[pairKey]) {
-                clearTimeout(wsReconnectTimers[pairKey]);
-                delete wsReconnectTimers[pairKey];
-            }
-        };
-        
-        ws.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                
-                if (exchange === 'KuCoin') {
-                    if (data.type === 'pong' || data.type === 'welcome' || data.type === 'ack') {
-                        return;
-                    }
-                    console.log(`KuCoin message received:`, data);
-                }
-                
-                const parsed = config.parseMessage(data);
-                if (parsed) {
-                    updatePairPrices(exchange, parsed.symbol, parsed.bid, parsed.ask);
-                }
-            } catch (error) {
-                console.error(`Error parsing WebSocket message for ${exchange}:`, error);
-            }
-        };
-        
-        ws.onerror = (error) => {
-            console.error(`WebSocket error for ${exchange}:`, error);
-        };
-        
-        ws.onclose = () => {
-            console.log(`WebSocket closed for ${exchange}`);
-            
-            if (pingIntervals[pairKey]) {
-                clearInterval(pingIntervals[pairKey]);
-                delete pingIntervals[pairKey];
-            }
-            
-            if (!wsReconnectTimers[pairKey]) {
-                wsReconnectTimers[pairKey] = setTimeout(() => {
-                    delete wsReconnectTimers[pairKey];
-                    connectWebSocket(exchange, symbol);
-                }, 5000);
-            }
-        };
-        
-        return ws;
-    }
-    function addDefaultPairs() {
-        const defaultPairs = [
-            { symbol: 'BTCUSDT', exchange: 'Mexc' },
-            { symbol: 'BTCUSDT', exchange: 'Bybit' },
-            { symbol: 'BTCUSDT', exchange: 'OKX' },
-            { symbol: 'BTCUSDT', exchange: 'KuCoin' },
-            { symbol: 'ETHUSDT', exchange: 'Mexc' },
-            { symbol: 'ETHUSDT', exchange: 'Bybit' },
-            { symbol: 'ETHUSDT', exchange: 'OKX' },
-            { symbol: 'ETHUSDT', exchange: 'KuCoin' }
-        ];
-
-        for (const pair of defaultPairs) {
-            const pairKey = `${pair.exchange}_${pair.symbol}`;
-            
-            if (pairs[pairKey]) continue;
-
-            const pairElement = document.createElement('div');
-            pairElement.className = 'pair-item';
-            pairElement.setAttribute('data-pair', pairKey);
-            pairElement.innerHTML = `
-                <div class="pair-name">${pair.symbol} ${pair.exchange}</div>
-                <div class="price-container">
-                    <button class="price-button bid" onclick="addToEquation('${pair.symbol}_${pair.exchange}_bid')">Загрузка...</button>
-                    <button class="price-button ask" onclick="addToEquation('${pair.symbol}_${pair.exchange}_ask')">Загрузка...</button>
-                    <button class="remove-button" onclick="removePair('${pairKey}')">×</button>
-                </div>
-            `;
-            
-            document.getElementById('pairs-list').appendChild(pairElement);
-            pairs[pairKey] = pairElement;
-            
-            connectWebSocket(pair.exchange, pair.symbol).then(ws => {
-                if (ws) {
-                    connections[pairKey] = ws;
-                }
-            });
-        }
-    }
-
-    function showScreen(screenName) {
-        document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
-        document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
-        document.getElementById(`${screenName}-screen`).classList.add('active');
-        document.querySelector(`.nav-button[onclick="showScreen('${screenName}')"]`).classList.add('active');
-    }
-
+    // Custom Select Implementation
     const customSelect = document.getElementById('exchange-select-container');
     const selectHeader = customSelect.querySelector('.custom-select-header');
     const selectOptions = customSelect.querySelector('.custom-select-options');
@@ -883,6 +686,77 @@
             customSelect.classList.remove('active');
         }
     });
+
+    // UI Functions
+    function showScreen(screenName) {
+        document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+        document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`${screenName}-screen`).classList.add('active');
+        document.querySelector(`.nav-button[onclick="showScreen('${screenName}')"]`).classList.add('active');
+    }
+
+    async function connectWebSocket(exchange, symbol) {
+        const config = exchangeConfigs[exchange];
+        const ws = new WebSocket(config.wsUrl);
+        
+        ws.onopen = () => {
+            ws.send(JSON.stringify(config.subscribeFormat(symbol)));
+        };
+        
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            const parsed = config.parseMessage(data);
+            if (parsed) {
+                updatePairPrices(exchange, parsed.symbol, parsed.bid, parsed.ask);
+            }
+        };
+        
+        ws.onerror = (error) => {
+            console.error(`WebSocket error for ${exchange}:`, error);
+        };
+        
+        ws.onclose = () => {
+            setTimeout(() => connectWebSocket(exchange, symbol), 5000);
+        };
+        
+        return ws;
+    }
+
+    function addDefaultPairs() {
+        const defaultPairs = [
+            { symbol: 'BTCUSDT', exchange: 'Mexc' },
+            { symbol: 'BTCUSDT', exchange: 'Bybit' },
+            { symbol: 'BTCUSDT', exchange: 'OKX' },
+            { symbol: 'ETHUSDT', exchange: 'Mexc' },
+            { symbol: 'ETHUSDT', exchange: 'Bybit' },
+            { symbol: 'ETHUSDT', exchange: 'OKX' }
+        ];
+
+        for (const pair of defaultPairs) {
+            const pairKey = `${pair.exchange}_${pair.symbol}`;
+            
+            if (pairs[pairKey]) continue;
+
+            const pairElement = document.createElement('div');
+            pairElement.className = 'pair-item';
+            pairElement.setAttribute('data-pair', pairKey);
+            pairElement.innerHTML = `
+                <div class="pair-name">${pair.symbol} ${pair.exchange}</div>
+                <div class="price-container">
+                    <button class="price-button bid" onclick="addToEquation('${pair.symbol}_${pair.exchange}_bid')">Загрузка...</button>
+                    <button class="price-button ask" onclick="addToEquation('${pair.symbol}_${pair.exchange}_ask')">Загрузка...</button>
+                    <button class="remove-button" onclick="removePair('${pairKey}')">×</button>
+                </div>
+            `;
+            
+            document.getElementById('pairs-list').appendChild(pairElement);
+            pairs[pairKey] = pairElement;
+            
+            connectWebSocket(pair.exchange, pair.symbol).then(ws => {
+                connections[pairKey] = ws;
+            });
+        }
+    }
 
     function addPair() {
         const symbol = document.getElementById('pair-symbol').value.toUpperCase();
@@ -915,9 +789,7 @@
         pairs[pairKey] = pairElement;
         
         connectWebSocket(exchange, symbol).then(ws => {
-            if (ws) {
-                connections[pairKey] = ws;
-            }
+            connections[pairKey] = ws;
         });
         
         document.getElementById('pair-symbol').value = '';
@@ -932,16 +804,6 @@
             if (connections[pairKey]) {
                 connections[pairKey].close();
                 delete connections[pairKey];
-            }
-
-            if (wsReconnectTimers[pairKey]) {
-                clearTimeout(wsReconnectTimers[pairKey]);
-                delete wsReconnectTimers[pairKey];
-            }
-
-            if (pingIntervals[pairKey]) {
-                clearInterval(pingIntervals[pairKey]);
-                delete pingIntervals[pairKey];
             }
             
             updateEquations();
@@ -979,12 +841,14 @@
     function addToEquation(value) {
         const equationInput = document.getElementById('equation-input-bottom');
         const [symbol, exchange, type] = value.split('_');
+        // Получаем комиссию для конкретной биржи из поля ввода в селекторе
         const feeInput = document.querySelector(`.exchange-fee[data-exchange="${exchange.toLowerCase()}"]`);
         const fee = parseFloat(feeInput.value);
         
         const cursorPosition = equationInput.selectionStart;
         const currentText = equationInput.value;
         
+        // Автоматически добавляем комиссию
         const feeMultiplier = (1 - fee/100).toFixed(4);
         const valueWithFee = type === 'bid' ? 
             `(${value}*${feeMultiplier})` : 
@@ -1055,6 +919,7 @@
         }
     }
 
+    // Event Listeners
     document.addEventListener('DOMContentLoaded', addDefaultPairs);
 
     document.addEventListener('touchstart', (e) => {
@@ -1068,12 +933,14 @@
         }
     });
 
+    // Prevent fee inputs from closing select when changing values
     document.querySelectorAll('.exchange-fee').forEach(input => {
         input.addEventListener('click', (e) => {
             e.stopPropagation();
         });
     });
 
+    // Обработка фокуса на инпутах без скрытия клавиатуры при скролле
     const inputs = document.querySelectorAll('input');
     inputs.forEach(input => {
         input.addEventListener('focus', () => {
@@ -1097,10 +964,12 @@
         }
     });
 
+    // Prevent zoom on iOS
     document.addEventListener('gesturestart', (e) => {
         e.preventDefault();
     });
 
+    // Update equations periodically
     setInterval(updateEquations, 1000);
     </script>
 </body>
