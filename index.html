@@ -597,12 +597,12 @@
             }
         }
     }
-
     let tg = window.Telegram.WebApp;
     let pairs = {};
     let equations = {};
     let connections = {};
     let wsReconnectTimers = {};
+    let pingIntervals = {};
     const equationManager = new EquationManager();
 
     const exchangeConfigs = {
@@ -664,13 +664,14 @@
         'KuCoin': {
             wsUrl: 'wss://ws-api.kucoin.com/endpoint',
             subscribeFormat: (symbol) => ({
+                id: Date.now(),
                 type: 'subscribe',
-                topic: `/market/ticker:${symbol.slice(0, -4)}-${symbol.slice(-4)}`,
+                topic: `/spotMarket/ticker:${symbol.slice(0, -4)}-${symbol.slice(-4)}`,
                 privateChannel: false,
                 response: true
             }),
             parseMessage: (data) => {
-                if (data.type === 'message' && data.subject === 'trade.ticker') {
+                if (data.subject === 'ticker' && data.data) {
                     const symbol = data.topic.split(':')[1].replace('-', '');
                     return {
                         symbol: symbol,
@@ -689,13 +690,16 @@
     async function getKuCoinWsToken() {
         try {
             const response = await fetch('https://api.kucoin.com/api/v1/bullet-public', {
-                method: 'POST'
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
             });
             const data = await response.json();
             
             if (data.code === '200000' && data.data) {
-                const wsEndpoint = data.data.instanceServers[0];
-                return `${wsEndpoint.endpoint}?token=${data.data.token}`;
+                const serverInfo = data.data.instanceServers[0];
+                return `${serverInfo.endpoint}?token=${data.data.token}&connectId=${Date.now()}`;
             }
             throw new Error('Failed to get KuCoin WebSocket token');
         } catch (error) {
@@ -704,9 +708,30 @@
         }
     }
 
+    function startKucoinPing(ws, pairKey) {
+        const pingInterval = setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    id: Date.now(),
+                    type: 'ping'
+                }));
+            } else {
+                clearInterval(pingInterval);
+            }
+        }, 30000);
+
+        pingIntervals[pairKey] = pingInterval;
+
+        ws.addEventListener('close', () => {
+            clearInterval(pingInterval);
+            delete pingIntervals[pairKey];
+        });
+    }
+
     async function connectWebSocket(exchange, symbol) {
         const config = exchangeConfigs[exchange];
         let wsUrl = config.wsUrl;
+        const pairKey = `${exchange}_${symbol}`;
         
         if (exchange === 'KuCoin') {
             try {
@@ -720,14 +745,13 @@
         const ws = new WebSocket(wsUrl);
         
         ws.onopen = () => {
+            console.log(`WebSocket connected for ${exchange}`);
             let subscribeSymbol = symbol;
             if (exchange === 'KuCoin') {
-                subscribeSymbol = `${symbol.slice(0, -4)}-${symbol.slice(-4)}`;
+                startKucoinPing(ws, pairKey);
             }
             ws.send(JSON.stringify(config.subscribeFormat(subscribeSymbol)));
             
-            // Очищаем таймер переподключения при успешном подключении
-            const pairKey = `${exchange}_${symbol}`;
             if (wsReconnectTimers[pairKey]) {
                 clearTimeout(wsReconnectTimers[pairKey]);
                 delete wsReconnectTimers[pairKey];
@@ -737,12 +761,15 @@
         ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
+                if (data.type === 'pong' || data.type === 'ack') {
+                    return;
+                }
                 const parsed = config.parseMessage(data);
                 if (parsed) {
                     updatePairPrices(exchange, parsed.symbol, parsed.bid, parsed.ask);
                 }
             } catch (error) {
-                console.error('Error parsing WebSocket message:', error);
+                console.error(`Error parsing WebSocket message for ${exchange}:`, error);
             }
         };
         
@@ -751,7 +778,12 @@
         };
         
         ws.onclose = () => {
-            const pairKey = `${exchange}_${symbol}`;
+            console.log(`WebSocket closed for ${exchange}`);
+            if (pingIntervals[pairKey]) {
+                clearInterval(pingIntervals[pairKey]);
+                delete pingIntervals[pairKey];
+            }
+            
             if (!wsReconnectTimers[pairKey]) {
                 wsReconnectTimers[pairKey] = setTimeout(() => {
                     delete wsReconnectTimers[pairKey];
@@ -887,6 +919,11 @@
             if (wsReconnectTimers[pairKey]) {
                 clearTimeout(wsReconnectTimers[pairKey]);
                 delete wsReconnectTimers[pairKey];
+            }
+
+            if (pingIntervals[pairKey]) {
+                clearInterval(pingIntervals[pairKey]);
+                delete pingIntervals[pairKey];
             }
             
             updateEquations();
