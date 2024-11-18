@@ -20,7 +20,7 @@
         }
 
         @keyframes slideIn {
-            from { transform: translateY(20px); opacity: 0; }
+            from { transform: translateY(-20px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
 
@@ -95,10 +95,6 @@
             transform: scale(1.1);
         }
 
-        .sound-control:active {
-            transform: scale(0.95);
-        }
-
         .notification {
             position: fixed;
             top: 20px;
@@ -110,9 +106,6 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             z-index: 1000;
             animation: fadeInOut 2s forwards;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
         .card:hover {
@@ -142,21 +135,10 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            user-select: none;
-            -webkit-user-select: none;
         }
 
         .button:active {
             transform: scale(0.98);
-        }
-
-        .button:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-
-        .button i {
-            font-size: 18px;
         }
 
         .button-outline {
@@ -174,7 +156,6 @@
             align-items: center;
             justify-content: center;
             animation: pulse 2s infinite;
-            position: relative;
         }
 
         .timer {
@@ -201,15 +182,14 @@
             display: flex;
             justify-content: space-around;
             margin-bottom: 20px;
-            gap: 16px;
         }
 
         .team-score {
             text-align: center;
-            padding: 16px;
+            padding: 10px;
             border-radius: 8px;
             background-color: rgba(59, 130, 246, 0.1);
-            flex: 1;
+            min-width: 120px;
             transition: all 0.3s ease;
         }
 
@@ -228,12 +208,11 @@
             background: transparent;
             border: 1px solid var(--tg-theme-button-color);
             color: var(--tg-theme-text-color);
-            padding: 8px;
+            padding: 4px;
             border-radius: 4px;
             text-align: center;
             width: 100%;
             margin-bottom: 10px;
-            font-size: 14px;
         }
 
         .score {
@@ -245,7 +224,6 @@
             margin-top: 20px;
             max-height: 200px;
             overflow-y: auto;
-            padding-right: 8px;
         }
 
         .word-history::-webkit-scrollbar {
@@ -263,18 +241,13 @@
         }
 
         .word-item {
-            padding: 8px 12px;
-            margin-bottom: 6px;
-            border-radius: 6px;
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 4px;
             display: flex;
             align-items: center;
             gap: 8px;
             animation: slideIn 0.2s ease-out;
-            transition: transform 0.2s ease;
-        }
-
-        .word-item:hover {
-            transform: translateX(4px);
         }
 
         .word-correct {
@@ -295,9 +268,8 @@
 
         .settings-label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
             color: var(--tg-theme-button-color);
-            font-size: 14px;
         }
 
         .select {
@@ -308,25 +280,19 @@
             border: 1px solid var(--tg-theme-button-color);
             border-radius: 8px;
             margin-bottom: 10px;
-            font-size: 14px;
         }
 
         .round-stats {
             background-color: rgba(59, 130, 246, 0.1);
             border-radius: 8px;
-            padding: 16px;
+            padding: 10px;
             margin-top: 20px;
         }
 
         .stats-item {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-
-        .stats-item:last-child {
-            margin-bottom: 0;
+            margin-bottom: 5px;
         }
 
         .hidden {
@@ -358,6 +324,7 @@
     </div>
 
     <div class="container">
+        <!-- Меню -->
         <div id="menu" class="card">
             <div class="title">
                 <i class="fas fa-gamepad"></i> Alias
@@ -370,6 +337,7 @@
             </button>
         </div>
 
+        <!-- Настройки -->
         <div id="setup" class="card hidden">
             <div class="title">
                 <i class="fas fa-cog"></i> Настройки игры
@@ -414,6 +382,7 @@
             </button>
         </div>
 
+        <!-- Игра -->
         <div id="game" class="card hidden">
             <div class="timer" id="timer">
                 <i class="fas fa-clock"></i> <span>60</span>
@@ -441,6 +410,7 @@
             <div class="round-stats" id="round-stats"></div>
         </div>
 
+        <!-- Результаты -->
         <div id="results" class="card hidden">
             <div class="title">
                 <i class="fas fa-trophy"></i> Игра окончена!
@@ -477,18 +447,6 @@
             wrong: new Howl({
                 src: ['data:audio/wav;base64,UklGRpgHAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQgHAAB3gXl8gH2Df4F8g3+BeH+AgICBfX99f4B/gIB/gX+BgICAgICAgYCBgICAgICAgICAgYGAgYCAgICAgICAgICAgYGAgYCBgIGAgYA='],
                 volume: 0.5
-            }),
-            timeWarning: new Howl({
-                src: ['data:audio/wav;base64,UklGRpAHAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQgHAAB/gH9/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gA=='],
-                volume: 0.3
-            }),
-            roundStart: new Howl({
-                src: ['data:audio/wav;base64,UklGRpAHAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQgHAAB/gH9/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gA=='],
-                volume: 0.5
-            }),
-            victory: new Howl({
-                src: ['data:audio/wav;base64,UklGRpAHAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQgHAAB/gH9/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gA=='],
-                volume: 0.7
             })
         };
 
@@ -564,19 +522,6 @@
             document.getElementById(screenId).classList.remove('hidden');
         }
 
-        // Обновление таймера
-        function updateTimer() {
-            const timerElement = document.getElementById('timer');
-            timerElement.querySelector('span').textContent = gameState.timer;
-            
-            timerElement.className = 'timer';
-            if (gameState.timer <= 10) {
-                timerElement.classList.add('danger');
-            } else if (gameState.timer <= 20) {
-                timerElement.classList.add('warning');
-            }
-        }
-
         // Получение следующего слова
         function getNextWord() {
             const availableWords = words[gameState.difficulty].filter(
@@ -603,7 +548,7 @@
             gameState.teams[gameState.currentTeam].totalCorrect++;
             gameState.teams[gameState.currentTeam].score++;
             
-            gameState.roundWords.push({
+            gameState.roundWords.unshift({
                 word: gameState.currentWord,
                 correct: true
             });
@@ -623,7 +568,7 @@
             if (soundEnabled) sounds.wrong.play();
             
             gameState.teams[gameState.currentTeam].totalSkipped++;
-            gameState.roundWords.push({
+            gameState.roundWords.unshift({
                 word: gameState.currentWord,
                 correct: false
             });
@@ -657,6 +602,9 @@
                 wordElement.appendChild(document.createTextNode(wordObj.word));
                 historyElement.appendChild(wordElement);
             });
+
+            // Прокручиваем к первому элементу
+            historyElement.scrollTop = 0;
         }
 
         // Обновление счета
@@ -667,6 +615,19 @@
             // Подсветка активной команды
             document.getElementById('team1-container').classList.toggle('active', gameState.currentTeam === 0);
             document.getElementById('team2-container').classList.toggle('active', gameState.currentTeam === 1);
+        }
+
+        // Обновление таймера
+        function updateTimer() {
+            const timerElement = document.getElementById('timer');
+            timerElement.querySelector('span').textContent = gameState.timer;
+            
+            timerElement.className = 'timer';
+            if (gameState.timer <= 10) {
+                timerElement.classList.add('danger');
+            } else if (gameState.timer <= 20) {
+                timerElement.classList.add('warning');
+            }
         }
 
         // Обновление статистики раунда
@@ -695,8 +656,6 @@
 
         // Начало раунда
         function startRound() {
-            if (soundEnabled) sounds.roundStart.play();
-            
             gameState.timer = gameState.roundTime;
             gameState.roundWords = [];
             
@@ -715,10 +674,6 @@
             gameState.timerInterval = setInterval(() => {
                 gameState.timer--;
                 updateTimer();
-                
-                if (gameState.timer <= 10 && soundEnabled) {
-                    sounds.timeWarning.play();
-                }
                 
                 if (gameState.timer <= 0) {
                     endRound();
@@ -741,8 +696,6 @@
 
         // Завершение игры
         function endGame() {
-            if (soundEnabled) sounds.victory.play();
-            
             if (window.navigator.vibrate) {
                 window.navigator.vibrate([100, 50, 100, 50, 100]);
             }
@@ -793,7 +746,7 @@
             gameState.teams[0].name = document.getElementById('team1-name').value || 'Команда 1';
             gameState.teams[1].name = document.getElementById('team2-name').value || 'Команда 2';
             
-            // Обновляем имена команд на всех экранах
+            // Обновляем имена команд
             updateTeamNames();
             
             // Сбрасываем счет и статистику
