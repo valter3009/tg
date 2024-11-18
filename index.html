@@ -17,7 +17,6 @@ const NonogramGame = () => {
 
   function generatePuzzle() {
     const puzzle = Array(SIZE).fill().map(() => Array(SIZE).fill(0));
-    // Create a simple pattern
     for (let i = 0; i < SIZE; i++) {
       for (let j = 0; j < SIZE; j++) {
         puzzle[i][j] = Math.random() > 0.7 ? 1 : 0;
@@ -30,7 +29,6 @@ const NonogramGame = () => {
     const rowHints = [];
     const colHints = [];
 
-    // Calculate row hints
     for (let i = 0; i < SIZE; i++) {
       const hints = [];
       let count = 0;
@@ -46,7 +44,6 @@ const NonogramGame = () => {
       rowHints.push(hints.length ? hints : [0]);
     }
 
-    // Calculate column hints
     for (let j = 0; j < SIZE; j++) {
       const hints = [];
       let count = 0;
@@ -70,7 +67,7 @@ const NonogramGame = () => {
     
     const newGrid = [...grid];
     if (rightClick) {
-      newGrid[row][col] = newGrid[row][col] === 2 ? 0 : 2; // 2 represents X mark
+      newGrid[row][col] = newGrid[row][col] === 2 ? 0 : 2;
     } else {
       newGrid[row][col] = newGrid[row][col] === 1 ? 0 : 1;
     }
@@ -93,15 +90,14 @@ const NonogramGame = () => {
   return (
     <Card className="p-6 bg-gray-900">
       <div className="flex flex-col items-center">
-        <div className="mb-4 text-xl font-bold">
-          {gameWon ? "Puzzle Completed! 🎉" : "Nonogram Puzzle"}
+        <div className="mb-4 text-xl font-bold text-white">
+          {gameWon ? "Головоломка решена! 🎉" : "Японский кроссворд"}
         </div>
         
         <div className="flex">
-          {/* Column hints */}
           <div className="mt-16">
             {rowHints.map((hints, i) => (
-              <div key={i} className="h-8 flex items-center justify-end pr-2">
+              <div key={i} className="h-8 flex items-center justify-end pr-2 text-white">
                 {hints.map((hint, j) => (
                   <span key={j} className="mx-1 text-sm font-mono">{hint}</span>
                 ))}
@@ -110,11 +106,10 @@ const NonogramGame = () => {
           </div>
           
           <div>
-            {/* Row hints */}
             <div className="ml-2 mb-2">
               <div className="flex">
                 {colHints.map((hints, i) => (
-                  <div key={i} className="w-8 flex flex-col items-center justify-end">
+                  <div key={i} className="w-8 flex flex-col items-center justify-end text-white">
                     {hints.map((hint, j) => (
                       <span key={j} className="text-sm font-mono">{hint}</span>
                     ))}
@@ -123,7 +118,6 @@ const NonogramGame = () => {
               </div>
             </div>
             
-            {/* Game grid */}
             <div className="grid gap-px bg-gray-600">
               {grid.map((row, i) => (
                 <div key={i} className="flex gap-px">
@@ -148,8 +142,8 @@ const NonogramGame = () => {
           </div>
         </div>
         
-        <div className="mt-4 text-sm">
-          Left click to fill • Right click to mark
+        <div className="mt-4 text-sm text-white">
+          Левый клик - закрасить • Правый клик - отметить
         </div>
       </div>
     </Card>
