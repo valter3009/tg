@@ -48,7 +48,6 @@
         left: 0;
         right: 0;
         z-index: 1000;
-        background: transparent; /* Changed from solid background */
     }
 
     .container {
@@ -59,7 +58,7 @@
     }
 
     .top-panel {
-        background: rgba(44, 46, 51, 0.8); /* Semi-transparent background */
+        background: rgba(44, 46, 51, 0.3); /* Semi-transparent background */
         padding: 16px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(10px);
@@ -71,7 +70,7 @@
         display: grid;
         grid-template-columns: 1fr auto auto;
         gap: 12px;
-        background: rgba(44, 46, 51, 0.8); /* Semi-transparent background */
+        background: rgba(44, 46, 51, 0.3); /* Semi-transparent background */
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
@@ -986,5 +985,6 @@ document.addEventListener('gesturestart', (e) => {
 // Update equations periodically
 setInterval(updateEquations, 1000);
 </script>
+    
     
     
