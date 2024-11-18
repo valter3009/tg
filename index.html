@@ -16,6 +16,7 @@
             --tg-theme-secondary-bg-color: #2c2c2c;
             --success-color: #22c55e;
             --error-color: #ef4444;
+            --warning-color: #f59e0b;
         }
 
         @keyframes slideIn {
@@ -33,6 +34,13 @@
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
             75% { transform: translateX(5px); }
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-20px); }
+            20% { opacity: 1; transform: translateY(0); }
+            80% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(20px); }
         }
 
         * {
@@ -63,6 +71,48 @@
             margin-bottom: 16px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             transition: transform 0.2s ease;
+            position: relative;
+        }
+
+        .sound-control {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: var(--tg-theme-secondary-bg-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .sound-control:hover {
+            transform: scale(1.1);
+        }
+
+        .sound-control:active {
+            transform: scale(0.95);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--tg-theme-secondary-bg-color);
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            animation: fadeInOut 2s forwards;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .card:hover {
@@ -124,6 +174,7 @@
             align-items: center;
             justify-content: center;
             animation: pulse 2s infinite;
+            position: relative;
         }
 
         .timer {
@@ -137,7 +188,7 @@
         }
 
         .timer.warning {
-            color: #f59e0b;
+            color: var(--warning-color);
             animation: pulse 1s infinite;
         }
 
@@ -150,14 +201,21 @@
             display: flex;
             justify-content: space-around;
             margin-bottom: 20px;
+            gap: 16px;
         }
 
         .team-score {
             text-align: center;
-            padding: 10px;
+            padding: 16px;
             border-radius: 8px;
             background-color: rgba(59, 130, 246, 0.1);
-            min-width: 120px;
+            flex: 1;
+            transition: all 0.3s ease;
+        }
+
+        .team-score.active {
+            background-color: rgba(59, 130, 246, 0.2);
+            transform: scale(1.05);
         }
 
         .team-name {
@@ -170,11 +228,12 @@
             background: transparent;
             border: 1px solid var(--tg-theme-button-color);
             color: var(--tg-theme-text-color);
-            padding: 4px;
+            padding: 8px;
             border-radius: 4px;
             text-align: center;
             width: 100%;
             margin-bottom: 10px;
+            font-size: 14px;
         }
 
         .score {
@@ -186,16 +245,36 @@
             margin-top: 20px;
             max-height: 200px;
             overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .word-history::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .word-history::-webkit-scrollbar-track {
+            background: var(--tg-theme-bg-color);
+            border-radius: 2px;
+        }
+
+        .word-history::-webkit-scrollbar-thumb {
+            background: var(--tg-theme-button-color);
+            border-radius: 2px;
         }
 
         .word-item {
-            padding: 8px;
-            margin-bottom: 5px;
-            border-radius: 4px;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             gap: 8px;
             animation: slideIn 0.2s ease-out;
+            transition: transform 0.2s ease;
+        }
+
+        .word-item:hover {
+            transform: translateX(4px);
         }
 
         .word-correct {
@@ -216,8 +295,9 @@
 
         .settings-label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             color: var(--tg-theme-button-color);
+            font-size: 14px;
         }
 
         .select {
@@ -228,19 +308,25 @@
             border: 1px solid var(--tg-theme-button-color);
             border-radius: 8px;
             margin-bottom: 10px;
+            font-size: 14px;
         }
 
         .round-stats {
             background-color: rgba(59, 130, 246, 0.1);
             border-radius: 8px;
-            padding: 10px;
+            padding: 16px;
             margin-top: 20px;
         }
 
         .stats-item {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .stats-item:last-child {
+            margin-bottom: 0;
         }
 
         .hidden {
@@ -267,8 +353,11 @@
     </style>
 </head>
 <body>
+    <div class="sound-control" id="soundToggle">
+        <i class="fas fa-volume-up"></i>
+    </div>
+
     <div class="container">
-        <!-- Меню -->
         <div id="menu" class="card">
             <div class="title">
                 <i class="fas fa-gamepad"></i> Alias
@@ -281,7 +370,6 @@
             </button>
         </div>
 
-        <!-- Настройки -->
         <div id="setup" class="card hidden">
             <div class="title">
                 <i class="fas fa-cog"></i> Настройки игры
@@ -326,17 +414,16 @@
             </button>
         </div>
 
-        <!-- Игра -->
         <div id="game" class="card hidden">
             <div class="timer" id="timer">
                 <i class="fas fa-clock"></i> <span>60</span>
             </div>
             <div class="score-board">
-                <div class="team-score">
+                <div class="team-score" id="team1-container">
                     <div class="team-name" id="playing-team1-name">Команда 1</div>
                     <div class="score" id="team1-score">0</div>
                 </div>
-                <div class="team-score">
+                <div class="team-score" id="team2-container">
                     <div class="team-name" id="playing-team2-name">Команда 2</div>
                     <div class="score" id="team2-score">0</div>
                 </div>
@@ -354,7 +441,6 @@
             <div class="round-stats" id="round-stats"></div>
         </div>
 
-        <!-- Результаты -->
         <div id="results" class="card hidden">
             <div class="title">
                 <i class="fas fa-trophy"></i> Игра окончена!
@@ -382,15 +468,6 @@
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Функция для отображения экранов
-        function showScreen(screenId) {
-            console.log('Showing screen:', screenId);
-            ['menu', 'setup', 'game', 'results'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
-            });
-            document.getElementById(screenId).classList.remove('hidden');
-        }
-
         // Звуковые эффекты
         const sounds = {
             correct: new Howl({
@@ -404,8 +481,25 @@
             timeWarning: new Howl({
                 src: ['data:audio/wav;base64,UklGRpAHAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQgHAAB/gH9/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gA=='],
                 volume: 0.3
+            }),
+            roundStart: new Howl({
+                src: ['data:audio/wav;base64,UklGRpAHAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQgHAAB/gH9/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gA=='],
+                volume: 0.5
+            }),
+            victory: new Howl({
+                src: ['data:audio/wav;base64,UklGRpAHAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQgHAAB/gH9/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gA=='],
+                volume: 0.7
             })
         };
+
+        // Управление звуком
+        let soundEnabled = true;
+        document.getElementById('soundToggle').addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            document.getElementById('soundToggle').innerHTML = 
+                `<i class="fas fa-volume-${soundEnabled ? 'up' : 'mute'}"></i>`;
+            Howler.mute(!soundEnabled);
+        });
 
         // Наборы слов
         const words = {
@@ -445,93 +539,42 @@
             timerInterval: null,
             difficulty: 'easy',
             winScore: 50,
-            roundTime: 60,
-            roundStats: {
-                wordsPerMinute: 0,
-                accuracy: 0,
-                bestStreak: 0
-            }
+            roundTime: 60
         };
 
-        // Инициализация игры после загрузки DOM
-        document.addEventListener('DOMContentLoaded', function() {
-            // Привязка обработчиков событий для кнопок
-            document.getElementById('newGameBtn').addEventListener('click', () => showScreen('setup'));
-            document.getElementById('settingsBtn').addEventListener('click', () => showScreen('setup'));
-            document.getElementById('startGameBtn').addEventListener('click', startGame);
-            document.getElementById('backToMenuBtn').addEventListener('click', () => showScreen('menu'));
-            document.getElementById('correctBtn').addEventListener('click', handleCorrect);
-            document.getElementById('skipBtn').addEventListener('click', handleSkip);
-            document.getElementById('backToMenuFromResultsBtn').addEventListener('click', () => showScreen('menu'));
+        // Показ уведомлений
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 
+                                 type === 'error' ? 'exclamation-circle' : 
+                                 'info-circle'}"></i>
+                ${message}
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 2000);
+        }
 
-            // Показываем начальный экран
-            showScreen('menu');
-        });
-
-        // Начало игры
-        function startGame() {
-            gameState.difficulty = document.getElementById('difficulty').value;
-            gameState.winScore = parseInt(document.getElementById('winScore').value);
-            gameState.roundTime = parseInt(document.getElementById('roundTime').value);
-            gameState.teams[0].name = document.getElementById('team1-name').value || 'Команда 1';
-            gameState.teams[1].name = document.getElementById('team2-name').value || 'Команда 2';
-            
-            // Обновляем имена команд на всех экранах
-            updateTeamNames();
-            
-            // Сбрасываем счет и статистику
-            gameState.teams.forEach(team => {
-                team.score = 0;
-                team.totalCorrect = 0;
-                team.totalSkipped = 0;
+        // Функция для отображения экранов
+        function showScreen(screenId) {
+            ['menu', 'setup', 'game', 'results'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
             });
-            
-            gameState.usedWords = [];
-            gameState.currentTeam = 0;
-            updateScores();
-            startRound();
-            showScreen('game');
+            document.getElementById(screenId).classList.remove('hidden');
         }
 
-        // Обновление имен команд
-        function updateTeamNames() {
-            document.getElementById('playing-team1-name').textContent = gameState.teams[0].name;
-            document.getElementById('playing-team2-name').textContent = gameState.teams[1].name;
-            document.getElementById('final-team1-name').textContent = gameState.teams[0].name;
-            document.getElementById('final-team2-name').textContent = gameState.teams[1].name;
-        }
-
-        // Начало раунда
-        function startRound() {
-            gameState.timer = gameState.roundTime;
-            gameState.roundWords = [];
-            gameState.roundStats = {
-                wordsPerMinute: 0,
-                accuracy: 0,
-                bestStreak: 0
-            };
+        // Обновление таймера
+        function updateTimer() {
+            const timerElement = document.getElementById('timer');
+            timerElement.querySelector('span').textContent = gameState.timer;
             
-            updateTimer();
-            getNextWord();
-            updateWordHistory();
-            updateRoundStats();
-            
-            if (gameState.timerInterval) {
-                clearInterval(gameState.timerInterval);
+            timerElement.className = 'timer';
+            if (gameState.timer <= 10) {
+                timerElement.classList.add('danger');
+            } else if (gameState.timer <= 20) {
+                timerElement.classList.add('warning');
             }
-            
-            gameState.timerInterval = setInterval(() => {
-                gameState.timer--;
-                updateTimer();
-                
-                if (gameState.timer <= 10) {
-                    sounds.timeWarning.play();
-                }
-                
-                if (gameState.timer <= 0) {
-                    endRound();
-                }
-            }, 1000);
         }
 
         // Получение следующего слова
@@ -542,97 +585,56 @@
             
             if (availableWords.length === 0) {
                 gameState.usedWords = [];
-                gameState.currentWord = words[gameState.difficulty][
+                return words[gameState.difficulty][
                     Math.floor(Math.random() * words[gameState.difficulty].length)
-                ];
-            } else {
-                gameState.currentWord = availableWords[
-                    Math.floor(Math.random() * availableWords.length)
                 ];
             }
             
-            gameState.usedWords.push(gameState.currentWord);
-            document.getElementById('current-word').textContent = gameState.currentWord;
+            const word = availableWords[Math.floor(Math.random() * availableWords.length)];
+            gameState.usedWords.push(word);
+            gameState.currentWord = word;
+            document.getElementById('current-word').textContent = word;
         }
 
-        // Обработка угаданного слова
+        // Обработка правильного ответа
         function handleCorrect() {
-            sounds.correct.play();
+            if (soundEnabled) sounds.correct.play();
+            
             gameState.teams[gameState.currentTeam].totalCorrect++;
+            gameState.teams[gameState.currentTeam].score++;
+            
             gameState.roundWords.push({
                 word: gameState.currentWord,
                 correct: true
             });
+            
+            if (window.navigator.vibrate) {
+                window.navigator.vibrate(50);
+            }
+            
+            updateScores();
             getNextWord();
             updateWordHistory();
             updateRoundStats();
         }
 
-        // Обработка пропущенного слова
+        // Обработка пропуска
         function handleSkip() {
-            sounds.wrong.play();
+            if (soundEnabled) sounds.wrong.play();
+            
             gameState.teams[gameState.currentTeam].totalSkipped++;
             gameState.roundWords.push({
                 word: gameState.currentWord,
                 correct: false
             });
+            
+            if (window.navigator.vibrate) {
+                window.navigator.vibrate([30, 30, 30]);
+            }
+            
             getNextWord();
             updateWordHistory();
             updateRoundStats();
-        }
-
-        // Обновление статистики раунда
-        function updateRoundStats() {
-            const totalWords = gameState.roundWords.length;
-            const correctWords = gameState.roundWords.filter(w => w.correct).length;
-            const timeSpent = gameState.roundTime - gameState.timer;
-            
-            let currentStreak = 0;
-            let bestStreak = 0;
-            gameState.roundWords.forEach(word => {
-                if (word.correct) {
-                    currentStreak++;
-                    bestStreak = Math.max(bestStreak, currentStreak);
-                } else {
-                    currentStreak = 0;
-                }
-            });
-            
-            gameState.roundStats = {
-                wordsPerMinute: totalWords > 0 ? (correctWords / timeSpent * 60).toFixed(1) : 0,
-                accuracy: totalWords > 0 ? (correctWords / totalWords * 100).toFixed(1) : 0,
-                bestStreak: bestStreak
-            };
-            
-            const statsHtml = `
-                <div class="stats-item">
-                    <span>Слов в минуту:</span>
-                    <span>${gameState.roundStats.wordsPerMinute}</span>
-                </div>
-                <div class="stats-item">
-                    <span>Точность:</span>
-                    <span>${gameState.roundStats.accuracy}%</span>
-                </div>
-                <div class="stats-item">
-                    <span>Лучшая серия:</span>
-                    <span>${gameState.roundStats.bestStreak}</span>
-                </div>
-            `;
-            
-            document.getElementById('round-stats').innerHTML = statsHtml;
-        }
-
-        // Обновление таймера
-        function updateTimer() {
-            const timerElement = document.getElementById('timer');
-            timerElement.querySelector('span').textContent = `${gameState.timer} сек`;
-            
-            timerElement.className = 'timer';
-            if (gameState.timer <= 10) {
-                timerElement.classList.add('danger');
-            } else if (gameState.timer <= 20) {
-                timerElement.classList.add('warning');
-            }
         }
 
         // Обновление истории слов
@@ -661,16 +663,75 @@
         function updateScores() {
             document.getElementById('team1-score').textContent = gameState.teams[0].score;
             document.getElementById('team2-score').textContent = gameState.teams[1].score;
+            
+            // Подсветка активной команды
+            document.getElementById('team1-container').classList.toggle('active', gameState.currentTeam === 0);
+            document.getElementById('team2-container').classList.toggle('active', gameState.currentTeam === 1);
+        }
+
+        // Обновление статистики раунда
+        function updateRoundStats() {
+            const totalWords = gameState.roundWords.length;
+            const correctWords = gameState.roundWords.filter(w => w.correct).length;
+            const timeSpent = gameState.roundTime - gameState.timer;
+            
+            const statsHtml = `
+                <div class="stats-item">
+                    <span>Слов в минуту:</span>
+                    <span>${totalWords > 0 ? (correctWords / timeSpent * 60).toFixed(1) : 0}</span>
+                </div>
+                <div class="stats-item">
+                    <span>Точность:</span>
+                    <span>${totalWords > 0 ? (correctWords / totalWords * 100).toFixed(1) : 0}%</span>
+                </div>
+                <div class="stats-item">
+                    <span>Всего слов:</span>
+                    <span>${totalWords}</span>
+                </div>
+            `;
+            
+            document.getElementById('round-stats').innerHTML = statsHtml;
+        }
+
+        // Начало раунда
+        function startRound() {
+            if (soundEnabled) sounds.roundStart.play();
+            
+            gameState.timer = gameState.roundTime;
+            gameState.roundWords = [];
+            
+            updateTimer();
+            getNextWord();
+            updateWordHistory();
+            updateRoundStats();
+            updateScores();
+            
+            showNotification(`Ход команды "${gameState.teams[gameState.currentTeam].name}"`, 'info');
+            
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+            }
+            
+            gameState.timerInterval = setInterval(() => {
+                gameState.timer--;
+                updateTimer();
+                
+                if (gameState.timer <= 10 && soundEnabled) {
+                    sounds.timeWarning.play();
+                }
+                
+                if (gameState.timer <= 0) {
+                    endRound();
+                }
+            }, 1000);
         }
 
         // Завершение раунда
         function endRound() {
             clearInterval(gameState.timerInterval);
-            const correctWords = gameState.roundWords.filter(w => w.correct).length;
-            gameState.teams[gameState.currentTeam].score += correctWords;
             updateScores();
             
-            if (gameState.teams[gameState.currentTeam].score >= gameState.winScore) {
+            if (gameState.teams.some(team => team.score >= gameState.winScore)) {
                 endGame();
             } else {
                 gameState.currentTeam = (gameState.currentTeam + 1) % 2;
@@ -680,12 +741,18 @@
 
         // Завершение игры
         function endGame() {
-            document.getElementById('final-team1-score').textContent = gameState.teams[0].score;
-            document.getElementById('final-team2-score').textContent = gameState.teams[1].score;
+            if (soundEnabled) sounds.victory.play();
+            
+            if (window.navigator.vibrate) {
+                window.navigator.vibrate([100, 50, 100, 50, 100]);
+            }
             
             const winner = gameState.teams[0].score > gameState.teams[1].score ? 0 : 1;
+            
+            document.getElementById('final-team1-score').textContent = gameState.teams[0].score;
+            document.getElementById('final-team2-score').textContent = gameState.teams[1].score;
             document.getElementById('winner').textContent = 
-                `Победила команда ${gameState.teams[winner].name}!`;
+                `Победила команда "${gameState.teams[winner].name}"!`;
             
             const finalStatsHtml = `
                 <div class="stats-item">
@@ -703,11 +770,85 @@
                         gameState.teams[1].totalCorrect
                     )} слов</span>
                 </div>
+                <div class="stats-item">
+                    <span>Общая точность:</span>
+                    <span>${(
+                        (gameState.teams[0].totalCorrect + gameState.teams[1].totalCorrect) /
+                        (gameState.teams[0].totalCorrect + gameState.teams[1].totalCorrect +
+                         gameState.teams[0].totalSkipped + gameState.teams[1].totalSkipped) * 100
+                    ).toFixed(1)}%</span>
+                </div>
             `;
             
             document.getElementById('final-stats').innerHTML = finalStatsHtml;
             showScreen('results');
         }
+
+        // Начало игры
+        function startGame() {
+            // Сохраняем настройки
+            gameState.difficulty = document.getElementById('difficulty').value;
+            gameState.winScore = parseInt(document.getElementById('winScore').value);
+            gameState.roundTime = parseInt(document.getElementById('roundTime').value);
+            gameState.teams[0].name = document.getElementById('team1-name').value || 'Команда 1';
+            gameState.teams[1].name = document.getElementById('team2-name').value || 'Команда 2';
+            
+            // Обновляем имена команд на всех экранах
+            updateTeamNames();
+            
+            // Сбрасываем счет и статистику
+            gameState.teams.forEach(team => {
+                team.score = 0;
+                team.totalCorrect = 0;
+                team.totalSkipped = 0;
+            });
+            
+            gameState.usedWords = [];
+            gameState.currentTeam = Math.floor(Math.random() * 2); // Случайный выбор первой команды
+            
+            showScreen('game');
+            showNotification('Игра начинается!', 'success');
+            startRound();
+        }
+
+        // Обновление имен команд
+        function updateTeamNames() {
+            document.getElementById('playing-team1-name').textContent = gameState.teams[0].name;
+            document.getElementById('playing-team2-name').textContent = gameState.teams[1].name;
+            document.getElementById('final-team1-name').textContent = gameState.teams[0].name;
+            document.getElementById('final-team2-name').textContent = gameState.teams[1].name;
+        }
+
+        // Инициализация игры
+        document.addEventListener('DOMContentLoaded', function() {
+            // Привязка обработчиков событий
+            document.getElementById('newGameBtn').addEventListener('click', () => showScreen('setup'));
+            document.getElementById('settingsBtn').addEventListener('click', () => showScreen('setup'));
+            document.getElementById('startGameBtn').addEventListener('click', startGame);
+            document.getElementById('backToMenuBtn').addEventListener('click', () => showScreen('menu'));
+            document.getElementById('correctBtn').addEventListener('click', handleCorrect);
+            document.getElementById('skipBtn').addEventListener('click', handleSkip);
+            document.getElementById('backToMenuFromResultsBtn').addEventListener('click', () => {
+                showScreen('menu');
+                showNotification('Спасибо за игру!', 'success');
+            });
+
+            // Добавляем обработку клавиш
+            document.addEventListener('keydown', (e) => {
+                if (document.getElementById('game').classList.contains('hidden')) return;
+                
+                if (e.code === 'Space' || e.code === 'ArrowUp') {
+                    e.preventDefault();
+                    handleCorrect();
+                } else if (e.code === 'ArrowDown') {
+                    e.preventDefault();
+                    handleSkip();
+                }
+            });
+
+            // Показываем начальный экран
+            showScreen('menu');
+        });
     </script>
 </body>
 </html>
