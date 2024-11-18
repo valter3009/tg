@@ -48,6 +48,7 @@
     .container {
         padding: 0;
         padding-bottom: env(safe-area-inset-bottom);
+        padding-top: 116px; /* Высота top-panel + отступ */
         max-width: 768px;
         margin: 0 auto;
     }
@@ -58,6 +59,11 @@
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 200;
     }
 
     .header {
@@ -67,7 +73,7 @@
         gap: 12px;
         background: #2c2e33;
         position: sticky;
-        top: 0;
+        top: 116px; /* Высота top-panel */
         z-index: 100;
         backdrop-filter: blur(10px);
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
