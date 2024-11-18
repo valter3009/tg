@@ -33,11 +33,11 @@
         color: var(--tg-theme-text-color);
         min-height: 100vh;
         line-height: 1.5;
-        padding-top: 140px; /* Уменьшено с 228px */
+        padding-top: 140px;
     }
 
     input, select, button {
-        font-size: 12px; /* Уменьшено с 16px */
+        font-size: 12px;
         font-family: inherit;
         transition: var(--transition-base);
     }
@@ -59,17 +59,17 @@
 
     .top-panel {
         background: rgba(44, 46, 51, 0.3);
-        padding: 8px; /* Уменьшено с 16px */
+        padding: 8px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
     }
 
     .header {
-        padding: 8px; /* Уменьшено с 16px */
+        padding: 8px;
         display: grid;
         grid-template-columns: 1fr auto auto;
-        gap: 8px; /* Уменьшено с 12px */
+        gap: 8px;
         background: rgba(44, 46, 51, 0.3);
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(10px);
@@ -81,10 +81,10 @@
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: var(--border-radius);
         color: var(--tg-theme-text-color);
-        padding: 0 12px; /* Уменьшено с 12px 16px */
+        padding: 0 12px;
         width: 100%;
-        height: 30px; /* Уменьшено с 48px */
-        font-size: 12px; /* Уменьшено с 9px */
+        height: 30px;
+        font-size: 12px;
     }
 
     .symbol-input:focus {
@@ -93,27 +93,80 @@
         outline: none;
     }
 
-    .exchange-select {
+    .custom-select-container {
+        position: relative;
+        width: 120px;
+    }
+
+    .custom-select-header {
         background: var(--tg-theme-secondary-bg-color);
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: var(--border-radius);
         color: var(--tg-theme-text-color);
-        padding: 0 24px 0 8px; /* Изменено с 12px */
-        height: 30px; /* Уменьшено с 48px */
-        width: 80px; /* Уменьшено со 100px */
+        padding: 0 24px 0 8px;
+        height: 30px;
         cursor: pointer;
-        appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 8px center;
-        background-size: 12px; /* Уменьшено с 16px */
-        font-size: 12px; /* Добавлено */
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 12px;
+        position: relative;
     }
 
-    .exchange-select:focus {
-        border-color: var(--tg-theme-button-color);
-        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-        outline: none;
+    .custom-select-header::after {
+        content: '';
+        width: 12px;
+        height: 12px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+        background-size: contain;
+        background-repeat: no-repeat;
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .custom-select-options {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--tg-theme-secondary-bg-color);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--border-radius);
+        margin-top: 4px;
+        display: none;
+        z-index: 1000;
+    }
+
+    .custom-select-option {
+        padding: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .custom-select-option:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .custom-select-option input {
+        width: 45px;
+        height: 20px;
+        background: var(--tg-theme-secondary-bg-color);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--border-radius);
+        color: var(--tg-theme-text-color);
+        text-align: center;
+        font-size: 12px;
+        padding: 0 4px;
+        margin-left: 8px;
+    }
+
+    .custom-select-container.active .custom-select-options {
+        display: block;
     }
 
     .add-button {
@@ -121,11 +174,11 @@
         border: none;
         border-radius: var(--border-radius);
         color: var(--tg-theme-button-text-color);
-        padding: 0 12px; /* Изменено с 12px 24px */
-        height: 30px; /* Уменьшено с 48px */
+        padding: 0 12px;
+        height: 30px;
         font-weight: 500;
         cursor: pointer;
-        font-size: 12px; /* Добавлено */
+        font-size: 12px;
     }
 
     .add-button:active {
@@ -245,26 +298,14 @@
     .bottom-controls {
         display: flex;
         flex-direction: column;
-        gap: 8px; /* Уменьшено с 12px */
+        gap: 8px;
     }
 
     .equation-row {
         display: flex;
         align-items: center;
         gap: 8px;
-        height: 30px; /* Уменьшено с 32px */
-    }
-
-    .fee-input {
-        width: 45px;
         height: 30px;
-        background: var(--tg-theme-secondary-bg-color);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: var(--border-radius);
-        color: var(--tg-theme-text-color);
-        text-align: center;
-        font-size: 12px;
-        padding: 0 4px;
     }
 
     .equation-input {
@@ -293,8 +334,8 @@
     .nav {
         display: flex;
         justify-content: space-around;
-        margin-top: 8px; /* Уменьшено с 12px */
-        padding-top: 8px; /* Уменьшено с 12px */
+        margin-top: 8px;
+        padding-top: 8px;
         border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
 
@@ -302,7 +343,7 @@
         background: none;
         border: none;
         color: var(--tg-theme-hint-color);
-        padding: 4px 12px; /* Уменьшено с 6px 16px */
+        padding: 4px 12px;
         font-size: 12px;
         font-weight: 500;
         border-radius: var(--border-radius);
@@ -361,7 +402,6 @@
             <div class="bottom-controls">
                 <div class="equation-row">
                     <input type="text" id="equation-input-bottom" class="equation-input" placeholder="Введите связку...">
-                    <input type="number" id="fee-input-bottom" class="fee-input" placeholder="%" value="0.02" step="0.01">
                     <button class="done-button" onclick="addEquationFromBottom()">Готово</button>
                 </div>
             </div>
@@ -372,11 +412,25 @@
         </div>
         <div class="header">
             <input type="text" id="pair-symbol" class="symbol-input" placeholder="Символ (например, BTCUSDT)">
-            <select id="exchange-select" class="exchange-select">
-                <option value="Mexc">Mexc</option>
-                <option value="Bybit">Bybit</option>
-                <option value="OKX">OKX</option>
-            </select>
+            <div class="custom-select-container" id="exchange-select-container">
+                <div class="custom-select-header">
+                    <span>Mexc</span>
+                </div>
+                <div class="custom-select-options">
+                    <div class="custom-select-option" data-value="Mexc">
+                        <span>Mexc</span>
+                        <input type="number" value="0.02" step="0.01" class="exchange-fee" data-exchange="mexc">
+                    </div>
+                    <div class="custom-select-option" data-value="Bybit">
+                        <span>Bybit</span>
+                        <input type="number" value="0.18" step="0.01" class="exchange-fee" data-exchange="bybit">
+                    </div>
+                    <div class="custom-select-option" data-value="OKX">
+                        <span>OKX</span>
+                        <input type="number" value="0.1" step="0.01" class="exchange-fee" data-exchange="okx">
+                    </div>
+                </div>
+            </div>
             <button onclick="addPair()" class="add-button">Добавить</button>
         </div>
     </div>
@@ -392,7 +446,6 @@
     </div>
 
     <script>
-    // Equation Manager Class
     class EquationManager {
         constructor() {
             this.equations = {};
@@ -541,7 +594,7 @@
         }
     }
 
-    // Global variables and initialization
+    // Global variables
     let tg = window.Telegram.WebApp;
     let pairs = {};
     let equations = {};
@@ -608,6 +661,31 @@
             }
         }
     };
+
+    // Custom Select Implementation
+    const customSelect = document.getElementById('exchange-select-container');
+    const selectHeader = customSelect.querySelector('.custom-select-header');
+    const selectOptions = customSelect.querySelector('.custom-select-options');
+    let selectedExchange = 'Mexc';
+
+    selectHeader.addEventListener('click', () => {
+        customSelect.classList.toggle('active');
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!customSelect.contains(e.target)) {
+            customSelect.classList.remove('active');
+        }
+    });
+
+    selectOptions.addEventListener('click', (e) => {
+        const option = e.target.closest('.custom-select-option');
+        if (option && !e.target.matches('input')) {
+            selectedExchange = option.dataset.value;
+            selectHeader.querySelector('span').textContent = selectedExchange;
+            customSelect.classList.remove('active');
+        }
+    });
 
     // UI Functions
     function showScreen(screenName) {
@@ -682,7 +760,7 @@
 
     function addPair() {
         const symbol = document.getElementById('pair-symbol').value.toUpperCase();
-        const exchange = document.getElementById('exchange-select').value;
+        const exchange = selectedExchange;
         
         if (!symbol) {
             tg.showAlert('Введите символ пары');
@@ -762,7 +840,9 @@
 
     function addToEquation(value) {
         const equationInput = document.getElementById('equation-input-bottom');
-        const feeInput = document.getElementById('fee-input-bottom');
+        const [symbol, exchange, type] = value.split('_');
+        // Получаем комиссию для конкретной биржи из поля ввода в селекторе
+        const feeInput = document.querySelector(`.exchange-fee[data-exchange="${exchange.toLowerCase()}"]`);
         const fee = parseFloat(feeInput.value);
         
         const cursorPosition = equationInput.selectionStart;
@@ -770,7 +850,7 @@
         
         // Автоматически добавляем комиссию
         const feeMultiplier = (1 - fee/100).toFixed(4);
-        const valueWithFee = value.includes('_bid') ? 
+        const valueWithFee = type === 'bid' ? 
             `(${value}*${feeMultiplier})` : 
             `(${value}/${feeMultiplier})`;
         
@@ -853,8 +933,15 @@
         }
     });
 
+    // Prevent fee inputs from closing select when changing values
+    document.querySelectorAll('.exchange-fee').forEach(input => {
+        input.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    });
+
     // Обработка фокуса на инпутах без скрытия клавиатуры при скролле
-    const inputs = document.querySelectorAll('input, select');
+    const inputs = document.querySelectorAll('input');
     inputs.forEach(input => {
         input.addEventListener('focus', () => {
             document.body.classList.add('keyboard-visible');
@@ -887,6 +974,7 @@
     </script>
 </body>
 </html>
+```
     
     
     
