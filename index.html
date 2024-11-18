@@ -1,322 +1,159 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Snake Game</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        :root {
-            --tg-theme-bg-color: #1a1b1e;
-            --tg-theme-text-color: #ffffff;
-            --tg-theme-button-color: #3b82f6;
-            --tg-theme-button-text-color: #ffffff;
-        }
+import React, { useState, useEffect } from 'react';
+import { Card } from '@/components/ui/card';
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+const NonogramGame = () => {
+  const SIZE = 15;
+  const [grid, setGrid] = useState(Array(SIZE).fill().map(() => Array(SIZE).fill(0)));
+  const [solution] = useState(generatePuzzle());
+  const [rowHints, setRowHints] = useState([]);
+  const [colHints, setColHints] = useState([]);
+  const [gameWon, setGameWon] = useState(false);
 
-        body {
-            background-color: var(--tg-theme-bg-color);
-            color: var(--tg-theme-text-color);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            touch-action: none;
-        }
+  useEffect(() => {
+    const hints = calculateHints(solution);
+    setRowHints(hints.rowHints);
+    setColHints(hints.colHints);
+  }, [solution]);
 
-        #game-container {
-            position: relative;
-            width: 300px;
-            height: 300px;
-            border: 2px solid var(--tg-theme-button-color);
-            border-radius: 8px;
-            overflow: hidden;
-        }
+  function generatePuzzle() {
+    const puzzle = Array(SIZE).fill().map(() => Array(SIZE).fill(0));
+    // Create a simple pattern
+    for (let i = 0; i < SIZE; i++) {
+      for (let j = 0; j < SIZE; j++) {
+        puzzle[i][j] = Math.random() > 0.7 ? 1 : 0;
+      }
+    }
+    return puzzle;
+  }
 
-        canvas {
-            display: block;
-        }
+  function calculateHints(puzzle) {
+    const rowHints = [];
+    const colHints = [];
 
-        #score {
-            font-size: 24px;
-            margin: 20px 0;
-            font-weight: bold;
+    // Calculate row hints
+    for (let i = 0; i < SIZE; i++) {
+      const hints = [];
+      let count = 0;
+      for (let j = 0; j < SIZE; j++) {
+        if (puzzle[i][j] === 1) {
+          count++;
+        } else if (count > 0) {
+          hints.push(count);
+          count = 0;
         }
+      }
+      if (count > 0) hints.push(count);
+      rowHints.push(hints.length ? hints : [0]);
+    }
 
-        #controls {
-            position: relative;
-            width: 300px;
-            height: 200px;
-            margin-top: 20px;
+    // Calculate column hints
+    for (let j = 0; j < SIZE; j++) {
+      const hints = [];
+      let count = 0;
+      for (let i = 0; i < SIZE; i++) {
+        if (puzzle[i][j] === 1) {
+          count++;
+        } else if (count > 0) {
+          hints.push(count);
+          count = 0;
         }
+      }
+      if (count > 0) hints.push(count);
+      colHints.push(hints.length ? hints : [0]);
+    }
 
-        .control-btn {
-            position: absolute;
-            width: 60px;
-            height: 60px;
-            background: var(--tg-theme-button-color);
-            border: none;
-            border-radius: 50%;
-            color: var(--tg-theme-button-text-color);
-            font-size: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            opacity: 0.8;
-            transition: opacity 0.2s;
-        }
+    return { rowHints, colHints };
+  }
 
-        .control-btn:active {
-            opacity: 1;
-        }
+  function handleCellClick(row, col, rightClick = false) {
+    if (gameWon) return;
+    
+    const newGrid = [...grid];
+    if (rightClick) {
+      newGrid[row][col] = newGrid[row][col] === 2 ? 0 : 2; // 2 represents X mark
+    } else {
+      newGrid[row][col] = newGrid[row][col] === 1 ? 0 : 1;
+    }
+    setGrid(newGrid);
+    checkWinCondition(newGrid);
+  }
 
-        #up {
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
+  function checkWinCondition(currentGrid) {
+    for (let i = 0; i < SIZE; i++) {
+      for (let j = 0; j < SIZE; j++) {
+        if ((solution[i][j] === 1 && currentGrid[i][j] !== 1) ||
+            (solution[i][j] === 0 && currentGrid[i][j] === 1)) {
+          return;
         }
+      }
+    }
+    setGameWon(true);
+  }
 
-        #down {
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        #left {
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-
-        #right {
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-
-        #start-btn {
-            background: var(--tg-theme-button-color);
-            border: none;
-            border-radius: 8px;
-            color: var(--tg-theme-button-text-color);
-            padding: 12px 24px;
-            font-size: 18px;
-            margin-top: 20px;
-            cursor: pointer;
-        }
-
-        #game-over {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 24px;
-        }
-    </style>
-</head>
-<body>
-    <div id="score">Score: 0</div>
-    <div id="game-container">
-        <canvas id="gameCanvas" width="300" height="300"></canvas>
-        <div id="game-over">
-            <div>Game Over!</div>
-            <div id="final-score"></div>
+  return (
+    <Card className="p-6 bg-gray-900">
+      <div className="flex flex-col items-center">
+        <div className="mb-4 text-xl font-bold">
+          {gameWon ? "Puzzle Completed! 🎉" : "Nonogram Puzzle"}
         </div>
-    </div>
-    <div id="controls">
-        <button id="up" class="control-btn">↑</button>
-        <button id="down" class="control-btn">↓</button>
-        <button id="left" class="control-btn">←</button>
-        <button id="right" class="control-btn">→</button>
-    </div>
-    <button id="start-btn">Start Game</button>
-
-    <script>
-        let tg = window.Telegram.WebApp;
-        tg.expand();
-
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const gameOverScreen = document.getElementById('game-over');
-        const scoreElement = document.getElementById('score');
-        const finalScoreElement = document.getElementById('final-score');
-        const startBtn = document.getElementById('start-btn');
-
-        const GRID_SIZE = 15;
-        const CELL_SIZE = canvas.width / GRID_SIZE;
-
-        let snake = [];
-        let food = {};
-        let direction = 'right';
-        let nextDirection = 'right';
-        let score = 0;
-        let gameLoop;
-        let gameStarted = false;
-
-        function initGame() {
-            snake = [
-                { x: 7, y: 7 },
-                { x: 6, y: 7 },
-                { x: 5, y: 7 }
-            ];
-            direction = 'right';
-            nextDirection = 'right';
-            score = 0;
-            scoreElement.textContent = `Score: ${score}`;
-            spawnFood();
-            gameOverScreen.style.display = 'none';
-        }
-
-        function spawnFood() {
-            while (true) {
-                food = {
-                    x: Math.floor(Math.random() * GRID_SIZE),
-                    y: Math.floor(Math.random() * GRID_SIZE)
-                };
-                
-                // Check if food spawned on snake
-                let validPosition = true;
-                for (let segment of snake) {
-                    if (segment.x === food.x && segment.y === food.y) {
-                        validPosition = false;
-                        break;
-                    }
-                }
-                if (validPosition) break;
-            }
-        }
-
-        function draw() {
-            // Clear canvas
-            ctx.fillStyle = '#1a1b1e';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Draw snake
-            snake.forEach((segment, index) => {
-                ctx.fillStyle = index === 0 ? '#3b82f6' : '#60a5fa';
-                ctx.fillRect(
-                    segment.x * CELL_SIZE + 1,
-                    segment.y * CELL_SIZE + 1,
-                    CELL_SIZE - 2,
-                    CELL_SIZE - 2
-                );
-            });
-
-            // Draw food
-            ctx.fillStyle = '#ef4444';
-            ctx.fillRect(
-                food.x * CELL_SIZE + 1,
-                food.y * CELL_SIZE + 1,
-                CELL_SIZE - 2,
-                CELL_SIZE - 2
-            );
-        }
-
-        function move() {
-            direction = nextDirection;
-            const head = { ...snake[0] };
-
-            switch (direction) {
-                case 'up': head.y--; break;
-                case 'down': head.y++; break;
-                case 'left': head.x--; break;
-                case 'right': head.x++; break;
-            }
-
-            // Check for collisions
-            if (head.x < 0 || head.x >= GRID_SIZE || 
-                head.y < 0 || head.y >= GRID_SIZE) {
-                gameOver();
-                return;
-            }
-
-            // Check for self-collision
-            for (let segment of snake) {
-                if (head.x === segment.x && head.y === segment.y) {
-                    gameOver();
-                    return;
-                }
-            }
-
-            snake.unshift(head);
-
-            // Check if food eaten
-            if (head.x === food.x && head.y === food.y) {
-                score += 10;
-                scoreElement.textContent = `Score: ${score}`;
-                spawnFood();
-            } else {
-                snake.pop();
-            }
-        }
-
-        function gameOver() {
-            clearInterval(gameLoop);
-            gameStarted = false;
-            gameOverScreen.style.display = 'flex';
-            finalScoreElement.textContent = `Final Score: ${score}`;
-            startBtn.textContent = 'Play Again';
-        }
-
-        function handleDirection(newDirection) {
-            const opposites = {
-                'up': 'down',
-                'down': 'up',
-                'left': 'right',
-                'right': 'left'
-            };
+        
+        <div className="flex">
+          {/* Column hints */}
+          <div className="mt-16">
+            {rowHints.map((hints, i) => (
+              <div key={i} className="h-8 flex items-center justify-end pr-2">
+                {hints.map((hint, j) => (
+                  <span key={j} className="mx-1 text-sm font-mono">{hint}</span>
+                ))}
+              </div>
+            ))}
+          </div>
+          
+          <div>
+            {/* Row hints */}
+            <div className="ml-2 mb-2">
+              <div className="flex">
+                {colHints.map((hints, i) => (
+                  <div key={i} className="w-8 flex flex-col items-center justify-end">
+                    {hints.map((hint, j) => (
+                      <span key={j} className="text-sm font-mono">{hint}</span>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
             
-            if (opposites[newDirection] !== direction) {
-                nextDirection = newDirection;
-            }
-        }
+            {/* Game grid */}
+            <div className="grid gap-px bg-gray-600">
+              {grid.map((row, i) => (
+                <div key={i} className="flex gap-px">
+                  {row.map((cell, j) => (
+                    <div
+                      key={j}
+                      className={`w-8 h-8 flex items-center justify-center cursor-pointer
+                        ${cell === 1 ? 'bg-blue-500' : cell === 2 ? 'bg-gray-800' : 'bg-gray-700'}
+                        hover:opacity-90`}
+                      onClick={() => handleCellClick(i, j)}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        handleCellClick(i, j, true);
+                      }}
+                    >
+                      {cell === 2 && <span className="text-gray-300">×</span>}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-4 text-sm">
+          Left click to fill • Right click to mark
+        </div>
+      </div>
+    </Card>
+  );
+};
 
-        // Controls
-        document.getElementById('up').addEventListener('touchstart', () => handleDirection('up'));
-        document.getElementById('down').addEventListener('touchstart', () => handleDirection('down'));
-        document.getElementById('left').addEventListener('touchstart', () => handleDirection('left'));
-        document.getElementById('right').addEventListener('touchstart', () => handleDirection('right'));
-
-        // Keyboard controls
-        document.addEventListener('keydown', (e) => {
-            switch (e.key) {
-                case 'ArrowUp': handleDirection('up'); break;
-                case 'ArrowDown': handleDirection('down'); break;
-                case 'ArrowLeft': handleDirection('left'); break;
-                case 'ArrowRight': handleDirection('right'); break;
-            }
-        });
-
-        startBtn.addEventListener('click', () => {
-            if (gameStarted) return;
-            
-            gameStarted = true;
-            initGame();
-            gameLoop = setInterval(() => {
-                move();
-                draw();
-            }, 150);
-        });
-
-        // Initial setup
-        initGame();
-        draw();
-    </script>
-</body>
-</html>
+export default NonogramGame;
