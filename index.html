@@ -213,7 +213,6 @@
         transition: var(--transition-base);
         flex-direction: row-reverse;
     }
-
     .pair-item:active {
         transform: scale(0.995);
     }
@@ -448,8 +447,6 @@
             <div id="equations-list" class="pairs-list"></div>
         </div>
     </div>
-
-    <script>
     class EquationManager {
         constructor() {
             this.equations = {};
@@ -597,6 +594,7 @@
             }
         }
     }
+
     let tg = window.Telegram.WebApp;
     let pairs = {};
     let equations = {};
@@ -604,7 +602,6 @@
     let wsReconnectTimers = {};
     let pingIntervals = {};
     const equationManager = new EquationManager();
-
     const exchangeConfigs = {
         'Mexc': {
             wsUrl: 'wss://wbs.mexc.com/ws',
@@ -662,22 +659,28 @@
             }
         },
         'KuCoin': {
-            wsUrl: 'wss://ws-api.kucoin.com/endpoint',
+            wsUrl: 'wss://push1.kucoin.com/endpoint',
             subscribeFormat: (symbol) => ({
                 id: Date.now(),
                 type: 'subscribe',
-                topic: `/spotMarket/ticker:${symbol.slice(0, -4)}-${symbol.slice(-4)}`,
+                topic: `/market/ticker:${symbol.slice(0, -4)}-${symbol.slice(-4)}`,
                 privateChannel: false,
                 response: true
             }),
             parseMessage: (data) => {
-                if (data.subject === 'ticker' && data.data) {
-                    const symbol = data.topic.split(':')[1].replace('-', '');
-                    return {
-                        symbol: symbol,
-                        bid: data.data.bestBid,
-                        ask: data.data.bestAsk
-                    };
+                if (data.type === 'message' && data.subject === 'trade.ticker') {
+                    try {
+                        const symbolParts = data.topic.split(':')[1];
+                        const symbol = symbolParts.replace('-', '');
+                        return {
+                            symbol: symbol,
+                            bid: data.data.bestBid,
+                            ask: data.data.bestAsk
+                        };
+                    } catch (e) {
+                        console.error('Error parsing KuCoin message:', e);
+                        return null;
+                    }
                 }
                 return null;
             }
@@ -699,7 +702,7 @@
             
             if (data.code === '200000' && data.data) {
                 const serverInfo = data.data.instanceServers[0];
-                return `${serverInfo.endpoint}?token=${data.data.token}&connectId=${Date.now()}`;
+                return `${serverInfo.endpoint}?token=${data.data.token}`;
             }
             throw new Error('Failed to get KuCoin WebSocket token');
         } catch (error) {
@@ -709,6 +712,7 @@
     }
 
     function startKucoinPing(ws, pairKey) {
+        console.log(`Starting ping for ${pairKey}`);
         const pingInterval = setInterval(() => {
             if (ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({
@@ -717,14 +721,16 @@
                 }));
             } else {
                 clearInterval(pingInterval);
+                console.log(`Clearing ping interval for ${pairKey} due to closed connection`);
             }
-        }, 30000);
+        }, 20000);
 
         pingIntervals[pairKey] = pingInterval;
 
         ws.addEventListener('close', () => {
             clearInterval(pingInterval);
             delete pingIntervals[pairKey];
+            console.log(`WebSocket closed for ${pairKey}, ping interval cleared`);
         });
     }
 
@@ -732,10 +738,13 @@
         const config = exchangeConfigs[exchange];
         let wsUrl = config.wsUrl;
         const pairKey = `${exchange}_${symbol}`;
+
+        console.log(`Connecting to ${exchange} for ${symbol}`);
         
         if (exchange === 'KuCoin') {
             try {
                 wsUrl = await getKuCoinWsToken();
+                console.log('KuCoin token received, connecting to:', wsUrl);
             } catch (error) {
                 console.error('Failed to connect to KuCoin:', error);
                 return;
@@ -747,10 +756,14 @@
         ws.onopen = () => {
             console.log(`WebSocket connected for ${exchange}`);
             let subscribeSymbol = symbol;
+            
             if (exchange === 'KuCoin') {
                 startKucoinPing(ws, pairKey);
             }
-            ws.send(JSON.stringify(config.subscribeFormat(subscribeSymbol)));
+            
+            const subscribeMsg = config.subscribeFormat(subscribeSymbol);
+            console.log(`Sending subscribe message for ${exchange}:`, subscribeMsg);
+            ws.send(JSON.stringify(subscribeMsg));
             
             if (wsReconnectTimers[pairKey]) {
                 clearTimeout(wsReconnectTimers[pairKey]);
@@ -761,9 +774,14 @@
         ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
-                if (data.type === 'pong' || data.type === 'ack') {
-                    return;
+                
+                if (exchange === 'KuCoin') {
+                    if (data.type === 'pong' || data.type === 'welcome' || data.type === 'ack') {
+                        return;
+                    }
+                    console.log(`KuCoin message received:`, data);
                 }
+                
                 const parsed = config.parseMessage(data);
                 if (parsed) {
                     updatePairPrices(exchange, parsed.symbol, parsed.bid, parsed.ask);
@@ -779,6 +797,7 @@
         
         ws.onclose = () => {
             console.log(`WebSocket closed for ${exchange}`);
+            
             if (pingIntervals[pairKey]) {
                 clearInterval(pingIntervals[pairKey]);
                 delete pingIntervals[pairKey];
@@ -794,7 +813,6 @@
         
         return ws;
     }
-
     function addDefaultPairs() {
         const defaultPairs = [
             { symbol: 'BTCUSDT', exchange: 'Mexc' },
