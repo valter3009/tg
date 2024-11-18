@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Alias Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
             --tg-theme-bg-color: #1a1b1e;
@@ -12,6 +14,25 @@
             --tg-theme-button-color: #3b82f6;
             --tg-theme-button-text-color: #ffffff;
             --tg-theme-secondary-bg-color: #2c2c2c;
+            --success-color: #22c55e;
+            --error-color: #ef4444;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
         }
 
         * {
@@ -32,6 +53,7 @@
         .container {
             max-width: 600px;
             margin: 0 auto;
+            animation: slideIn 0.3s ease-out;
         }
 
         .card {
@@ -39,6 +61,12 @@
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
         }
 
         .title {
@@ -46,6 +74,7 @@
             font-weight: bold;
             text-align: center;
             margin-bottom: 20px;
+            color: var(--tg-theme-button-color);
         }
 
         .button {
@@ -58,6 +87,19 @@
             width: 100%;
             margin-bottom: 10px;
             cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .button:active {
+            transform: scale(0.98);
+        }
+
+        .button i {
+            font-size: 18px;
         }
 
         .button-outline {
@@ -74,12 +116,27 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            animation: pulse 2s infinite;
         }
 
         .timer {
             font-size: 24px;
             text-align: center;
             margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .timer.warning {
+            color: #f59e0b;
+            animation: pulse 1s infinite;
+        }
+
+        .timer.danger {
+            color: var(--error-color);
+            animation: shake 0.5s infinite;
         }
 
         .score-board {
@@ -90,11 +147,26 @@
 
         .team-score {
             text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: rgba(59, 130, 246, 0.1);
+            min-width: 120px;
         }
 
         .team-name {
             font-size: 16px;
             margin-bottom: 5px;
+            color: var(--tg-theme-button-color);
+        }
+
+        .team-name-input {
+            background: transparent;
+            border: 1px solid var(--tg-theme-button-color);
+            color: var(--tg-theme-text-color);
+            padding: 4px;
+            border-radius: 4px;
+            text-align: center;
+            width: 100%;
         }
 
         .score {
@@ -104,12 +176,18 @@
 
         .word-history {
             margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
         }
 
         .word-item {
             padding: 8px;
             margin-bottom: 5px;
             border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: slideIn 0.2s ease-out;
         }
 
         .word-correct {
@@ -124,6 +202,16 @@
             margin-bottom: 20px;
         }
 
+        .settings-group {
+            margin-bottom: 15px;
+        }
+
+        .settings-label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--tg-theme-button-color);
+        }
+
         .select {
             width: 100%;
             padding: 10px;
@@ -132,10 +220,43 @@
             border: 1px solid var(--tg-theme-button-color);
             border-radius: 8px;
             margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .round-stats {
+            background-color: rgba(59, 130, 246, 0.1);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 20px;
+        }
+
+        .stats-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
         }
 
         .hidden {
             display: none;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+            }
+
+            .card {
+                padding: 15px;
+            }
+
+            .word-card {
+                font-size: 28px;
+            }
+
+            .team-score {
+                min-width: 100px;
+            }
         }
     </style>
 </head>
@@ -143,66 +264,110 @@
     <div class="container">
         <!-- Меню -->
         <div id="menu" class="card">
-            <div class="title">Alias</div>
-            <button class="button" onclick="showScreen('setup')">Новая игра</button>
-            <button class="button button-outline" onclick="showScreen('settings')">Настройки</button>
+            <div class="title">
+                <i class="fas fa-gamepad"></i> Alias
+            </div>
+            <button class="button" onclick="showScreen('setup')">
+                <i class="fas fa-play"></i> Новая игра
+            </button>
+            <button class="button button-outline" onclick="showScreen('settings')">
+                <i class="fas fa-cog"></i> Настройки
+            </button>
         </div>
 
         <!-- Настройки -->
         <div id="setup" class="card hidden">
-            <div class="title">Настройки игры</div>
-            <div class="settings">
-                <select id="difficulty" class="select">
-                    <option value="easy">Легкий уровень</option>
-                    <option value="medium">Средний уровень</option>
-                    <option value="hard">Сложный уровень</option>
-                </select>
-                <select id="winScore" class="select">
-                    <option value="30">До 30 очков</option>
-                    <option value="50">До 50 очков</option>
-                    <option value="100">До 100 очков</option>
-                </select>
+            <div class="title">
+                <i class="fas fa-cog"></i> Настройки игры
             </div>
-            <button class="button" onclick="startGame()">Начать игру</button>
-            <button class="button button-outline" onclick="showScreen('menu')">Назад</button>
+            <div class="settings">
+                <div class="settings-group">
+                    <label class="settings-label">Названия команд:</label>
+                    <input type="text" id="team1-name" class="team-name-input" placeholder="Команда 1" value="Команда 1">
+                    <input type="text" id="team2-name" class="team-name-input" placeholder="Команда 2" value="Команда 2">
+                </div>
+                <div class="settings-group">
+                    <label class="settings-label">Сложность:</label>
+                    <select id="difficulty" class="select">
+                        <option value="easy">Легкий уровень</option>
+                        <option value="medium">Средний уровень</option>
+                        <option value="hard">Сложный уровень</option>
+                    </select>
+                </div>
+                <div class="settings-group">
+                    <label class="settings-label">Время раунда:</label>
+                    <select id="roundTime" class="select">
+                        <option value="30">30 секунд</option>
+                        <option value="60" selected>1 минута</option>
+                        <option value="90">1.5 минуты</option>
+                        <option value="120">2 минуты</option>
+                    </select>
+                </div>
+                <div class="settings-group">
+                    <label class="settings-label">Играть до:</label>
+                    <select id="winScore" class="select">
+                        <option value="30">30 очков</option>
+                        <option value="50">50 очков</option>
+                        <option value="100">100 очков</option>
+                    </select>
+                </div>
+            </div>
+            <button class="button" onclick="startGame()">
+                <i class="fas fa-play"></i> Начать игру
+            </button>
+            <button class="button button-outline" onclick="showScreen('menu')">
+                <i class="fas fa-arrow-left"></i> Назад
+            </button>
         </div>
 
         <!-- Игра -->
         <div id="game" class="card hidden">
-            <div class="timer" id="timer">60</div>
+            <div class="timer" id="timer">
+                <i class="fas fa-clock"></i> <span>60</span>
+            </div>
             <div class="score-board">
                 <div class="team-score">
-                    <div class="team-name">Команда 1</div>
+                    <div class="team-name" id="playing-team1-name">Команда 1</div>
                     <div class="score" id="team1-score">0</div>
                 </div>
                 <div class="team-score">
-                    <div class="team-name">Команда 2</div>
+                    <div class="team-name" id="playing-team2-name">Команда 2</div>
                     <div class="score" id="team2-score">0</div>
                 </div>
             </div>
             <div class="word-card" id="current-word"></div>
             <div class="controls">
-                <button class="button" onclick="handleCorrect()">Угадали!</button>
-                <button class="button button-outline" onclick="handleSkip()">Пропустить</button>
+                <button class="button" onclick="handleCorrect()">
+                    <i class="fas fa-check"></i> Угадали!
+                </button>
+                <button class="button button-outline" onclick="handleSkip()">
+                    <i class="fas fa-forward"></i> Пропустить
+                </button>
             </div>
             <div class="word-history" id="word-history"></div>
+            <div class="round-stats" id="round-stats"></div>
         </div>
 
         <!-- Результаты -->
         <div id="results" class="card hidden">
-            <div class="title">Игра окончена!</div>
+            <div class="title">
+                <i class="fas fa-trophy"></i> Игра окончена!
+            </div>
             <div id="winner" class="title"></div>
             <div class="score-board">
                 <div class="team-score">
-                    <div class="team-name">Команда 1</div>
+                    <div class="team-name" id="final-team1-name">Команда 1</div>
                     <div class="score" id="final-team1-score">0</div>
                 </div>
                 <div class="team-score">
-                    <div class="team-name">Команда 2</div>
+                    <div class="team-name" id="final-team2-name">Команда 2</div>
                     <div class="score" id="final-team2-score">0</div>
                 </div>
             </div>
-            <button class="button" onclick="showScreen('menu')">В главное меню</button>
+            <div class="round-stats" id="final-stats"></div>
+            <button class="button" onclick="showScreen('menu')">
+                <i class="fas fa-home"></i> В главное меню
+            </button>
         </div>
     </div>
 
@@ -211,22 +376,43 @@
         let tg = window.Telegram.WebApp;
         tg.expand();
 
+        // Звуковые эффекты
+        const sounds = {
+            correct: new Howl({ src: ['data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAASAAAeMwAUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAcorrect: new Howl({
+                src: ['data:audio/wav;base64,UklGRqgHAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQgHAACAgICAgICAgIB+goN8f4F6kHyIgHyGgICAgYGBgYOBgYGBgYCCgICBgYGBgYKCgYKBgYGBgYKBgYGBgYGC'],
+                volume: 0.5
+            }),
+            wrong: new Howl({
+                src: ['data:audio/wav;base64,UklGRpgHAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQgHAAB3gXl8gH2Df4F8g3+BeH+AgICBfX99f4B/gIB/gX+BgICAgICAgYCBgICAgICAgICAgYGAgYCAgICAgICAgICAgYGAgYCBgIGAgYA='],
+                volume: 0.5
+            }),
+            timeWarning: new Howl({
+                src: ['data:audio/wav;base64,UklGRpAHAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQgHAAB/gH9/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gA=='],
+                volume: 0.3
+            })
+        };
+
         // Наборы слов
         const words = {
             easy: [
                 'кошка', 'собака', 'дом', 'солнце', 'дерево', 'книга', 'телефон',
                 'стол', 'вода', 'хлеб', 'машина', 'школа', 'мяч', 'цветок',
-                'птица', 'рыба', 'море', 'гора', 'снег', 'дождь'
+                'птица', 'рыба', 'море', 'гора', 'снег', 'дождь', 'луна', 'звезда',
+                'очки', 'окно', 'дверь', 'ручка', 'карандаш', 'тетрадь', 'улица',
+                'парк', 'сад', 'лес', 'река', 'озеро', 'поле', 'трава'
             ],
             medium: [
                 'архитектура', 'велосипед', 'гитара', 'динозавр', 'живопись',
                 'интернет', 'календарь', 'микроскоп', 'небоскреб', 'олимпиада',
-                'парашют', 'революция', 'телескоп', 'фестиваль'
+                'парашют', 'революция', 'телескоп', 'фестиваль', 'хореография',
+                'цивилизация', 'эволюция', 'ядро', 'философия', 'университет'
             ],
             hard: [
                 'амбивалентность', 'бюрократия', 'витализм', 'гносеология',
                 'диссертация', 'эклектика', 'интеграция', 'каламбур',
-                'метафизика', 'нумизматика', 'оптимизация', 'парадигма'
+                'метафизика', 'нумизматика', 'оптимизация', 'парадигма',
+                'релятивизм', 'силлогизм', 'трансцендентность', 'утилитаризм',
+                'феноменология', 'харизматичность', 'эпистемология', 'юриспруденция'
             ]
         };
 
@@ -234,8 +420,8 @@
         let gameState = {
             currentTeam: 0,
             teams: [
-                { score: 0 },
-                { score: 0 }
+                { name: 'Команда 1', score: 0, totalCorrect: 0, totalSkipped: 0 },
+                { name: 'Команда 2', score: 0, totalCorrect: 0, totalSkipped: 0 }
             ],
             currentWord: '',
             usedWords: [],
@@ -243,7 +429,13 @@
             timer: 60,
             timerInterval: null,
             difficulty: 'easy',
-            winScore: 50
+            winScore: 50,
+            roundTime: 60,
+            roundStats: {
+                wordsPerMinute: 0,
+                accuracy: 0,
+                bestStreak: 0
+            }
         };
 
         // Показ экрана
@@ -258,8 +450,20 @@
         function startGame() {
             gameState.difficulty = document.getElementById('difficulty').value;
             gameState.winScore = parseInt(document.getElementById('winScore').value);
-            gameState.teams[0].score = 0;
-            gameState.teams[1].score = 0;
+            gameState.roundTime = parseInt(document.getElementById('roundTime').value);
+            gameState.teams[0].name = document.getElementById('team1-name').value || 'Команда 1';
+            gameState.teams[1].name = document.getElementById('team2-name').value || 'Команда 2';
+            
+            // Обновляем имена команд на всех экранах
+            updateTeamNames();
+            
+            // Сбрасываем счет и статистику
+            gameState.teams.forEach(team => {
+                team.score = 0;
+                team.totalCorrect = 0;
+                team.totalSkipped = 0;
+            });
+            
             gameState.usedWords = [];
             gameState.currentTeam = 0;
             updateScores();
@@ -267,13 +471,28 @@
             showScreen('game');
         }
 
+        // Обновление имен команд
+        function updateTeamNames() {
+            document.getElementById('playing-team1-name').textContent = gameState.teams[0].name;
+            document.getElementById('playing-team2-name').textContent = gameState.teams[1].name;
+            document.getElementById('final-team1-name').textContent = gameState.teams[0].name;
+            document.getElementById('final-team2-name').textContent = gameState.teams[1].name;
+        }
+
         // Начало раунда
         function startRound() {
-            gameState.timer = 60;
+            gameState.timer = gameState.roundTime;
             gameState.roundWords = [];
+            gameState.roundStats = {
+                wordsPerMinute: 0,
+                accuracy: 0,
+                bestStreak: 0
+            };
+            
             updateTimer();
             getNextWord();
             updateWordHistory();
+            updateRoundStats();
             
             if (gameState.timerInterval) {
                 clearInterval(gameState.timerInterval);
@@ -282,10 +501,30 @@
             gameState.timerInterval = setInterval(() => {
                 gameState.timer--;
                 updateTimer();
+                
+                // Звуковые предупреждения о времени
+                if (gameState.timer === 10) {
+                    sounds.timeWarning.play();
+                }
+                
                 if (gameState.timer <= 0) {
                     endRound();
                 }
             }, 1000);
+        }
+
+        // Обновление таймера
+        function updateTimer() {
+            const timerElement = document.getElementById('timer');
+            timerElement.querySelector('span').textContent = `${gameState.timer} сек`;
+            
+            // Визуальные предупреждения
+            timerElement.className = 'timer';
+            if (gameState.timer <= 10) {
+                timerElement.classList.add('danger');
+            } else if (gameState.timer <= 20) {
+                timerElement.classList.add('warning');
+            }
         }
 
         // Получение следующего слова
@@ -311,65 +550,69 @@
 
         // Обработка угаданного слова
         function handleCorrect() {
+            sounds.correct.play();
+            gameState.teams[gameState.currentTeam].totalCorrect++;
             gameState.roundWords.push({
                 word: gameState.currentWord,
                 correct: true
             });
             getNextWord();
             updateWordHistory();
+            updateRoundStats();
         }
 
         // Обработка пропущенного слова
         function handleSkip() {
+            sounds.wrong.play();
+            gameState.teams[gameState.currentTeam].totalSkipped++;
             gameState.roundWords.push({
                 word: gameState.currentWord,
                 correct: false
             });
             getNextWord();
             updateWordHistory();
+            updateRoundStats();
         }
 
-        // Завершение раунда
-        function endRound() {
-            clearInterval(gameState.timerInterval);
+        // Обновление статистики раунда
+        function updateRoundStats() {
+            const totalWords = gameState.roundWords.length;
             const correctWords = gameState.roundWords.filter(w => w.correct).length;
-            gameState.teams[gameState.currentTeam].score += correctWords;
-            updateScores();
-
-            if (gameState.teams[gameState.currentTeam].score >= gameState.winScore) {
-                endGame();
-            } else {
-                gameState.currentTeam = (gameState.currentTeam + 1) % 2;
-                startRound();
-            }
-        }
-
-        // Завершение игры
-        function endGame() {
-            document.getElementById('final-team1-score').textContent = 
-                gameState.teams[0].score;
-            document.getElementById('final-team2-score').textContent = 
-                gameState.teams[1].score;
+            const timeSpent = gameState.roundTime - gameState.timer;
             
-            const winner = gameState.teams[0].score > gameState.teams[1].score ? 1 : 2;
-            document.getElementById('winner').textContent = 
-                `Победила команда ${winner}!`;
+            let currentStreak = 0;
+            let bestStreak = 0;
+            gameState.roundWords.forEach(word => {
+                if (word.correct) {
+                    currentStreak++;
+                    bestStreak = Math.max(bestStreak, currentStreak);
+                } else {
+                    currentStreak = 0;
+                }
+            });
             
-            showScreen('results');
-        }
-
-        // Обновление таймера
-        function updateTimer() {
-            document.getElementById('timer').textContent = 
-                `${gameState.timer} сек`;
-        }
-
-        // Обновление счета
-        function updateScores() {
-            document.getElementById('team1-score').textContent = 
-                gameState.teams[0].score;
-            document.getElementById('team2-score').textContent = 
-                gameState.teams[1].score;
+            gameState.roundStats = {
+                wordsPerMinute: totalWords > 0 ? (correctWords / timeSpent * 60).toFixed(1) : 0,
+                accuracy: totalWords > 0 ? (correctWords / totalWords * 100).toFixed(1) : 0,
+                bestStreak: bestStreak
+            };
+            
+            const statsHtml = `
+                <div class="stats-item">
+                    <span>Слов в минуту:</span>
+                    <span>${gameState.roundStats.wordsPerMinute}</span>
+                </div>
+                <div class="stats-item">
+                    <span>Точность:</span>
+                    <span>${gameState.roundStats.accuracy}%</span>
+                </div>
+                <div class="stats-item">
+                    <span>Лучшая серия:</span>
+                    <span>${gameState.roundStats.bestStreak}</span>
+                </div>
+            `;
+            
+            document.getElementById('round-stats').innerHTML = statsHtml;
         }
 
         // Обновление истории слов
@@ -382,9 +625,69 @@
                 wordElement.className = `word-item ${
                     wordObj.correct ? 'word-correct' : 'word-incorrect'
                 }`;
-                wordElement.textContent = wordObj.word;
+                
+                const icon = document.createElement('i');
+                icon.className = `fas ${
+                    wordObj.correct ? 'fa-check' : 'fa-times'
+                }`;
+                
+                wordElement.appendChild(icon);
+                wordElement.appendChild(document.createTextNode(wordObj.word));
                 historyElement.appendChild(wordElement);
             });
+        }
+
+        // Завершение раунда
+        function endRound() {
+            clearInterval(gameState.timerInterval);
+            const correctWords = gameState.roundWords.filter(w => w.correct).length;
+            gameState.teams[gameState.currentTeam].score += correctWords;
+            updateScores();
+            
+            if (gameState.teams[gameState.currentTeam].score >= gameState.winScore) {
+                endGame();
+            } else {
+                gameState.currentTeam = (gameState.currentTeam + 1) % 2;
+                startRound();
+            }
+        }
+
+        // Обновление счета
+        function updateScores() {
+            document.getElementById('team1-score').textContent = gameState.teams[0].score;
+            document.getElementById('team2-score').textContent = gameState.teams[1].score;
+        }
+
+        // Завершение игры
+        function endGame() {
+            document.getElementById('final-team1-score').textContent = gameState.teams[0].score;
+            document.getElementById('final-team2-score').textContent = gameState.teams[1].score;
+            
+            const winner = gameState.teams[0].score > gameState.teams[1].score ? 0 : 1;
+            document.getElementById('winner').textContent = 
+                `Победила команда ${gameState.teams[winner].name}!`;
+            
+            // Финальная статистика
+            const finalStatsHtml = `
+                <div class="stats-item">
+                    <span>Всего угадано слов:</span>
+                    <span>${gameState.teams[0].totalCorrect + gameState.teams[1].totalCorrect}</span>
+                </div>
+                <div class="stats-item">
+                    <span>Всего пропущено:</span>
+                    <span>${gameState.teams[0].totalSkipped + gameState.teams[1].totalSkipped}</span>
+                </div>
+                <div class="stats-item">
+                    <span>Лучший результат за раунд:</span>
+                    <span>${Math.max(
+                        gameState.teams[0].totalCorrect,
+                        gameState.teams[1].totalCorrect
+                    )} слов</span>
+                </div>
+            `;
+            
+            document.getElementById('final-stats').innerHTML = finalStatsHtml;
+            showScreen('results');
         }
 
         // Показываем начальный экран
