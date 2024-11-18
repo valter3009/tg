@@ -48,7 +48,7 @@
     .container {
         padding: 0;
         padding-bottom: env(safe-area-inset-bottom);
-        padding-top: 116px; /* Высота top-panel + отступ */
+        padding-top: 180px; /* Суммарная высота top-panel и header */
         max-width: 768px;
         margin: 0 auto;
     }
@@ -68,15 +68,23 @@
 
     .header {
         padding: 16px;
-        display: grid;
-        grid-template-columns: 1fr auto auto;
-        gap: 12px;
         background: #2c2e33;
-        position: sticky;
+        position: fixed;
         top: 116px; /* Высота top-panel */
+        left: 0;
+        right: 0;
         z-index: 100;
         backdrop-filter: blur(10px);
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .header-content {
+        max-width: 768px;
+        margin: 0 auto;
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 12px;
     }
 
     .symbol-input {
@@ -87,7 +95,7 @@
         padding: 12px 16px;
         width: 100%;
         height: 48px;
-        font-size: 9px;
+        font-size: 16px;
     }
 
     .symbol-input:focus {
@@ -137,7 +145,6 @@
 
     .screen {
         display: none;
-        padding: 16px;
     }
 
     .screen.active {
@@ -148,6 +155,7 @@
         display: flex;
         flex-direction: column;
         gap: 5px;
+        padding: 16px;
     }
 
     .pair-item {
@@ -168,7 +176,7 @@
     }
 
     .pair-name {
-        font-size: 7px;
+        font-size: 16px;
         font-weight: 600;
         color: var(--tg-theme-text-color);
         margin-left: 16px;
@@ -187,9 +195,9 @@
         border-radius: var(--border-radius);
         padding: 8px 16px;
         width: 100px;
-        height: 22px;
+        height: 32px;
         font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
-        font-size: 10px;
+        font-size: 14px;
         font-weight: 500;
         cursor: pointer;
         transition: var(--transition-base);
@@ -225,13 +233,13 @@
         background: rgba(255, 255, 255, 0.1);
         border: none;
         color: var(--tg-theme-hint-color);
-        width: 20px;
-        height: 20px;
+        width: 28px;
+        height: 28px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 15px;
+        font-size: 18px;
         cursor: pointer;
         transition: var(--transition-base);
         margin-left: 8px;
@@ -399,8 +407,8 @@
             </div>
         </div>
 
-        <div id="pairs-screen" class="screen active">
-            <div class="header">
+        <div class="header">
+            <div class="header-content">
                 <input type="text" id="pair-symbol" class="symbol-input" placeholder="Символ (например, BTCUSDT)">
                 <select id="exchange-select" class="exchange-select">
                     <option value="Mexc">Mexc</option>
@@ -409,6 +417,9 @@
                 </select>
                 <button onclick="addPair()" class="add-button">Добавить</button>
             </div>
+        </div>
+
+        <div id="pairs-screen" class="screen active">
             <div id="pairs-list" class="pairs-list"></div>
         </div>
 
@@ -941,11 +952,24 @@
 
         // Event Listeners
         document.addEventListener('touchstart', (e) => {
-            if (!e.target.matches('input, select') && 
-                !e.target.matches('.action-button') && 
-                !e.target.matches('.price-button') && 
-                !e.target.matches('.fee-button') && 
-                !e.target.matches('.done-button')) {
+            // Проверяем, является ли целевой элемент или его родители прокручиваемым контентом
+            let target = e.target;
+            let isPairsList = false;
+            while (target && target !== document.body) {
+                if (target.classList.contains('pairs-list')) {
+                    isPairsList = true;
+                    break;
+                }
+                target = target.parentElement;
+            }
+
+            // Не скрываем клавиатуру при прокрутке списка
+            if (isPairsList) {
+                return;
+            }
+
+            // Проверяем, является ли целевой элемент интерактивным
+            if (!e.target.matches('input, select, .action-button, .price-button, .fee-button, .done-button, .nav-button')) {
                 document.activeElement?.blur();
             }
         });
