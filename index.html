@@ -92,10 +92,17 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .button:active {
             transform: scale(0.98);
+        }
+
+        .button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
         }
 
         .button i {
@@ -167,6 +174,7 @@
             border-radius: 4px;
             text-align: center;
             width: 100%;
+            margin-bottom: 10px;
         }
 
         .score {
@@ -220,7 +228,6 @@
             border: 1px solid var(--tg-theme-button-color);
             border-radius: 8px;
             margin-bottom: 10px;
-            cursor: pointer;
         }
 
         .round-stats {
@@ -237,10 +244,9 @@
         }
 
         .hidden {
-            display: none;
+            display: none !important;
         }
 
-        /* Адаптивность */
         @media (max-width: 480px) {
             body {
                 padding: 8px;
@@ -267,10 +273,10 @@
             <div class="title">
                 <i class="fas fa-gamepad"></i> Alias
             </div>
-            <button class="button" onclick="showScreen('setup')">
+            <button class="button" id="newGameBtn">
                 <i class="fas fa-play"></i> Новая игра
             </button>
-            <button class="button button-outline" onclick="showScreen('settings')">
+            <button class="button button-outline" id="settingsBtn">
                 <i class="fas fa-cog"></i> Настройки
             </button>
         </div>
@@ -312,10 +318,10 @@
                     </select>
                 </div>
             </div>
-            <button class="button" onclick="startGame()">
+            <button class="button" id="startGameBtn">
                 <i class="fas fa-play"></i> Начать игру
             </button>
-            <button class="button button-outline" onclick="showScreen('menu')">
+            <button class="button button-outline" id="backToMenuBtn">
                 <i class="fas fa-arrow-left"></i> Назад
             </button>
         </div>
@@ -337,10 +343,10 @@
             </div>
             <div class="word-card" id="current-word"></div>
             <div class="controls">
-                <button class="button" onclick="handleCorrect()">
+                <button class="button" id="correctBtn">
                     <i class="fas fa-check"></i> Угадали!
                 </button>
-                <button class="button button-outline" onclick="handleSkip()">
+                <button class="button button-outline" id="skipBtn">
                     <i class="fas fa-forward"></i> Пропустить
                 </button>
             </div>
@@ -365,7 +371,7 @@
                 </div>
             </div>
             <div class="round-stats" id="final-stats"></div>
-            <button class="button" onclick="showScreen('menu')">
+            <button class="button" id="backToMenuFromResultsBtn">
                 <i class="fas fa-home"></i> В главное меню
             </button>
         </div>
@@ -376,9 +382,18 @@
         let tg = window.Telegram.WebApp;
         tg.expand();
 
+        // Функция для отображения экранов
+        function showScreen(screenId) {
+            console.log('Showing screen:', screenId);
+            ['menu', 'setup', 'game', 'results'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
         // Звуковые эффекты
         const sounds = {
-            correct: new Howl({ src: ['data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAASAAAeMwAUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAcorrect: new Howl({
+            correct: new Howl({
                 src: ['data:audio/wav;base64,UklGRqgHAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQgHAACAgICAgICAgIB+goN8f4F6kHyIgHyGgICAgYGBgYOBgYGBgYCCgICBgYGBgYKCgYKBgYGBgYKBgYGBgYGC'],
                 volume: 0.5
             }),
@@ -438,13 +453,20 @@
             }
         };
 
-        // Показ экрана
-        function showScreen(screenId) {
-            ['menu', 'setup', 'game', 'results'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
-            });
-            document.getElementById(screenId).classList.remove('hidden');
-        }
+        // Инициализация игры после загрузки DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            // Привязка обработчиков событий для кнопок
+            document.getElementById('newGameBtn').addEventListener('click', () => showScreen('setup'));
+            document.getElementById('settingsBtn').addEventListener('click', () => showScreen('setup'));
+            document.getElementById('startGameBtn').addEventListener('click', startGame);
+            document.getElementById('backToMenuBtn').addEventListener('click', () => showScreen('menu'));
+            document.getElementById('correctBtn').addEventListener('click', handleCorrect);
+            document.getElementById('skipBtn').addEventListener('click', handleSkip);
+            document.getElementById('backToMenuFromResultsBtn').addEventListener('click', () => showScreen('menu'));
+
+            // Показываем начальный экран
+            showScreen('menu');
+        });
 
         // Начало игры
         function startGame() {
@@ -502,8 +524,7 @@
                 gameState.timer--;
                 updateTimer();
                 
-                // Звуковые предупреждения о времени
-                if (gameState.timer === 10) {
+                if (gameState.timer <= 10) {
                     sounds.timeWarning.play();
                 }
                 
@@ -511,20 +532,6 @@
                     endRound();
                 }
             }, 1000);
-        }
-
-        // Обновление таймера
-        function updateTimer() {
-            const timerElement = document.getElementById('timer');
-            timerElement.querySelector('span').textContent = `${gameState.timer} сек`;
-            
-            // Визуальные предупреждения
-            timerElement.className = 'timer';
-            if (gameState.timer <= 10) {
-                timerElement.classList.add('danger');
-            } else if (gameState.timer <= 20) {
-                timerElement.classList.add('warning');
-            }
         }
 
         // Получение следующего слова
@@ -615,6 +622,19 @@
             document.getElementById('round-stats').innerHTML = statsHtml;
         }
 
+        // Обновление таймера
+        function updateTimer() {
+            const timerElement = document.getElementById('timer');
+            timerElement.querySelector('span').textContent = `${gameState.timer} сек`;
+            
+            timerElement.className = 'timer';
+            if (gameState.timer <= 10) {
+                timerElement.classList.add('danger');
+            } else if (gameState.timer <= 20) {
+                timerElement.classList.add('warning');
+            }
+        }
+
         // Обновление истории слов
         function updateWordHistory() {
             const historyElement = document.getElementById('word-history');
@@ -637,6 +657,12 @@
             });
         }
 
+        // Обновление счета
+        function updateScores() {
+            document.getElementById('team1-score').textContent = gameState.teams[0].score;
+            document.getElementById('team2-score').textContent = gameState.teams[1].score;
+        }
+
         // Завершение раунда
         function endRound() {
             clearInterval(gameState.timerInterval);
@@ -652,12 +678,6 @@
             }
         }
 
-        // Обновление счета
-        function updateScores() {
-            document.getElementById('team1-score').textContent = gameState.teams[0].score;
-            document.getElementById('team2-score').textContent = gameState.teams[1].score;
-        }
-
         // Завершение игры
         function endGame() {
             document.getElementById('final-team1-score').textContent = gameState.teams[0].score;
@@ -667,7 +687,6 @@
             document.getElementById('winner').textContent = 
                 `Победила команда ${gameState.teams[winner].name}!`;
             
-            // Финальная статистика
             const finalStatsHtml = `
                 <div class="stats-item">
                     <span>Всего угадано слов:</span>
@@ -689,9 +708,6 @@
             document.getElementById('final-stats').innerHTML = finalStatsHtml;
             showScreen('results');
         }
-
-        // Показываем начальный экран
-        showScreen('menu');
     </script>
 </body>
 </html>
