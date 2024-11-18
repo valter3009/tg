@@ -14,8 +14,35 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
         body {
-            background-color: #fff;
+            background: linear-gradient(135deg, #f6f8ff 0%, #ffffff 100%);
             color: #333;
             min-height: 100vh;
             padding: 20px;
@@ -24,13 +51,20 @@
         .container {
             max-width: 600px;
             margin: 0 auto;
+            animation: fadeIn 0.5s ease-out;
         }
 
         .logo {
-            font-size: 2rem;
-            color: #ff4757;
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ff4757, #ff6b81);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
             text-align: center;
             margin-bottom: 30px;
+            animation: bounce 2s infinite;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
         }
 
         .button {
@@ -43,20 +77,63 @@
             font-size: 1rem;
             cursor: pointer;
             transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255,255,255,0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+
+        .button:active::after {
+            animation: ripple 1s ease-out;
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(40, 40);
+                opacity: 0;
+            }
         }
 
         .button-primary {
-            background-color: #2196F3;
+            background: linear-gradient(45deg, #2196F3, #42a5f5);
             color: white;
         }
 
+        .button-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(33,150,243,0.2);
+        }
+
         .button-orange {
-            background-color: #ff9f43;
+            background: linear-gradient(45deg, #ff9f43, #ffa75a);
             color: white;
+        }
+
+        .button-orange:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(255,159,67,0.2);
         }
 
         .screen {
             display: none;
+            animation: slideIn 0.3s ease-out;
         }
 
         .screen.active {
@@ -68,6 +145,7 @@
             font-size: 2rem;
             color: #ff4757;
             margin: 20px 0;
+            animation: fadeIn 0.5s ease-out;
         }
 
         .player-controls {
@@ -84,6 +162,14 @@
             border: none;
             font-size: 1.5rem;
             cursor: pointer;
+            background: linear-gradient(45deg, #2196F3, #42a5f5);
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .player-controls button:hover {
+            transform: scale(1.1);
         }
 
         .team-list {
@@ -95,9 +181,17 @@
             align-items: center;
             gap: 10px;
             margin: 10px 0;
-            padding: 10px;
-            background-color: #f1f2f6;
+            padding: 15px;
+            background: white;
             border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .team-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
         }
 
         .team-icon {
@@ -107,12 +201,31 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            background: linear-gradient(45deg, #ff4757, #ff6b81);
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .team-input {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+        .team-input:focus {
+            outline: none;
+            background: white;
+            box-shadow: 0 0 0 2px rgba(33,150,243,0.2);
         }
 
         .word-sets {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 15px;
             margin: 20px 0;
         }
 
@@ -122,12 +235,29 @@
             border-radius: 10px;
             overflow: hidden;
             cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .word-set:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+
+        .word-set.selected {
+            border: 3px solid #2196F3;
+            animation: pulse 0.3s ease-out;
         }
 
         .word-set img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transition: all 0.3s ease;
+        }
+
+        .word-set:hover img {
+            transform: scale(1.05);
         }
 
         .word-set-info {
@@ -135,65 +265,15 @@
             bottom: 0;
             left: 0;
             right: 0;
-            padding: 10px;
-            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            background: rgba(0,0,0,0.7);
             color: white;
-        }
-
-        .settings-item {
-            margin: 20px 0;
-        }
-
-        .settings-label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-
-        .slider {
-            width: 100%;
-            height: 30px;
-            background: #f1f2f6;
-            border-radius: 15px;
-            position: relative;
-            margin: 10px 0;
-        }
-
-        .slider-handle {
-            width: 40px;
-            height: 30px;
-            background: #2196F3;
-            border-radius: 15px;
-            position: absolute;
-            cursor: pointer;
-        }
-
-        .toggle {
-            width: 60px;
-            height: 30px;
-            background: #f1f2f6;
-            border-radius: 15px;
-            position: relative;
-            cursor: pointer;
-        }
-
-        .toggle-handle {
-            width: 26px;
-            height: 26px;
-            background: white;
-            border-radius: 13px;
-            position: absolute;
-            top: 2px;
-            left: 2px;
+            transform: translateY(100%);
             transition: all 0.3s ease;
         }
 
-        .toggle.active {
-            background: #2196F3;
-        }
-
-        .toggle.active .toggle-handle {
-            left: 32px;
+        .word-set:hover .word-set-info {
+            transform: translateY(0);
         }
 
         .game-header {
@@ -201,32 +281,101 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            animation: slideIn 0.3s ease-out;
         }
 
         .timer {
-            font-size: 2rem;
+            font-size: 2.5rem;
             font-weight: bold;
             color: #2196F3;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            animation: pulse 1s infinite;
+        }
+
+        .timer.warning {
+            color: #ff4757;
+            animation: shake 0.5s infinite;
         }
 
         .score {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2196F3;
+            padding: 10px 20px;
+            border-radius: 10px;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         .word-card {
             background: white;
-            border-radius: 10px;
-            padding: 30px;
+            border-radius: 15px;
+            padding: 40px;
             text-align: center;
-            font-size: 2rem;
+            font-size: 2.5rem;
+            font-weight: bold;
             margin: 20px 0;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            animation: slideIn 0.3s ease-out;
+            transition: all 0.3s ease;
+        }
+
+        .word-card.highlight {
+            animation: bounce 0.3s ease-out;
         }
 
         .game-controls {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 15px;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 90%;
+            width: 400px;
+            animation: slideIn 0.3s ease-out;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #2196F3;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #2196F3;
+            animation: confetti 1s ease-out forwards;
+            pointer-events: none;
+        }
+
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
         }
 
         @media (max-width: 480px) {
@@ -240,8 +389,16 @@
             }
             
             .word-card {
+                font-size: 2rem;
+                padding: 30px;
+            }
+
+            .timer {
+                font-size: 2rem;
+            }
+
+            .score {
                 font-size: 1.5rem;
-                padding: 20px;
             }
         }
     </style>
@@ -251,9 +408,15 @@
         <!-- Главное меню -->
         <div id="menu" class="screen active">
             <div class="logo">Alias</div>
-            <button class="button button-primary" onclick="showScreen('playerSelect')">Играть</button>
-            <button class="button button-orange" onclick="showScreen('rules')">Правила</button>
-            <button class="button button-orange" onclick="showScreen('settings')">Настройки</button>
+            <button class="button button-primary" onclick="showScreen('playerSelect')">
+                <i class="fas fa-play"></i> Играть
+            </button>
+            <button class="button button-orange" onclick="showRules()">
+                <i class="fas fa-book"></i> Правила
+            </button>
+            <button class="button button-orange" onclick="showScreen('settings')">
+                <i class="fas fa-cog"></i> Настройки
+            </button>
         </div>
 
         <!-- Выбор количества игроков -->
@@ -272,63 +435,16 @@
 
         <!-- Выбор команд -->
         <div id="teamSelect" class="screen">
-            <div class="team-list" id="teamList">
-                <!-- Команды добавляются динамически -->
-            </div>
+            <div class="team-list" id="teamList"></div>
             <button class="button button-primary" onclick="showScreen('wordSets')">Продолжить</button>
             <button class="button button-orange" onclick="showScreen('playerSelect')">Назад</button>
         </div>
 
         <!-- Наборы слов -->
         <div id="wordSets" class="screen">
-            <div class="word-sets">
-                <div class="word-set" onclick="selectWordSet('basic')">
-                    <img src="/api/placeholder/400/400" alt="Базовый набор">
-                    <div class="word-set-info">
-                        <div>Базовый набор</div>
-                        <div>3060 слов</div>
-                    </div>
-                </div>
-                <!-- Остальные наборы -->
-            </div>
-            <button class="button button-primary" onclick="startGame()">Продолжить</button>
+            <div class="word-sets" id="wordSetsGrid"></div>
+            <button class="button button-primary" onclick="startGame()">Начать игру</button>
             <button class="button button-orange" onclick="showScreen('teamSelect')">Назад</button>
-        </div>
-
-        <!-- Настройки -->
-        <div id="settings" class="screen">
-            <div class="settings-item">
-                <label class="settings-label">Длительность раунда</label>
-                <div class="slider">
-                    <div class="slider-handle" id="roundTimeHandle"></div>
-                </div>
-                <div id="roundTimeValue">60 сек</div>
-            </div>
-            
-            <div class="settings-item">
-                <label class="settings-label">Очков для победы</label>
-                <div class="slider">
-                    <div class="slider-handle" id="winScoreHandle"></div>
-                </div>
-                <div id="winScoreValue">50 очков</div>
-            </div>
-
-            <div class="settings-item">
-                <label class="settings-label">Отнимать очки за пропуск</label>
-                <div class="toggle" id="penaltyToggle">
-                    <div class="toggle-handle"></div>
-                </div>
-            </div>
-
-            <div class="settings-item">
-                <label class="settings-label">Звуки</label>
-                <div class="toggle" id="soundToggle">
-                    <div class="toggle-handle"></div>
-                </div>
-            </div>
-
-            <button class="button button-primary" onclick="saveSettings()">Сохранить</button>
-            <button class="button button-orange" onclick="showScreen('menu')">Назад</button>
         </div>
 
         <!-- Игра -->
@@ -339,9 +455,20 @@
             </div>
             <div class="word-card" id="currentWord"></div>
             <div class="game-controls">
-                <button class="button button-primary" onclick="wordGuessed()">Угадали</button>
-                <button class="button button-orange" onclick="wordSkipped()">Пропустить</button>
+                <button class="button button-primary" onclick="wordGuessed()">
+                    <i class="fas fa-check"></i> Угадали
+                </button>
+                <button class="button button-orange" onclick="wordSkipped()">
+                    <i class="fas fa-times"></i> Пропустить
+                </button>
             </div>
+        </div>
+    </div>
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-title"></div>
+            <div class="modal-body"></div>
+            <button class="button button-primary" onclick="closeModal()">OK</button>
         </div>
     </div>
 
@@ -353,49 +480,135 @@
             currentTeam: 0,
             currentWord: '',
             timer: 60,
+            timerInterval: null,
             settings: {
                 roundTime: 60,
                 winScore: 50,
                 penalty: false,
                 sound: true
             },
-            words: {
-                basic: ['слово1', 'слово2', 'слово3'], // Здесь будет полный набор слов
-                science: ['наука1', 'наука2', 'наука3'],
-                // Остальные наборы слов
-            },
-            selectedWordSet: 'basic'
+            selectedWordSet: 'basic',
+            usedWords: new Set()
         };
 
-        // Управление экранами
+        // Звуковые эффекты
+        const sounds = {
+            correct: new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAABkAAAA/w=='),
+            wrong: new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA='),
+            tick: new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA='),
+            win: new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=')
+        };
+
+        // Базовый набор слов (расширенный)
+        const wordSets = {
+            basic: [
+                'дом', 'кошка', 'собака', 'дерево', 'солнце', 'луна', 'звезда',
+                'вода', 'огонь', 'земля', 'воздух', 'книга', 'ручка', 'карандаш',
+                'стол', 'стул', 'окно', 'дверь', 'телефон', 'компьютер', 'машина',
+                'велосипед', 'самолет', 'поезд', 'море', 'река', 'гора', 'лес',
+                'цветок', 'трава', 'птица', 'рыба', 'бабочка', 'муравей', 'пчела',
+                // Добавьте больше слов здесь...
+            ],
+            science: [
+                'атом', 'молекула', 'энергия', 'гравитация', 'электрон', 'протон',
+                'нейтрон', 'реакция', 'формула', 'теорема', 'гипотеза', 'опыт',
+                'микроскоп', 'телескоп', 'планета', 'галактика', 'вселенная',
+                // Добавьте больше научных слов...
+            ],
+            // Добавьте другие наборы слов...
+        };
+
+        // Управление экранами с анимацией
         function showScreen(screenId) {
-            document.querySelectorAll('.screen').forEach(screen => {
-                screen.classList.remove('active');
-            });
-            document.getElementById(screenId).classList.add('active');
+            const currentScreen = document.querySelector('.screen.active');
+            const nextScreen = document.getElementById(screenId);
             
-            if (screenId === 'teamSelect') {
-                updateTeamList();
+            currentScreen.style.animation = 'fadeOut 0.3s ease-out';
+            setTimeout(() => {
+                currentScreen.classList.remove('active');
+                currentScreen.style.animation = '';
+                nextScreen.classList.add('active');
+                nextScreen.style.animation = 'fadeIn 0.3s ease-out';
+                
+                if (screenId === 'teamSelect') {
+                    updateTeamList();
+                } else if (screenId === 'wordSets') {
+                    updateWordSets();
+                }
+            }, 300);
+        }
+
+        // Показать модальное окно
+        function showModal(title, content) {
+            const modal = document.getElementById('modal');
+            modal.querySelector('.modal-title').textContent = title;
+            modal.querySelector('.modal-body').innerHTML = content;
+            modal.classList.add('active');
+        }
+
+        // Закрыть модальное окно
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        // Показать правила
+        function showRules() {
+            showModal('Правила игры', `
+                <ul style="list-style: none; padding: 0;">
+                    <li style="margin: 10px 0;">
+                        <i class="fas fa-users"></i> Игроки делятся на команды по 2 человека
+                    </li>
+                    <li style="margin: 10px 0;">
+                        <i class="fas fa-comments"></i> Объясняйте слова своей команде
+                    </li>
+                    <li style="margin: 10px 0;">
+                        <i class="fas fa-ban"></i> Нельзя использовать однокоренные слова
+                    </li>
+                    <li style="margin: 10px 0;">
+                        <i class="fas fa-star"></i> За каждое угаданное слово - 1 очко
+                    </li>
+                    <li style="margin: 10px 0;">
+                        <i class="fas fa-trophy"></i> Побеждает команда, первой набравшая цель
+                    </li>
+                </ul>
+            `);
+        }
+
+        // Управление количеством игроков с анимацией
+        function adjustPlayers(delta) {
+            const countElement = document.getElementById('playerCount');
+            const newCount = Math.max(2, Math.min(8, gameState.players + delta));
+            
+            if (newCount !== gameState.players) {
+                countElement.style.animation = 'bounce 0.3s ease-out';
+                setTimeout(() => {
+                    countElement.style.animation = '';
+                }, 300);
+                
+                gameState.players = newCount;
+                countElement.textContent = newCount;
+                playSound('tick');
             }
         }
 
-        // Управление количеством игроков
-        function adjustPlayers(delta) {
-            gameState.players = Math.max(2, Math.min(8, gameState.players + delta));
-            document.getElementById('playerCount').textContent = gameState.players;
-        }
-
-        // Обновление списка команд
+        // Обновление списка команд с анимацией
         function updateTeamList() {
             const teamList = document.getElementById('teamList');
             teamList.innerHTML = '';
             
             for (let i = 0; i < gameState.players / 2; i++) {
+                const delay = i * 100;
                 const teamItem = document.createElement('div');
                 teamItem.className = 'team-item';
+                teamItem.style.animation = `slideIn 0.3s ease-out ${delay}ms both`;
+                
                 teamItem.innerHTML = `
-                    <div class="team-icon">👥</div>
-                    <input type="text" placeholder="Название команды ${i + 1}" 
+                    <div class="team-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <input type="text" 
+                           class="team-input"
+                           placeholder="Название команды ${i + 1}" 
                            value="${gameState.teams[i]?.name || ''}"
                            onchange="updateTeamName(${i}, this.value)">
                 `;
@@ -410,49 +623,143 @@
             } else {
                 gameState.teams[index].name = name;
             }
+            playSound('tick');
+        }
+
+        // Обновление сетки наборов слов
+        function updateWordSets() {
+            const grid = document.getElementById('wordSetsGrid');
+            grid.innerHTML = '';
+            
+            Object.entries(wordSets).forEach(([key, words], index) => {
+                const delay = index * 100;
+                const set = document.createElement('div');
+                set.className = `word-set ${gameState.selectedWordSet === key ? 'selected' : ''}`;
+                set.style.animation = `slideIn 0.3s ease-out ${delay}ms both`;
+                set.onclick = () => selectWordSet(key);
+                
+                set.innerHTML = `
+                    <img src="/api/placeholder/400/400" alt="${key} набор">
+                    <div class="word-set-info">
+                        <div>${getWordSetName(key)}</div>
+                        <div>${words.length} слов</div>
+                    </div>
+                `;
+                grid.appendChild(set);
+            });
+        }
+
+        // Получение названия набора слов
+        function getWordSetName(key) {
+            const names = {
+                basic: 'Базовый набор',
+                science: 'Наука',
+                // Добавьте другие наборы...
+            };
+            return names[key] || key;
         }
 
         // Выбор набора слов
         function selectWordSet(setName) {
+            const previousSet = document.querySelector('.word-set.selected');
+            if (previousSet) {
+                previousSet.classList.remove('selected');
+            }
+            
+            const newSet = document.querySelector(`.word-set[onclick*="${setName}"]`);
+            newSet.classList.add('selected');
+            
             gameState.selectedWordSet = setName;
+            playSound('tick');
         }
 
-        // Сохранение настроек
-        function saveSettings() {
-            // Сохраняем настройки в gameState
-            showScreen('menu');
+        // Воспроизведение звука
+        function playSound(soundName) {
+            if (gameState.settings.sound && sounds[soundName]) {
+                sounds[soundName].currentTime = 0;
+                sounds[soundName].play().catch(() => {});
+            }
+        }
+
+        // Создание эффекта конфетти
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = `${Math.random() * 100}vw`;
+                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                confetti.style.animationDuration = `${Math.random() * 2 + 1}s`;
+                document.body.appendChild(confetti);
+                
+                setTimeout(() => {
+                    confetti.remove();
+                }, 3000);
+            }
         }
 
         // Начало игры
         function startGame() {
+            if (gameState.teams.length < 2) {
+                showModal('Ошибка', 'Необходимо создать хотя бы две команды!');
+                return;
+            }
+
+            gameState.usedWords.clear();
             gameState.currentWord = getNextWord();
+            gameState.timer = gameState.settings.roundTime;
             updateGameUI();
             showScreen('game');
             startTimer();
+            playSound('tick');
         }
 
         // Получение следующего слова
         function getNextWord() {
-            const words = gameState.words[gameState.selectedWordSet];
-            return words[Math.floor(Math.random() * words.length)];
+            const words = wordSets[gameState.selectedWordSet];
+            let word;
+            
+            do {
+                word = words[Math.floor(Math.random() * words.length)];
+            } while (gameState.usedWords.has(word));
+            
+            gameState.usedWords.add(word);
+            return word;
         }
 
         // Обновление игрового интерфейса
         function updateGameUI() {
-            document.getElementById('currentWord').textContent = gameState.currentWord;
-            document.getElementById('score').textContent = 
-                gameState.teams[gameState.currentTeam].score;
-            document.getElementById('timer').textContent = gameState.timer;
+            const wordCard = document.getElementById('currentWord');
+            const scoreElement = document.getElementById('score');
+            const timerElement = document.getElementById('timer');
+            
+            wordCard.textContent = gameState.currentWord;
+            scoreElement.textContent = gameState.teams[gameState.currentTeam].score;
+            timerElement.textContent = gameState.timer;
+            
+            wordCard.classList.add('highlight');
+            setTimeout(() => {
+                wordCard.classList.remove('highlight');
+            }, 300);
         }
 
         // Запуск таймера
         function startTimer() {
-            const timerInterval = setInterval(() => {
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+            }
+            
+            gameState.timerInterval = setInterval(() => {
                 gameState.timer--;
-                document.getElementById('timer').textContent = gameState.timer;
+                const timerElement = document.getElementById('timer');
+                timerElement.textContent = gameState.timer;
+                
+                if (gameState.timer <= 10) {
+                    timerElement.classList.add('warning');
+                    playSound('tick');
+                }
                 
                 if (gameState.timer <= 0) {
-                    clearInterval(timerInterval);
+                    clearInterval(gameState.timerInterval);
                     endRound();
                 }
             }, 1000);
@@ -461,8 +768,13 @@
         // Обработка угаданного слова
         function wordGuessed() {
             gameState.teams[gameState.currentTeam].score++;
+            playSound('correct');
             gameState.currentWord = getNextWord();
             updateGameUI();
+            
+            if (gameState.teams[gameState.currentTeam].score >= gameState.settings.winScore) {
+                endGame();
+            }
         }
 
         // Обработка пропущенного слова
@@ -471,31 +783,55 @@
                 gameState.teams[gameState.currentTeam].score = 
                     Math.max(0, gameState.teams[gameState.currentTeam].score - 1);
             }
+            playSound('wrong');
             gameState.currentWord = getNextWord();
             updateGameUI();
         }
 
         // Завершение раунда
         function endRound() {
+            clearInterval(gameState.timerInterval);
             gameState.currentTeam = (gameState.currentTeam + 1) % gameState.teams.length;
             gameState.timer = gameState.settings.roundTime;
             
-            if (gameState.teams.some(team => team.score >= gameState.settings.winScore)) {
-                endGame();
-            } else {
-                startGame();
-            }
+            showModal('Конец раунда', `
+                <div style="text-align: center;">
+                    <h2>Следующая команда:</h2>
+                    <h1 style="color: #2196F3; margin: 20px 0;">
+                        ${gameState.teams[gameState.currentTeam].name}
+                    </h1>
+                    <div style="margin-top: 20px;">
+                        Приготовьтесь объяснять слова!
+                    </div>
+                </div>
+            `);
         }
 
         // Завершение игры
         function endGame() {
+            clearInterval(gameState.timerInterval);
             const winner = gameState.teams.reduce((prev, current) => 
                 (prev.score > current.score) ? prev : current
             );
             
-            alert(`Победила команда "${winner.name}" со счетом ${winner.score}!`);
+            createConfetti();
+            playSound('win');
+            
+            showModal('Победа!', `
+                <div style="text-align: center;">
+                    <h1 style="color: #ff4757; margin: 20px 0;">
+                        ${winner.name}
+                    </h1>
+                    <div style="font-size: 1.2rem; margin: 20px 0;">
+                        Победила со счётом: ${winner.score} очков!
+                    </div>
+                    <div style="margin-top: 20px;">
+                        🎉 Поздравляем! 🎉
+                    </div>
+                </div>
+            `);
+            
             resetGame();
-            showScreen('menu');
         }
 
         // Сброс игры
@@ -503,6 +839,87 @@
             gameState.teams.forEach(team => team.score = 0);
             gameState.currentTeam = 0;
             gameState.timer = gameState.settings.roundTime;
+            gameState.usedWords.clear();
+            
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+            }
+            
+            const timerElement = document.getElementById('timer');
+            timerElement.classList.remove('warning');
+        }
+
+        // Обработка клавиатуры
+        function handleKeyPress(e) {
+            if (document.getElementById('game').classList.contains('active')) {
+                if (e.code === 'ArrowUp' || e.code === 'Space') {
+                    e.preventDefault();
+                    wordGuessed();
+                } else if (e.code === 'ArrowDown') {
+                    e.preventDefault();
+                    wordSkipped();
+                }
+            }
+        }
+
+        // Настройки слайдера
+        function setupSlider(handle, values, onChange) {
+            let isDragging = false;
+            const slider = handle.parentElement;
+            
+            function updateSlider(clientX) {
+                const sliderRect = slider.getBoundingClientRect();
+                const stepSize = sliderRect.width / (values.length - 1);
+                const relativeX = Math.max(0, Math.min(sliderRect.width, clientX - sliderRect.left));
+                const step = Math.round(relativeX / stepSize);
+                const value = values[Math.max(0, Math.min(values.length - 1, step))];
+                const position = (step * stepSize) / sliderRect.width * 100;
+                
+                handle.style.left = `${position}%`;
+                onChange(value);
+                playSound('tick');
+            }
+
+            function startDrag(e) {
+                isDragging = true;
+                handle.style.transition = 'none';
+                updateSlider(e.type === 'touchstart' ? e.touches[0].clientX : e.clientX);
+                e.preventDefault();
+            }
+
+            function stopDrag() {
+                isDragging = false;
+                handle.style.transition = 'all 0.3s ease';
+            }
+
+            function drag(e) {
+                if (isDragging) {
+                    updateSlider(e.type === 'touchmove' ? e.touches[0].clientX : e.clientX);
+                }
+            }
+
+            handle.addEventListener('mousedown', startDrag);
+            handle.addEventListener('touchstart', startDrag, { passive: false });
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('touchmove', drag, { passive: true });
+            document.addEventListener('mouseup', stopDrag);
+            document.addEventListener('touchend', stopDrag);
+        }
+
+        // Настройка переключателя
+        function setupToggle(toggle, onChange) {
+            toggle.addEventListener('click', () => {
+                toggle.classList.toggle('active');
+                const isActive = toggle.classList.contains('active');
+                onChange(isActive);
+                playSound('tick');
+                
+                // Добавляем анимацию при переключении
+                toggle.style.animation = 'bounce 0.3s ease-out';
+                setTimeout(() => {
+                    toggle.style.animation = '';
+                }, 300);
+            });
         }
 
         // Инициализация настроек
@@ -512,8 +929,8 @@
             const penaltyToggle = document.getElementById('penaltyToggle');
             const soundToggle = document.getElementById('soundToggle');
 
-            // Инициализация слайдеров
-            setupSlider(roundTimeHandle, [30, 60, 90], value => {
+            // Настройка слайдеров
+            setupSlider(roundTimeHandle, [30, 45, 60, 90, 120], value => {
                 gameState.settings.roundTime = value;
                 document.getElementById('roundTimeValue').textContent = `${value} сек`;
             });
@@ -523,7 +940,7 @@
                 document.getElementById('winScoreValue').textContent = `${value} очков`;
             });
 
-            // Инициализация переключателей
+            // Настройка переключателей
             setupToggle(penaltyToggle, checked => {
                 gameState.settings.penalty = checked;
             });
@@ -533,151 +950,74 @@
             });
         }
 
-        // Настройка слайдера
-        function setupSlider(handle, values, onChange) {
-            let isDragging = false;
-            const slider = handle.parentElement;
-            const sliderRect = slider.getBoundingClientRect();
-            const stepSize = sliderRect.width / (values.length - 1);
-
-            function updatePosition(clientX) {
-                const relativeX = clientX - sliderRect.left;
-                const step = Math.round(relativeX / stepSize);
-                const value = values[Math.max(0, Math.min(values.length - 1, step))];
-                const position = step * stepSize;
-                
-                handle.style.left = `${position}px`;
-                onChange(value);
-            }
-
-            handle.addEventListener('mousedown', e => {
-                isDragging = true;
-                e.preventDefault();
-            });
-
-            document.addEventListener('mousemove', e => {
-                if (isDragging) {
-                    updatePosition(e.clientX);
-                }
-            });
-
-            document.addEventListener('mouseup', () => {
-                isDragging = false;
-            });
-
-            // Мобильная поддержка
-            handle.addEventListener('touchstart', e => {
-                isDragging = true;
-                e.preventDefault();
-            });
-
-            document.addEventListener('touchmove', e => {
-                if (isDragging) {
-                    const touch = e.touches[0];
-                    updatePosition(touch.clientX);
-                }
-            });
-
-            document.addEventListener('touchend', () => {
-                isDragging = false;
-            });
+        // Вспомогательные функции для анимации
+        function animate(element, animationName, duration = 300) {
+            element.style.animation = `${animationName} ${duration}ms ease-out`;
+            setTimeout(() => {
+                element.style.animation = '';
+            }, duration);
         }
-
-        // Настройка переключателя
-        function setupToggle(toggle, onChange) {
-            toggle.addEventListener('click', () => {
-                toggle.classList.toggle('active');
-                onChange(toggle.classList.contains('active'));
-            });
-        }
-
-        // Наборы слов (базовые наборы, остальные можно добавить позже)
-        const wordSets = {
-            basic: [
-                // Базовый набор слов (3060 слов)
-                'дом', 'кошка', 'собака', 'дерево', 'солнце', 'луна', 'звезда',
-                'вода', 'огонь', 'земля', 'воздух', 'книга', 'ручка', 'карандаш',
-                // ... добавить остальные слова
-            ],
-            science: [
-                // Научный набор (300 слов)
-                'атом', 'молекула', 'энергия', 'гравитация', 'электрон', 'протон',
-                'нейтрон', 'реакция', 'формула', 'теорема', 'гипотеза', 'опыт',
-                // ... добавить остальные слова
-            ],
-            newYear: [
-                // Новогодний набор (300 слов)
-                'ёлка', 'подарок', 'гирлянда', 'снег', 'мороз', 'снеговик',
-                'сани', 'каток', 'варежки', 'шапка', 'праздник', 'салют',
-                // ... добавить остальные слова
-            ],
-            plants: [
-                // Растения (400 слов)
-                'роза', 'тюльпан', 'ромашка', 'дуб', 'берёза', 'ель', 'сосна',
-                'трава', 'мох', 'гриб', 'цветок', 'лист', 'корень', 'стебель',
-                // ... добавить остальные слова
-            ],
-            tolkien: [
-                // Вселенная Толкиена (400 слов)
-                'хоббит', 'кольцо', 'гэндальф', 'саурон', 'фродо', 'голлум',
-                'мордор', 'шир', 'эльф', 'гном', 'орк', 'назгул', 'арагорн',
-                // ... добавить остальные слова
-            ],
-            literature: [
-                // Литературные герои (250 слов)
-                'онегин', 'печорин', 'чацкий', 'базаров', 'раскольников',
-                'анна_каренина', 'чичиков', 'обломов', 'донкихот', 'гамлет',
-                // ... добавить остальные слова
-            ],
-            adult: [
-                // 18+ набор (500 слов)
-                // Добавить соответствующие слова
-            ]
-        };
-
-        // Звуковые эффекты
-        const sounds = {
-            correct: new Audio('data:audio/wav;base64,UklGRn4AAABXQVZFZm10IBAAAAABAAEAxD4AAIC+AAACAAAAZGF0YVoAAAA...'), // Base64 звука
-            wrong: new Audio('data:audio/wav;base64,UklGRn4AAABXQVZFZm10IBAAAAABAAEAxD4AAIC+AAACAAAAZGF0YVoAAAA...'),  // Base64 звука
-            tick: new Audio('data:audio/wav;base64,UklGRn4AAABXQVZFZm10IBAAAAABAAEAxD4AAIC+AAACAAAAZGF0YVoAAAA...')   // Base64 звука
-        };
-
-        // Воспроизведение звука
-        function playSound(soundName) {
-            if (gameState.settings.sound) {
-                sounds[soundName].currentTime = 0;
-                sounds[soundName].play().catch(() => {}); // Игнорируем ошибки автовоспроизведения
-            }
-        }
-
-        // Правила игры
-        const rules = `
-            Правила игры Alias:
-            1. Игроки делятся на команды по 2 человека
-            2. Задача - объяснить как можно больше слов своей команде за отведенное время
-            3. Нельзя использовать однокоренные слова при объяснении
-            4. За каждое угаданное слово команда получает 1 очко
-            5. За пропуск слова может сниматься очко (зависит от настроек)
-            6. Побеждает команда, первой набравшая нужное количество очков
-        `;
 
         // Инициализация игры
-        document.addEventListener('DOMContentLoaded', () => {
+        function initGame() {
+            // Инициализация настроек
             initSettings();
             
-            // Добавляем обработку клавиш
-            document.addEventListener('keydown', e => {
-                if (document.getElementById('game').classList.contains('active')) {
-                    if (e.code === 'ArrowUp' || e.code === 'Space') {
-                        e.preventDefault();
+            // Обработка клавиатуры
+            document.addEventListener('keydown', handleKeyPress);
+            
+            // Предзагрузка звуков
+            Object.values(sounds).forEach(sound => {
+                sound.load();
+            });
+            
+            // Добавление обработчиков свайпов для мобильных устройств
+            let touchStartX = 0;
+            let touchStartY = 0;
+
+            document.addEventListener('touchstart', e => {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            });
+
+            document.addEventListener('touchend', e => {
+                if (!document.getElementById('game').classList.contains('active')) return;
+                
+                const touchEndX = e.changedTouches[0].clientX;
+                const touchEndY = e.changedTouches[0].clientY;
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
+                
+                // Определяем направление свайпа
+                if (Math.abs(deltaY) > Math.abs(deltaX)) {
+                    if (deltaY < -50) { // Свайп вверх
                         wordGuessed();
-                    } else if (e.code === 'ArrowDown') {
-                        e.preventDefault();
+                    } else if (deltaY > 50) { // Свайп вниз
                         wordSkipped();
                     }
                 }
             });
-        });
+
+            // Добавление обработчика изменения размера окна
+            window.addEventListener('resize', () => {
+                // Пересчитываем позиции слайдеров
+                const roundTimeHandle = document.getElementById('roundTimeHandle');
+                const winScoreHandle = document.getElementById('winScoreHandle');
+                
+                if (roundTimeHandle && winScoreHandle) {
+                    const roundTimeValue = gameState.settings.roundTime;
+                    const winScoreValue = gameState.settings.winScore;
+                    
+                    roundTimeHandle.style.left = 
+                        `${((roundTimeValue - 30) / 90) * 100}%`;
+                    winScoreHandle.style.left = 
+                        `${((winScoreValue - 25) / 75) * 100}%`;
+                }
+            });
+        }
+
+        // Запуск игры при загрузке страницы
+        document.addEventListener('DOMContentLoaded', initGame);
     </script>
 </body>
 </html>
