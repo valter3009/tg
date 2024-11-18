@@ -1,153 +1,260 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Timer, Users, Trophy, Settings, PlayCircle, PauseCircle, Crown } from 'lucide-react';
 
-const NonogramGame = () => {
-  const SIZE = 15;
-  const [grid, setGrid] = useState(Array(SIZE).fill().map(() => Array(SIZE).fill(0)));
-  const [solution] = useState(generatePuzzle());
-  const [rowHints, setRowHints] = useState([]);
-  const [colHints, setColHints] = useState([]);
-  const [gameWon, setGameWon] = useState(false);
+// Базовые наборы слов по категориям
+const wordSets = {
+  easy: [
+    'кошка', 'собака', 'дом', 'солнце', 'дерево', 'книга', 'телефон', 'стол', 'вода', 'хлеб',
+    'машина', 'школа', 'мяч', 'цветок', 'птица', 'рыба', 'море', 'гора', 'снег', 'дождь',
+  ],
+  medium: [
+    'архитектура', 'велосипед', 'гитара', 'динозавр', 'живопись', 'интернет', 'календарь',
+    'микроскоп', 'небоскреб', 'олимпиада', 'парашют', 'революция', 'телескоп', 'фестиваль',
+  ],
+  hard: [
+    'амбивалентность', 'бюрократия', 'витализм', 'гносеология', 'диссертация', 'эклектика',
+    'интеграция', 'каламбур', 'метафизика', 'нумизматика', 'оптимизация', 'парадигма',
+  ],
+};
 
+const ROUND_TIME = 60; // время раунда в секундах
+
+const AliasGame = () => {
+  // Состояния игры
+  const [gameState, setGameState] = useState('menu'); // menu, setup, game, results
+  const [teams, setTeams] = useState([
+    { id: 1, name: 'Команда 1', score: 0, players: [] },
+    { id: 2, name: 'Команда 2', score: 0, players: [] },
+  ]);
+  const [currentTeam, setCurrentTeam] = useState(0);
+  const [currentWord, setCurrentWord] = useState('');
+  const [usedWords, setUsedWords] = useState([]);
+  const [roundWords, setRoundWords] = useState([]);
+  const [timeLeft, setTimeLeft] = useState(ROUND_TIME);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [difficulty, setDifficulty] = useState('easy');
+  const [winScore, setWinScore] = useState(50);
+
+  // Эффект для таймера
   useEffect(() => {
-    const hints = calculateHints(solution);
-    setRowHints(hints.rowHints);
-    setColHints(hints.colHints);
-  }, [solution]);
-
-  function generatePuzzle() {
-    const puzzle = Array(SIZE).fill().map(() => Array(SIZE).fill(0));
-    for (let i = 0; i < SIZE; i++) {
-      for (let j = 0; j < SIZE; j++) {
-        puzzle[i][j] = Math.random() > 0.7 ? 1 : 0;
-      }
+    let timer;
+    if (isTimerRunning && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+    } else if (timeLeft === 0) {
+      endRound();
     }
-    return puzzle;
-  }
+    return () => clearInterval(timer);
+  }, [isTimerRunning, timeLeft]);
 
-  function calculateHints(puzzle) {
-    const rowHints = [];
-    const colHints = [];
+  // Начало новой игры
+  const startGame = () => {
+    setGameState('game');
+    setUsedWords([]);
+    teams.forEach(team => team.score = 0);
+    startRound();
+  };
 
-    for (let i = 0; i < SIZE; i++) {
-      const hints = [];
-      let count = 0;
-      for (let j = 0; j < SIZE; j++) {
-        if (puzzle[i][j] === 1) {
-          count++;
-        } else if (count > 0) {
-          hints.push(count);
-          count = 0;
-        }
-      }
-      if (count > 0) hints.push(count);
-      rowHints.push(hints.length ? hints : [0]);
-    }
+  // Начало нового раунда
+  const startRound = () => {
+    setTimeLeft(ROUND_TIME);
+    setRoundWords([]);
+    setIsTimerRunning(true);
+    getNextWord();
+  };
 
-    for (let j = 0; j < SIZE; j++) {
-      const hints = [];
-      let count = 0;
-      for (let i = 0; i < SIZE; i++) {
-        if (puzzle[i][j] === 1) {
-          count++;
-        } else if (count > 0) {
-          hints.push(count);
-          count = 0;
-        }
-      }
-      if (count > 0) hints.push(count);
-      colHints.push(hints.length ? hints : [0]);
-    }
-
-    return { rowHints, colHints };
-  }
-
-  function handleCellClick(row, col, rightClick = false) {
-    if (gameWon) return;
-    
-    const newGrid = [...grid];
-    if (rightClick) {
-      newGrid[row][col] = newGrid[row][col] === 2 ? 0 : 2;
+  // Получение следующего слова
+  const getNextWord = () => {
+    const availableWords = wordSets[difficulty].filter(
+      word => !usedWords.includes(word)
+    );
+    if (availableWords.length === 0) {
+      // Если слова закончились, очищаем использованные
+      setUsedWords([]);
+      const word = wordSets[difficulty][Math.floor(Math.random() * wordSets[difficulty].length)];
+      setCurrentWord(word);
     } else {
-      newGrid[row][col] = newGrid[row][col] === 1 ? 0 : 1;
+      const word = availableWords[Math.floor(Math.random() * availableWords.length)];
+      setCurrentWord(word);
+      setUsedWords([...usedWords, word]);
     }
-    setGrid(newGrid);
-    checkWinCondition(newGrid);
-  }
+  };
 
-  function checkWinCondition(currentGrid) {
-    for (let i = 0; i < SIZE; i++) {
-      for (let j = 0; j < SIZE; j++) {
-        if ((solution[i][j] === 1 && currentGrid[i][j] !== 1) ||
-            (solution[i][j] === 0 && currentGrid[i][j] === 1)) {
-          return;
-        }
-      }
+  // Обработка угаданного слова
+  const handleCorrect = () => {
+    setRoundWords([...roundWords, { word: currentWord, correct: true }]);
+    getNextWord();
+  };
+
+  // Обработка пропущенного слова
+  const handleSkip = () => {
+    setRoundWords([...roundWords, { word: currentWord, correct: false }]);
+    getNextWord();
+  };
+
+  // Завершение раунда
+  const endRound = () => {
+    setIsTimerRunning(false);
+    const correctWords = roundWords.filter(w => w.correct).length;
+    const newTeams = [...teams];
+    newTeams[currentTeam].score += correctWords;
+    setTeams(newTeams);
+
+    if (newTeams[currentTeam].score >= winScore) {
+      setGameState('results');
+    } else {
+      setCurrentTeam((currentTeam + 1) % teams.length);
     }
-    setGameWon(true);
-  }
+  };
 
-  return (
-    <Card className="p-6 bg-gray-900">
-      <div className="flex flex-col items-center">
-        <div className="mb-4 text-xl font-bold text-white">
-          {gameWon ? "Головоломка решена! 🎉" : "Японский кроссворд"}
+  // Рендер меню
+  const renderMenu = () => (
+    <div className="flex flex-col gap-4">
+      <h1 className="text-2xl font-bold text-center mb-4">Alias</h1>
+      <Button 
+        className="w-full" 
+        onClick={() => setGameState('setup')}
+      >
+        <PlayCircle className="mr-2 h-4 w-4" />
+        Новая игра
+      </Button>
+      <Button 
+        className="w-full"
+        variant="outline"
+        onClick={() => setGameState('settings')}
+      >
+        <Settings className="mr-2 h-4 w-4" />
+        Настройки
+      </Button>
+    </div>
+  );
+
+  // Рендер настроек игры
+  const renderSetup = () => (
+    <div className="flex flex-col gap-4">
+      <h2 className="text-xl font-bold">Настройка игры</h2>
+      <div className="flex flex-col gap-2">
+        <label className="font-medium">Сложность:</label>
+        <select 
+          className="p-2 rounded bg-gray-700"
+          value={difficulty} 
+          onChange={(e) => setDifficulty(e.target.value)}
+        >
+          <option value="easy">Легкая</option>
+          <option value="medium">Средняя</option>
+          <option value="hard">Сложная</option>
+        </select>
+      </div>
+      <Button onClick={startGame}>Начать игру</Button>
+      <Button variant="outline" onClick={() => setGameState('menu')}>Назад</Button>
+    </div>
+  );
+
+  // Рендер игрового процесса
+  const renderGame = () => (
+    <div className="flex flex-col gap-4">
+      <div className="flex justify-between items-center">
+        <div className="text-xl font-bold">
+          {teams[currentTeam].name}
         </div>
-        
-        <div className="flex">
-          <div className="mt-16">
-            {rowHints.map((hints, i) => (
-              <div key={i} className="h-8 flex items-center justify-end pr-2 text-white">
-                {hints.map((hint, j) => (
-                  <span key={j} className="mx-1 text-sm font-mono">{hint}</span>
-                ))}
-              </div>
-            ))}
-          </div>
-          
-          <div>
-            <div className="ml-2 mb-2">
-              <div className="flex">
-                {colHints.map((hints, i) => (
-                  <div key={i} className="w-8 flex flex-col items-center justify-end text-white">
-                    {hints.map((hint, j) => (
-                      <span key={j} className="text-sm font-mono">{hint}</span>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <div className="grid gap-px bg-gray-600">
-              {grid.map((row, i) => (
-                <div key={i} className="flex gap-px">
-                  {row.map((cell, j) => (
-                    <div
-                      key={j}
-                      className={`w-8 h-8 flex items-center justify-center cursor-pointer
-                        ${cell === 1 ? 'bg-blue-500' : cell === 2 ? 'bg-gray-800' : 'bg-gray-700'}
-                        hover:opacity-90`}
-                      onClick={() => handleCellClick(i, j)}
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        handleCellClick(i, j, true);
-                      }}
-                    >
-                      {cell === 2 && <span className="text-gray-300">×</span>}
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        
-        <div className="mt-4 text-sm text-white">
-          Левый клик - закрасить • Правый клик - отметить
+        <div className="flex items-center gap-2">
+          <Timer className="h-5 w-5" />
+          <span className="text-xl">{timeLeft}с</span>
         </div>
       </div>
+
+      <Card className="p-6 text-center">
+        <h1 className="text-3xl font-bold mb-4">{currentWord}</h1>
+        <div className="flex gap-2">
+          <Button 
+            className="flex-1" 
+            variant="outline"
+            onClick={handleSkip}
+          >
+            Пропустить
+          </Button>
+          <Button 
+            className="flex-1"
+            onClick={handleCorrect}
+          >
+            Угадали!
+          </Button>
+        </div>
+      </Card>
+
+      <div className="flex justify-between">
+        {teams.map((team, index) => (
+          <div key={team.id} className="text-center">
+            <div className="font-medium">{team.name}</div>
+            <div className={`text-xl font-bold ${index === currentTeam ? 'text-blue-500' : ''}`}>
+              {team.score}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4">
+        <h3 className="font-medium mb-2">Слова в этом раунде:</h3>
+        <div className="flex flex-col gap-1">
+          {roundWords.map((item, index) => (
+            <div 
+              key={index}
+              className={`px-2 py-1 rounded ${
+                item.correct ? 'bg-green-900/20' : 'bg-red-900/20'
+              }`}
+            >
+              {item.word}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  // Рендер результатов
+  const renderResults = () => {
+    const winner = teams.reduce((prev, current) => 
+      (prev.score > current.score) ? prev : current
+    );
+
+    return (
+      <div className="flex flex-col items-center gap-4">
+        <Trophy className="h-16 w-16 text-yellow-500" />
+        <h2 className="text-2xl font-bold">Игра окончена!</h2>
+        <div className="text-xl">Победитель: {winner.name}</div>
+        <div className="w-full mt-4">
+          {teams.map(team => (
+            <div key={team.id} className="flex justify-between items-center py-2">
+              <div className="flex items-center gap-2">
+                {team.id === winner.id && <Crown className="h-5 w-5 text-yellow-500" />}
+                {team.name}
+              </div>
+              <div className="font-bold">{team.score}</div>
+            </div>
+          ))}
+        </div>
+        <Button 
+          className="w-full mt-4" 
+          onClick={() => setGameState('menu')}
+        >
+          Вернуться в меню
+        </Button>
+      </div>
+    );
+  };
+
+  // Основной рендер
+  return (
+    <Card className="w-full max-w-md mx-auto p-6 bg-gray-900">
+      {gameState === 'menu' && renderMenu()}
+      {gameState === 'setup' && renderSetup()}
+      {gameState === 'game' && renderGame()}
+      {gameState === 'results' && renderResults()}
     </Card>
   );
 };
 
-export default NonogramGame;
+export default AliasGame;
