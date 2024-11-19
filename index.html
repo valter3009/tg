@@ -433,6 +433,10 @@
                         <span>Bitget</span>
                         <input type="number" value="0.1" step="0.01" class="exchange-fee" data-exchange="bitget">
                     </div>
+                    <div class="custom-select-option" data-value="Gate">
+                        <span>Gate</span>
+                        <input type="number" value="0.2" step="0.01" class="exchange-fee" data-exchange="gate">
+                    </div>
                 </div>
             </div>
             <button onclick="addPair()" class="add-button">Добавить</button>
@@ -664,28 +668,47 @@
             }
         },
         'Bitget': {
-        wsUrl: 'wss://ws.bitget.com/v2/ws/public',
-        subscribeFormat: (symbol) => ({
-            op: "subscribe",
-            args: [{
-                instType: "SPOT",
-                channel: "ticker",
-                instId: symbol
-            }]
-        }),
-        parseMessage: (data) => {
-            if (data.action === 'snapshot' && data.data && data.data[0]) {
-                const tickerData = data.data[0];
-                return {
-                    symbol: tickerData.instId,
-                    bid: parseFloat(tickerData.bidPr) || tickerData.bidPr,
-                    ask: parseFloat(tickerData.askPr) || tickerData.askPr
-                };
+            wsUrl: 'wss://ws.bitget.com/v2/ws/public',
+            subscribeFormat: (symbol) => ({
+                op: "subscribe",
+                args: [{
+                    instType: "SPOT",
+                    channel: "ticker",
+                    instId: symbol
+                }]
+            }),
+            parseMessage: (data) => {
+                if (data.action === 'snapshot' && data.data && data.data[0]) {
+                    const tickerData = data.data[0];
+                    return {
+                        symbol: tickerData.instId,
+                        bid: parseFloat(tickerData.bidPr) || tickerData.bidPr,
+                        ask: parseFloat(tickerData.askPr) || tickerData.askPr
+                    };
+                }
+                return null;
             }
-            return null;
+        },
+        'Gate': {
+        wsUrl: 'wss://api.gateio.ws/ws/v4/',
+            subscribeFormat: (symbol) => ({
+                time: Math.floor(Date.now() / 1000),
+                channel: "spot.tickers",
+                event: "subscribe", 
+                payload: [`${symbol.slice(0, -4)}_${symbol.slice(-4)}`]
+            }),
+            parseMessage: (data) => {
+                if (data.result) {
+                    return {
+                        symbol: data.result.currency_pair.replace('_', ''),
+                        bid: data.result.last,
+                        ask: data.result.last
+                    };
+                }
+                return null;
+            }
         }
-    }
-};
+    };
 
     function showScreen(screenName) {
         document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
@@ -727,10 +750,12 @@
             { symbol: 'BTCUSDT', exchange: 'Bybit' },
             { symbol: 'BTCUSDT', exchange: 'OKX' },
             { symbol: 'BTCUSDT', exchange: 'Bitget' },
+            { symbol: 'BTCUSDT', exchange: 'Gate' },
             { symbol: 'ETHUSDT', exchange: 'Mexc' },
             { symbol: 'ETHUSDT', exchange: 'Bybit' },
             { symbol: 'ETHUSDT', exchange: 'OKX' },
-            { symbol: 'ETHUSDT', exchange: 'Bitget' }
+            { symbol: 'ETHUSDT', exchange: 'Bitget' },
+            { symbol: 'ETHUSDT', exchange: 'Gate' }
         ];
 
         for (const pair of defaultPairs) {
@@ -806,7 +831,6 @@
                 connections[pairKey].close();
                 delete connections[pairKey];
             }
-            
             updateEquations();
         }
     }
