@@ -95,7 +95,10 @@
 
     .custom-select-container {
         position: relative;
-        width: 120px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        width: 180px;
     }
 
     .custom-select-header {
@@ -111,6 +114,30 @@
         justify-content: space-between;
         font-size: 12px;
         position: relative;
+        flex: 1;
+    }
+
+    .fees-toggle {
+        background: var(--tg-theme-secondary-bg-color);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--border-radius);
+        color: var(--tg-theme-text-color);
+        padding: 0 8px;
+        height: 30px;
+        font-size: 10px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: var(--transition-base);
+    }
+
+    .fees-toggle.active {
+        background: var(--tg-theme-button-color);
+        color: var(--tg-theme-button-text-color);
+    }
+
+    .exchange-fee.disabled {
+        opacity: 0.5;
+        pointer-events: none;
     }
 
     .custom-select-header::after {
@@ -416,6 +443,7 @@
                 <div class="custom-select-header">
                     <span>Mexc</span>
                 </div>
+                <button class="fees-toggle" id="fees-toggle">Откл. ком-ии.</button>
                 <div class="custom-select-options">
                     <div class="custom-select-option" data-value="Mexc">
                         <span>Mexc</span>
@@ -606,6 +634,7 @@
     let pairs = {};
     let equations = {};
     let connections = {};
+    let feesEnabled = true;
     const equationManager = new EquationManager();
 
     tg.expand();
@@ -805,9 +834,10 @@
         pairElement.innerHTML = `
             <div class="pair-name">${symbol} ${exchange}</div>
             <div class="price-container">
-                <button class="price-button bid" onclick="addToEquation('${symbol}_${exchange}_bid')">Загрузка...</button>
-                <button class="price-button ask" onclick="addToEquation('${symbol}_${exchange}_ask')">Загрузка...</button>
-                <button class="remove-button" onclick="removePair('${pairKey}')">×</button>
+                    <button class="price-button bid" onclick="addToEquation('${symbol}_${exchange}_bid')">Загрузка...</button>
+                    <button class="price-button ask" onclick="addToEquation('${symbol}_${exchange}_ask')">Загрузка...</button>
+                    <button class="remove-button" onclick="removePair('${pairKey}')">×</button>
+                </div>
             </div>
         `;
         
@@ -866,16 +896,19 @@
     function addToEquation(value) {
         const equationInput = document.getElementById('equation-input-bottom');
         const [symbol, exchange, type] = value.split('_');
-        const feeInput = document.querySelector(`.exchange-fee[data-exchange="${exchange.toLowerCase()}"]`);
-        const fee = parseFloat(feeInput.value);
+        let valueWithFee = value;
+
+        if (feesEnabled) {
+            const feeInput = document.querySelector(`.exchange-fee[data-exchange="${exchange.toLowerCase()}"]`);
+            const fee = parseFloat(feeInput.value);
+            const feeMultiplier = (1 - fee/100).toFixed(4);
+            valueWithFee = type === 'bid' ? 
+                `(${value}*${feeMultiplier})` : 
+                `(${value}/${feeMultiplier})`;
+        }
         
         const cursorPosition = equationInput.selectionStart;
         const currentText = equationInput.value;
-        
-        const feeMultiplier = (1 - fee/100).toFixed(4);
-        const valueWithFee = type === 'bid' ? 
-            `(${value}*${feeMultiplier})` : 
-            `(${value}/${feeMultiplier})`;
         
         const newText = currentText.slice(0, cursorPosition) + 
                        valueWithFee + 
@@ -945,7 +978,18 @@
     const customSelect = document.getElementById('exchange-select-container');
     const selectHeader = customSelect.querySelector('.custom-select-header');
     const selectOptions = customSelect.querySelector('.custom-select-options');
+    const feesToggle = document.getElementById('fees-toggle');
+    const feeInputs = document.querySelectorAll('.exchange-fee');
     let selectedExchange = 'Mexc';
+
+    feesToggle.addEventListener('click', () => {
+        feesEnabled = !feesEnabled;
+        feesToggle.classList.toggle('active');
+        feeInputs.forEach(input => {
+            input.classList.toggle('disabled');
+        });
+        updateEquations();
+    });
 
     selectHeader.addEventListener('click', () => {
         customSelect.classList.toggle('active');
