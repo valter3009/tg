@@ -389,7 +389,6 @@
         margin-bottom: 12px;
         border: 1px solid rgba(255, 255, 255, 0.1);
         box-shadow: var(--shadow-sm);
-        position: relative;
     }
 
     .equation-name {
@@ -415,29 +414,6 @@
 
     .error {
         color: #ef4444;
-    }
-
-    .save-button {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background: var(--tg-theme-button-color);
-        border: none;
-        border-radius: 50%;
-        width: 56px;
-        height: 56px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        z-index: 1000;
-    }
-
-    .save-button svg {
-        width: 24px;
-        height: 24px;
-        fill: white;
     }
 
     @supports (padding: max(0px)) {
@@ -504,12 +480,6 @@
             <div id="equations-list" class="pairs-list"></div>
         </div>
     </div>
-
-    <button class="save-button" onclick="saveState()">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M19 12v7H5v-7H3v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z"/>
-        </svg>
-    </button>
 
     <script>
     class EquationManager {
@@ -658,16 +628,6 @@
                 }
             }
         }
-
-        toJSON() {
-            return {
-                equations: this.equations
-            };
-        }
-
-        fromJSON(json) {
-            this.equations = json.equations || {};
-        }
     }
 
     let tg = window.Telegram.WebApp;
@@ -759,7 +719,7 @@
             }
         },
         'Gate': {
-            wsUrl: 'wss://api.gateio.ws/ws/v4/',
+        wsUrl: 'wss://api.gateio.ws/ws/v4/',
             subscribeFormat: (symbol) => ({
                 time: Math.floor(Date.now() / 1000),
                 channel: "spot.tickers",
@@ -778,113 +738,6 @@
             }
         }
     };
-
-    function saveState() {
-        const state = {
-            pairs: Object.keys(pairs).map(key => {
-                const [exchange, symbol] = key.split('_');
-                return { exchange, symbol };
-            }),
-            equations: Object.keys(equations),
-            feesEnabled,
-            exchangeFees: Array.from(document.querySelectorAll('.exchange-fee')).map(input => ({
-                exchange: input.dataset.exchange,
-                value: input.value
-            }))
-        };
-        
-        tg.sendData(JSON.stringify(state));
-        tg.showPopup({
-            title: 'Сохранено',
-            message: 'Состояние успешно сохранено'
-        });
-    }
-
-    function loadState(stateStr) {
-        try {
-            const state = JSON.parse(stateStr);
-            
-            // Clear existing state
-            document.getElementById('pairs-list').innerHTML = '';
-            document.getElementById('equations-list').innerHTML = '';
-            pairs = {};
-            equations = {};
-            equationManager = new EquationManager();
-            
-            // Restore fees state
-            if (state.feesEnabled !== undefined) {
-                feesEnabled = state.feesEnabled;
-                document.getElementById('fees-toggle').classList.toggle('active', feesEnabled);
-            }
-            
-            if (state.exchangeFees) {
-                state.exchangeFees.forEach(fee => {
-                    const input = document.querySelector(`.exchange-fee[data-exchange="${fee.exchange}"]`);
-                    if (input) input.value = fee.value;
-                });
-            }
-            
-            // Restore pairs
-            if (state.pairs) {
-                state.pairs.forEach(pair => {
-                    const pairElement = document.createElement('div');
-                    const pairKey = `${pair.exchange}_${pair.symbol}`;
-                    
-                    pairElement.className = 'pair-item';
-                    pairElement.setAttribute('data-pair', pairKey);
-                    pairElement.innerHTML = `
-                        <div class="pair-name">${pair.symbol} ${pair.exchange}</div>
-                        <div class="price-container">
-                            <button class="price-button bid" onclick="addToEquation('${pair.symbol}_${pair.exchange}_bid')">Загрузка...</button>
-                            <button class="price-button ask" onclick="addToEquation('${pair.symbol}_${pair.exchange}_ask')">Загрузка...</button>
-                            <button class="remove-button" onclick="removePair('${pairKey}')">×</button>
-                        </div>
-                    `;
-                    
-                    document.getElementById('pairs-list').appendChild(pairElement);
-                    pairs[pairKey] = pairElement;
-                    
-                    connectWebSocket(pair.exchange, pair.symbol).then(ws => {
-                        connections[pairKey] = ws;
-                    });
-                });
-            }
-            
-            // Restore equations
-            if (state.equations) {
-                state.equations.forEach(equation => {
-                    try {
-                        const equationName = equationManager.addEquation(equation);
-                        
-                        const equationElement = document.createElement('div');
-                        equationElement.className = 'equation-item';
-                        equationElement.setAttribute('data-equation', equation);
-                        equationElement.innerHTML = `
-                            <div>
-                                <div class="equation-name">${equationName}</div>
-                                <div class="equation-text">${equation}</div>
-                                <div class="result">Вычисление...</div>
-                            </div>
-                            <button class="remove-button" onclick="removeEquation('${equation}')">×</button>
-                        `;
-                        
-                        document.getElementById('equations-list').appendChild(equationElement);
-                        equations[equation] = equationElement;
-                    } catch (error) {
-                        console.error('Error restoring equation:', error);
-                    }
-                });
-            }
-            
-            updateEquations();
-        } catch (error) {
-            console.error('Error loading state:', error);
-            tg.showPopup({
-                title: 'Ошибка',
-                message: 'Не удалось загрузить сохраненное состояние'
-            });
-        }
-    }
 
     function showScreen(screenName) {
         document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
@@ -934,16 +787,6 @@
             { symbol: 'ETHUSDT', exchange: 'Gate' }
         ];
 
-        // Try to load saved state from URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const savedState = urlParams.get('state');
-        
-        if (savedState) {
-            loadState(savedState);
-            return;
-        }
-
-        // If no saved state, add default pairs
         for (const pair of defaultPairs) {
             const pairKey = `${pair.exchange}_${pair.symbol}`;
             
@@ -991,9 +834,10 @@
         pairElement.innerHTML = `
             <div class="pair-name">${symbol} ${exchange}</div>
             <div class="price-container">
-                <button class="price-button bid" onclick="addToEquation('${symbol}_${exchange}_bid')">Загрузка...</button>
-                <button class="price-button ask" onclick="addToEquation('${symbol}_${exchange}_ask')">Загрузка...</button>
-                <button class="remove-button" onclick="removePair('${pairKey}')">×</button>
+                    <button class="price-button bid" onclick="addToEquation('${symbol}_${exchange}_bid')">Загрузка...</button>
+                    <button class="price-button ask" onclick="addToEquation('${symbol}_${exchange}_ask')">Загрузка...</button>
+                    <button class="remove-button" onclick="removePair('${pairKey}')">×</button>
+                </div>
             </div>
         `;
         
@@ -1166,22 +1010,7 @@
         }
     });
 
-    document.addEventListener('DOMContentLoaded', () => {
-        addDefaultPairs();
-        
-        // Check if we have initData from Telegram
-        if (tg.initData) {
-            try {
-                const initData = new URLSearchParams(tg.initData);
-                const startParam = initData.get('start_param');
-                if (startParam) {
-                    loadState(decodeURIComponent(startParam));
-                }
-            } catch (error) {
-                console.error('Error parsing initData:', error);
-            }
-        }
-    });
+    document.addEventListener('DOMContentLoaded', addDefaultPairs);
 
     document.addEventListener('touchstart', (e) => {
         const clickedElement = e.target;
