@@ -309,12 +309,11 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 15px;
+        font-size: 14px;
         cursor: pointer;
         transition: var(--transition-base);
-        margin-left: 8px;
-        line-height: 1;
         padding: 0;
+        flex-shrink: 0;
     }
 
     .remove-button:active {
@@ -385,31 +384,58 @@
     .equation-item {
         background: var(--tg-theme-secondary-bg-color);
         border-radius: var(--border-radius);
-        padding: 16px;
-        margin-bottom: 12px;
+        padding: 12px;
+        margin-bottom: 8px;
         border: 1px solid rgba(255, 255, 255, 0.1);
         box-shadow: var(--shadow-sm);
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .equation-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .equation-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
     }
 
     .equation-name {
+        font-size: 12px;
         font-weight: 600;
-        margin-bottom: 8px;
-        font-size: 16px;
         color: var(--tg-theme-text-color);
+        background: transparent;
+        border: 1px solid transparent;
+        padding: 2px 4px;
+        border-radius: 4px;
+        min-width: 50px;
+    }
+
+    .equation-name:focus {
+        border-color: var(--tg-theme-button-color);
+        outline: none;
     }
 
     .equation-text {
         color: var(--tg-theme-hint-color);
-        margin-bottom: 8px;
-        font-size: 14px;
+        font-size: 10px;
         font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .result {
         font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
-        font-size: 15px;
+        font-size: 12px;
         font-weight: 500;
         color: #10b981;
+        margin-top: 4px;
     }
 
     .error {
@@ -719,7 +745,7 @@
             }
         },
         'Gate': {
-        wsUrl: 'wss://api.gateio.ws/ws/v4/',
+            wsUrl: 'wss://api.gateio.ws/ws/v4/',
             subscribeFormat: (symbol) => ({
                 time: Math.floor(Date.now() / 1000),
                 channel: "spot.tickers",
@@ -829,10 +855,9 @@
         pairElement.innerHTML = `
             <div class="pair-name">${symbol} ${exchange}</div>
             <div class="price-container">
-                    <button class="price-button bid" onclick="addToEquation('${symbol}_${exchange}_bid')">Загрузка...</button>
-                    <button class="price-button ask" onclick="addToEquation('${symbol}_${exchange}_ask')">Загрузка...</button>
-                    <button class="remove-button" onclick="removePair('${pairKey}')">×</button>
-                </div>
+                <button class="price-button bid" onclick="addToEquation('${symbol}_${exchange}_bid')">Загрузка...</button>
+                <button class="price-button ask" onclick="addToEquation('${symbol}_${exchange}_ask')">Загрузка...</button>
+                <button class="remove-button" onclick="removePair('${pairKey}')">×</button>
             </div>
         `;
         
@@ -928,8 +953,10 @@
             equationElement.className = 'equation-item';
             equationElement.setAttribute('data-equation', equation);
             equationElement.innerHTML = `
-                <div>
-                    <div class="equation-name">${equationName}</div>
+                <div class="equation-content">
+                    <div class="equation-header">
+                        <input type="text" class="equation-name" value="${equationName}" onchange="updateEquationName(this, '${equation}')">
+                    </div>
                     <div class="equation-text">${equation}</div>
                     <div class="result">Вычисление...</div>
                 </div>
@@ -945,6 +972,14 @@
             
         } catch (error) {
             tg.showAlert(error.message);
+        }
+    }
+
+    function updateEquationName(input, equation) {
+        const newName = input.value.trim();
+        if (newName && equation in equationManager.equations) {
+            equationManager.equations[equation].name = newName;
+            updateEquations();
         }
     }
 
