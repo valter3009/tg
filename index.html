@@ -429,6 +429,10 @@
                         <span>OKX</span>
                         <input type="number" value="0.1" step="0.01" class="exchange-fee" data-exchange="okx">
                     </div>
+                    <div class="custom-select-option" data-value="Bitget">
+                        <span>Bitget</span>
+                        <input type="number" value="0.1" step="0.01" class="exchange-fee" data-exchange="bitget">
+                    </div>
                 </div>
             </div>
             <button onclick="addPair()" class="add-button">Добавить</button>
@@ -594,7 +598,6 @@
         }
     }
 
-    // Global variables
     let tg = window.Telegram.WebApp;
     let pairs = {};
     let equations = {};
@@ -659,35 +662,31 @@
                 }
                 return null;
             }
+        },
+        'Bitget': {
+        wsUrl: 'wss://ws.bitget.com/v2/ws/public',
+        subscribeFormat: (symbol) => ({
+            op: "subscribe",
+            args: [{
+                instType: "SPOT",
+                channel: "ticker",
+                instId: symbol
+            }]
+        }),
+        parseMessage: (data) => {
+            if (data.action === 'snapshot' && data.data && data.data[0]) {
+                const tickerData = data.data[0];
+                return {
+                    symbol: tickerData.instId,
+                    bid: parseFloat(tickerData.bidPr) || tickerData.bidPr,
+                    ask: parseFloat(tickerData.askPr) || tickerData.askPr
+                };
+            }
+            return null;
         }
-    };
+    }
+};
 
-    // Custom Select Implementation
-    const customSelect = document.getElementById('exchange-select-container');
-    const selectHeader = customSelect.querySelector('.custom-select-header');
-    const selectOptions = customSelect.querySelector('.custom-select-options');
-    let selectedExchange = 'Mexc';
-
-    selectHeader.addEventListener('click', () => {
-        customSelect.classList.toggle('active');
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!customSelect.contains(e.target)) {
-            customSelect.classList.remove('active');
-        }
-    });
-
-    selectOptions.addEventListener('click', (e) => {
-        const option = e.target.closest('.custom-select-option');
-        if (option && !e.target.matches('input')) {
-            selectedExchange = option.dataset.value;
-            selectHeader.querySelector('span').textContent = selectedExchange;
-            customSelect.classList.remove('active');
-        }
-    });
-
-    // UI Functions
     function showScreen(screenName) {
         document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
         document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
@@ -727,9 +726,11 @@
             { symbol: 'BTCUSDT', exchange: 'Mexc' },
             { symbol: 'BTCUSDT', exchange: 'Bybit' },
             { symbol: 'BTCUSDT', exchange: 'OKX' },
+            { symbol: 'BTCUSDT', exchange: 'Bitget' },
             { symbol: 'ETHUSDT', exchange: 'Mexc' },
             { symbol: 'ETHUSDT', exchange: 'Bybit' },
-            { symbol: 'ETHUSDT', exchange: 'OKX' }
+            { symbol: 'ETHUSDT', exchange: 'OKX' },
+            { symbol: 'ETHUSDT', exchange: 'Bitget' }
         ];
 
         for (const pair of defaultPairs) {
@@ -841,14 +842,12 @@
     function addToEquation(value) {
         const equationInput = document.getElementById('equation-input-bottom');
         const [symbol, exchange, type] = value.split('_');
-        // Получаем комиссию для конкретной биржи из поля ввода в селекторе
         const feeInput = document.querySelector(`.exchange-fee[data-exchange="${exchange.toLowerCase()}"]`);
         const fee = parseFloat(feeInput.value);
         
         const cursorPosition = equationInput.selectionStart;
         const currentText = equationInput.value;
         
-        // Автоматически добавляем комиссию
         const feeMultiplier = (1 - fee/100).toFixed(4);
         const valueWithFee = type === 'bid' ? 
             `(${value}*${feeMultiplier})` : 
@@ -919,7 +918,30 @@
         }
     }
 
-    // Event Listeners
+    const customSelect = document.getElementById('exchange-select-container');
+    const selectHeader = customSelect.querySelector('.custom-select-header');
+    const selectOptions = customSelect.querySelector('.custom-select-options');
+    let selectedExchange = 'Mexc';
+
+    selectHeader.addEventListener('click', () => {
+        customSelect.classList.toggle('active');
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!customSelect.contains(e.target)) {
+            customSelect.classList.remove('active');
+        }
+    });
+
+    selectOptions.addEventListener('click', (e) => {
+        const option = e.target.closest('.custom-select-option');
+        if (option && !e.target.matches('input')) {
+            selectedExchange = option.dataset.value;
+            selectHeader.querySelector('span').textContent = selectedExchange;
+            customSelect.classList.remove('active');
+        }
+    });
+
     document.addEventListener('DOMContentLoaded', addDefaultPairs);
 
     document.addEventListener('touchstart', (e) => {
@@ -933,14 +955,12 @@
         }
     });
 
-    // Prevent fee inputs from closing select when changing values
     document.querySelectorAll('.exchange-fee').forEach(input => {
         input.addEventListener('click', (e) => {
             e.stopPropagation();
         });
     });
 
-    // Обработка фокуса на инпутах без скрытия клавиатуры при скролле
     const inputs = document.querySelectorAll('input');
     inputs.forEach(input => {
         input.addEventListener('focus', () => {
@@ -964,12 +984,10 @@
         }
     });
 
-    // Prevent zoom on iOS
     document.addEventListener('gesturestart', (e) => {
         e.preventDefault();
     });
 
-    // Update equations periodically
     setInterval(updateEquations, 1000);
     </script>
 </body>
