@@ -314,6 +314,7 @@
         transition: var(--transition-base);
         padding: 0;
         flex-shrink: 0;
+        align-self: center;
     }
 
     .remove-button:active {
@@ -388,23 +389,27 @@
         margin-bottom: 8px;
         border: 1px solid rgba(255, 255, 255, 0.1);
         box-shadow: var(--shadow-sm);
-        display: flex;
-        align-items: flex-start;
+        display: grid;
+        grid-template-columns: 1fr auto;
         gap: 12px;
+        position: relative;
     }
-
+    
     .equation-content {
-        flex: 1;
-        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        width: 100%;
     }
-
+    
     .equation-header {
         display: flex;
         align-items: center;
         gap: 8px;
         margin-bottom: 4px;
+        width: 100%;
     }
-
+    
     .equation-name {
         font-size: 12px;
         font-weight: 600;
@@ -413,21 +418,20 @@
         border: 1px solid transparent;
         padding: 2px 4px;
         border-radius: 4px;
-        min-width: 50px;
+        width: 100%;
     }
-
+    
     .equation-name:focus {
         border-color: var(--tg-theme-button-color);
         outline: none;
     }
-
+    
     .equation-text {
         color: var(--tg-theme-hint-color);
         font-size: 10px;
         font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        width: 100%;
+        word-break: break-all;
     }
 
     .result {
@@ -436,6 +440,7 @@
         font-weight: 500;
         color: #10b981;
         margin-top: 4px;
+        width: 100%;
     }
 
     .error {
