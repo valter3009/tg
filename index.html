@@ -409,6 +409,13 @@
         margin-bottom: 4px;
         width: 100%;
     }
+
+    .equation-number {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--tg-theme-hint-color);
+        min-width: 24px;
+    }
     
     .equation-name {
         font-size: 12px;
@@ -441,6 +448,11 @@
         color: #10b981;
         margin-top: 4px;
         width: 100%;
+        cursor: pointer;
+    }
+
+    .result:hover {
+        opacity: 0.8;
     }
 
     .error {
@@ -513,10 +525,16 @@
     </div>
 
     <script>
+    let equationCounter = 1;
+    
     class EquationManager {
         constructor() {
             this.equations = {};
             this.evalCache = {};
+        }
+
+        addEquationNumber(equation) {
+            this.equations[equation].number = equationCounter++;
         }
 
         extractVariables(equation) {
@@ -534,6 +552,11 @@
                         continue;
                     }
                 }
+                
+                // Check for equation result references (#N)
+                if (part.startsWith('#') && /^#\d+$/.test(part)) {
+                    variables.add(part);
+                }
             }
             
             return Array.from(variables);
@@ -543,8 +566,8 @@
             const findDependencies = (eq) => {
                 const deps = new Set();
                 for (const [, eqData] of Object.entries(this.equations)) {
-                    if (eq.includes(`${eqData.name}_result`)) {
-                        deps.add(eqData.name);
+                    if (eq.includes(`#${eqData.number}`)) {
+                        deps.add(eqData.number);
                     }
                 }
                 return deps;
@@ -553,8 +576,8 @@
             const checkCycle = (start, current, visited = new Set()) => {
                 if (current === start) return true;
                 visited.add(current);
-                for (const eqName of findDependencies(current)) {
-                    if (!visited.has(eqName) && checkCycle(start, eqName, new Set([...visited]))) {
+                for (const eqNum of findDependencies(this.equations[current])) {
+                    if (!visited.has(eqNum) && checkCycle(start, eqNum, new Set([...visited]))) {
                         return true;
                     }
                 }
@@ -569,14 +592,22 @@
             try {
                 let evalStr = equation;
                 
-                for (const [eq, eqData] of Object.entries(this.equations)) {
-                    const resultVar = `${eqData.name}_result`;
-                    if (evalStr.includes(resultVar)) {
-                        const resultValue = eqData.currentResult;
-                        if (resultValue === "н/д" || resultValue === "Загрузка..." || resultValue.startsWith("Ошибка")) {
+                // Replace equation result references (#N)
+                for (const variable of this.equations[equation].variables) {
+                    if (variable.startsWith('#')) {
+                        const equationNumber = parseInt(variable.slice(1));
+                        const targetEquation = Object.values(this.equations)
+                            .find(eq => eq.number === equationNumber);
+                            
+                        if (targetEquation) {
+                            const result = targetEquation.currentResult;
+                            if (result === "н/д" || result === "Загрузка..." || result.startsWith("Ошибка")) {
+                                return "н/д";
+                            }
+                            evalStr = evalStr.replace(new RegExp(variable, 'g'), result);
+                        } else {
                             return "н/д";
                         }
-                        evalStr = evalStr.replace(new RegExp(resultVar, 'g'), resultValue);
                     }
                 }
                 
@@ -633,30 +664,22 @@
                 currentResult: "Загрузка...",
                 dependents: new Set()
             };
-
+            
+            this.addEquationNumber(equation);
             return equationName;
         }
 
         removeEquation(equation) {
             if (equation in this.equations) {
-                const equationName = this.equations[equation].name;
                 delete this.equations[equation];
-                
-                for (const eq in this.equations) {
-                    if (eq.includes(`${equationName}_result`)) {
-                        this.equations[eq].currentResult = "н/д";
-                    }
-                }
+                updateEquations();
             }
         }
 
         updateResult(equation, result) {
             if (equation in this.equations) {
                 this.equations[equation].currentResult = result;
-                
-                for (const dependent of this.equations[equation].dependents) {
-                    this.updateResult(dependent, this.evaluateEquation(dependent));
-                }
+                updateEquations();
             }
         }
     }
@@ -827,8 +850,7 @@
                     <button class="price-button bid" onclick="addToEquation('${pair.symbol}_${pair.exchange}_bid')">Загрузка...</button>
                     <button class="price-button ask" onclick="addToEquation('${pair.symbol}_${pair.exchange}_ask')">Загрузка...</button>
                     <button class="remove-button" onclick="removePair('${pairKey}')">×</button>
-                </div>
-            `;
+                </div>`;
             
             document.getElementById('pairs-list').appendChild(pairElement);
             pairs[pairKey] = pairElement;
@@ -953,6 +975,7 @@
         
         try {
             const equationName = equationManager.addEquation(equation);
+            const equationData = equationManager.equations[equation];
             
             const equationElement = document.createElement('div');
             equationElement.className = 'equation-item';
@@ -960,10 +983,11 @@
             equationElement.innerHTML = `
                 <div class="equation-content">
                     <div class="equation-header">
+                        <span class="equation-number">#${equationData.number}</span>
                         <input type="text" class="equation-name" value="${equationName}" onchange="updateEquationName(this, '${equation}')">
                     </div>
                     <div class="equation-text">${equation}</div>
-                    <div class="result">Вычисление...</div>
+                    <div class="result" onclick="addResultToEquation(${equationData.number})">Вычисление...</div>
                 </div>
                 <button class="remove-button" onclick="removeEquation('${equation}')">×</button>
             `;
@@ -978,6 +1002,25 @@
         } catch (error) {
             tg.showAlert(error.message);
         }
+    }
+
+    function addResultToEquation(equationNumber) {
+        const equationInput = document.getElementById('equation-input-bottom');
+        const value = `#${equationNumber}`;
+        
+        const cursorPosition = equationInput.selectionStart;
+        const currentText = equationInput.value;
+        
+        const newText = currentText.slice(0, cursorPosition) + 
+                       value + 
+                       currentText.slice(cursorPosition);
+        
+        equationInput.value = newText;
+        equationInput.focus();
+        equationInput.setSelectionRange(
+            cursorPosition + value.length,
+            cursorPosition + value.length
+        );
     }
 
     function updateEquationName(input, equation) {
