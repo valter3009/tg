@@ -882,7 +882,6 @@
                 this.isDragging = false;
                 this.touchStartY = 0;
                 this.animationFrameId = null;
-                this.itemPositions = new Map(); // Store initial positions of items
                 
                 this.handleTouchStart = this.handleTouchStart.bind(this);
                 this.handleTouchMove = this.handleTouchMove.bind(this);
@@ -918,31 +917,27 @@
                 this.isDragging = true;
                 this.draggedItem = item;
                 this.draggedRect = item.getBoundingClientRect();
-                this.itemHeight = this.draggedRect.height;
+                this.itemHeight = this.draggedRect.height + 5; // Include margin
                 this.initialY = isTouchEvent ? e.touches[0].clientY : e.clientY;
                 this.currentY = this.initialY;
                 this.initialIndex = Array.from(this.listElement.children).indexOf(item);
         
-                // Store initial positions of all items
+                // Enable smooth transitions for all non-dragged items
                 Array.from(this.listElement.children).forEach(child => {
-                    const rect = child.getBoundingClientRect();
-                    this.itemPositions.set(child, { top: rect.top, left: rect.left });
-                    
-                    // Enable smooth transitions for non-dragged items
                     if (child !== item) {
-                        child.style.transition = 'transform 0.3s ease-out';
+                        child.style.transition = 'transform 0.2s ease-out';
                         child.style.transform = 'translate(0, 0)';
                     }
                 });
         
                 // Create placeholder
                 this.placeholder = document.createElement('div');
-                this.placeholder.style.height = `${this.itemHeight}px`;
+                this.placeholder.style.height = `${this.itemHeight - 5}px`; // Subtract margin
                 this.placeholder.style.margin = '5px 0';
-                this.placeholder.style.transition = 'all 0.3s ease-out';
+                this.placeholder.style.transition = 'all 0.2s ease-out';
                 this.draggedItem.before(this.placeholder);
         
-                // Set up dragged item styles
+                // Set up dragged item
                 this.draggedItem.style.position = 'fixed';
                 this.draggedItem.style.top = `${this.draggedRect.top}px`;
                 this.draggedItem.style.left = `${this.draggedRect.left}px`;
@@ -952,51 +947,6 @@
                 this.draggedItem.style.transition = 'none';
                 
                 return true;
-            }
-        
-            updateItemPositions(newPlaceholderIndex) {
-                const items = Array.from(this.listElement.children);
-                const currentPlaceholderIndex = items.indexOf(this.placeholder);
-                
-                // If placeholder position hasn't changed, no need to update
-                if (newPlaceholderIndex === currentPlaceholderIndex) return;
-        
-                // Calculate the direction and distance of movement
-                const moveDistance = this.itemHeight + 5; // height + margin
-                const movingDown = newPlaceholderIndex > currentPlaceholderIndex;
-        
-                items.forEach((item, index) => {
-                    if (item === this.draggedItem) return;
-        
-                    const initialPosition = this.itemPositions.get(item);
-                    if (!initialPosition) return;
-        
-                    let translateY = 0;
-        
-                    if (movingDown) {
-                        if (index > currentPlaceholderIndex && index <= newPlaceholderIndex) {
-                            translateY = -moveDistance;
-                        }
-                    } else {
-                        if (index >= newPlaceholderIndex && index < currentPlaceholderIndex) {
-                            translateY = moveDistance;
-                        }
-                    }
-        
-                    requestAnimationFrame(() => {
-                        item.style.transform = `translateY(${translateY}px)`;
-                    });
-                });
-        
-                // Move placeholder
-                const targetItem = items[newPlaceholderIndex];
-                if (targetItem) {
-                    if (movingDown) {
-                        targetItem.after(this.placeholder);
-                    } else {
-                        targetItem.before(this.placeholder);
-                    }
-                }
             }
         
             handleMove(clientY) {
@@ -1014,26 +964,61 @@
                     this.draggedItem.style.transform = `translateY(${deltaY}px)`;
         
                     const items = Array.from(this.listElement.children);
-                    const currentIndex = items.indexOf(this.placeholder);
-                    const draggedMiddle = clientY;
+                    const currentPlaceholderIndex = items.indexOf(this.placeholder);
+                    const draggedRect = this.draggedItem.getBoundingClientRect();
+                    const draggedCenter = draggedRect.top + (draggedRect.height / 2);
         
-                    // Find new position
-                    let newIndex = currentIndex;
+                    // Find the item we're currently hovering over
+                    let targetIndex = currentPlaceholderIndex;
                     items.forEach((item, index) => {
                         if (item === this.placeholder || item === this.draggedItem) return;
         
                         const rect = item.getBoundingClientRect();
-                        const itemMiddle = rect.top + rect.height / 2;
+                        const itemCenter = rect.top + (rect.height / 2);
         
-                        if (draggedMiddle < itemMiddle && index < currentIndex) {
-                            newIndex = index;
-                        } else if (draggedMiddle > itemMiddle && index > currentIndex) {
-                            newIndex = index;
+                        // Only move if we're hovering over the immediate next/previous item
+                        if (Math.abs(index - currentPlaceholderIndex) === 1) {
+                            if (draggedCenter < itemCenter && index < currentPlaceholderIndex) {
+                                targetIndex = index;
+                            } else if (draggedCenter > itemCenter && index > currentPlaceholderIndex) {
+                                targetIndex = index;
+                            }
                         }
                     });
         
-                    // Update positions if needed
-                    this.updateItemPositions(newIndex);
+                    // Only proceed if we need to move the placeholder
+                    if (targetIndex !== currentPlaceholderIndex) {
+                        const moveDistance = this.itemHeight;
+                        
+                        // Update transforms for affected items
+                        items.forEach((item, index) => {
+                            if (item === this.draggedItem || item === this.placeholder) return;
+        
+                            if (targetIndex > currentPlaceholderIndex) {
+                                // Moving down
+                                if (index > currentPlaceholderIndex && index <= targetIndex) {
+                                    item.style.transform = `translateY(${-moveDistance}px)`;
+                                } else {
+                                    item.style.transform = 'translateY(0)';
+                                }
+                            } else {
+                                // Moving up
+                                if (index >= targetIndex && index < currentPlaceholderIndex) {
+                                    item.style.transform = `translateY(${moveDistance}px)`;
+                                } else {
+                                    item.style.transform = 'translateY(0)';
+                                }
+                            }
+                        });
+        
+                        // Move placeholder
+                        const targetItem = items[targetIndex];
+                        if (targetIndex > currentPlaceholderIndex) {
+                            targetItem.after(this.placeholder);
+                        } else {
+                            targetItem.before(this.placeholder);
+                        }
+                    }
                 });
             }
         
@@ -1048,10 +1033,10 @@
                 const placeholderRect = this.placeholder.getBoundingClientRect();
         
                 // Animate dragged item to final position
-                this.draggedItem.style.transition = 'all 0.3s ease-out';
+                this.draggedItem.style.transition = 'all 0.2s ease-out';
                 this.draggedItem.style.transform = `translateY(${placeholderRect.top - this.draggedRect.top}px)`;
         
-                // After animation completes
+                // Reset everything after animation
                 setTimeout(() => {
                     if (this.placeholder) {
                         this.placeholder.before(this.draggedItem);
@@ -1075,9 +1060,6 @@
                     this.draggedItem.style.margin = '';
                     this.draggedItem.style.transition = '';
         
-                    // Clear stored positions
-                    this.itemPositions.clear();
-        
                     // Reset state
                     this.draggedItem = null;
                     this.isDragging = false;
@@ -1086,7 +1068,7 @@
                     this.draggedRect = null;
                     
                     saveState();
-                }, 300); // Match transition duration
+                }, 200);
             }
         
             handleTouchStart(e) {
