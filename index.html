@@ -883,6 +883,7 @@
                 this.touchStartY = 0;
                 this.animationFrameId = null;
                 
+                // Bind all handlers to maintain correct 'this' context
                 this.handleTouchStart = this.handleTouchStart.bind(this);
                 this.handleTouchMove = this.handleTouchMove.bind(this);
                 this.handleTouchEnd = this.handleTouchEnd.bind(this);
@@ -922,7 +923,7 @@
                 this.currentY = this.initialY;
                 this.initialIndex = Array.from(this.listElement.children).indexOf(item);
         
-                // Enable smooth transitions for all non-dragged items
+                // Set up transitions for all non-dragged items
                 Array.from(this.listElement.children).forEach(child => {
                     if (child !== item) {
                         child.style.transition = 'transform 0.2s ease-out';
@@ -930,14 +931,14 @@
                     }
                 });
         
-                // Create placeholder
+                // Create and insert placeholder
                 this.placeholder = document.createElement('div');
-                this.placeholder.style.height = `${this.itemHeight - 5}px`; // Subtract margin
+                this.placeholder.style.height = `${this.itemHeight - 5}px`;
                 this.placeholder.style.margin = '5px 0';
                 this.placeholder.style.transition = 'all 0.2s ease-out';
                 this.draggedItem.before(this.placeholder);
         
-                // Set up dragged item
+                // Style dragged item
                 this.draggedItem.style.position = 'fixed';
                 this.draggedItem.style.top = `${this.draggedRect.top}px`;
                 this.draggedItem.style.left = `${this.draggedRect.left}px`;
@@ -965,10 +966,9 @@
         
                     const items = Array.from(this.listElement.children);
                     const currentPlaceholderIndex = items.indexOf(this.placeholder);
-                    const draggedRect = this.draggedItem.getBoundingClientRect();
-                    const draggedCenter = draggedRect.top + (draggedRect.height / 2);
+                    const draggedCenter = clientY;
         
-                    // Find the item we're currently hovering over
+                    // Find the best position for the placeholder
                     let targetIndex = currentPlaceholderIndex;
                     items.forEach((item, index) => {
                         if (item === this.placeholder || item === this.draggedItem) return;
@@ -976,44 +976,39 @@
                         const rect = item.getBoundingClientRect();
                         const itemCenter = rect.top + (rect.height / 2);
         
-                        // Only move if we're hovering over the immediate next/previous item
-                        if (Math.abs(index - currentPlaceholderIndex) === 1) {
-                            if (draggedCenter < itemCenter && index < currentPlaceholderIndex) {
-                                targetIndex = index;
-                            } else if (draggedCenter > itemCenter && index > currentPlaceholderIndex) {
-                                targetIndex = index;
-                            }
+                        if (draggedCenter < itemCenter && index < currentPlaceholderIndex) {
+                            targetIndex = index;
+                        } else if (draggedCenter > itemCenter && index > currentPlaceholderIndex) {
+                            targetIndex = index;
                         }
                     });
         
-                    // Only proceed if we need to move the placeholder
+                    // If we need to move the placeholder
                     if (targetIndex !== currentPlaceholderIndex) {
+                        // Calculate movement direction and distance
                         const moveDistance = this.itemHeight;
-                        
-                        // Update transforms for affected items
+                        const movingDown = targetIndex > currentPlaceholderIndex;
+        
+                        // Update transforms for all affected items
                         items.forEach((item, index) => {
                             if (item === this.draggedItem || item === this.placeholder) return;
         
-                            if (targetIndex > currentPlaceholderIndex) {
-                                // Moving down
+                            let transform = 'translateY(0)';
+                            if (movingDown) {
                                 if (index > currentPlaceholderIndex && index <= targetIndex) {
-                                    item.style.transform = `translateY(${-moveDistance}px)`;
-                                } else {
-                                    item.style.transform = 'translateY(0)';
+                                    transform = `translateY(${-moveDistance}px)`;
                                 }
                             } else {
-                                // Moving up
                                 if (index >= targetIndex && index < currentPlaceholderIndex) {
-                                    item.style.transform = `translateY(${moveDistance}px)`;
-                                } else {
-                                    item.style.transform = 'translateY(0)';
+                                    transform = `translateY(${moveDistance}px)`;
                                 }
                             }
+                            item.style.transform = transform;
                         });
         
                         // Move placeholder
                         const targetItem = items[targetIndex];
-                        if (targetIndex > currentPlaceholderIndex) {
+                        if (movingDown) {
                             targetItem.after(this.placeholder);
                         } else {
                             targetItem.before(this.placeholder);
@@ -1036,7 +1031,7 @@
                 this.draggedItem.style.transition = 'all 0.2s ease-out';
                 this.draggedItem.style.transform = `translateY(${placeholderRect.top - this.draggedRect.top}px)`;
         
-                // Reset everything after animation
+                // Complete the animation and cleanup
                 setTimeout(() => {
                     if (this.placeholder) {
                         this.placeholder.before(this.draggedItem);
@@ -1050,7 +1045,7 @@
                         child.style.transform = '';
                     });
         
-                    // Reset dragged item
+                    // Reset dragged item styles
                     this.draggedItem.style.position = '';
                     this.draggedItem.style.top = '';
                     this.draggedItem.style.left = '';
