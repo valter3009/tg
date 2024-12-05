@@ -294,7 +294,7 @@
             background: #b91c1c;
         }
 
-        .remove-button {
+        .equation-remove {
             position: absolute;
             top: 77px;
             right: 80px;
@@ -303,6 +303,21 @@
             color: #ef0b0b;
             width: 100px;
             height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .pair-remove {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #9ca3af;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1211,7 +1226,7 @@
 
             // Create remove button
             const removeButton = document.createElement('button');
-            removeButton.className = 'remove-button';
+            removeButton.className = 'pair-remove';
             removeButton.textContent = 'х';
             removeButton.addEventListener('click', e => {
                 e.stopPropagation();
@@ -1361,7 +1376,7 @@
                 result.textContent = 'Вычисление...';
                 
                 const removeButton = document.createElement('button');
-                removeButton.className = 'remove-button';
+                removeButton.className = 'equation-remove';
                 removeButton.textContent = 'Удалить';
                 removeButton.addEventListener('click', () => removeEquation(equation));
                 
