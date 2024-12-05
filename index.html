@@ -296,14 +296,13 @@
 
         .remove-button {
             position: absolute;
-            top: 12px;
-            right: 12px;
-            background: rgba(255, 255, 255, 0.1);
+            top: 77px;
+            right: 80px;
+            background: rgba(246, 4, 4, 0.1);
             border: none;
-            color: #9ca3af;
-            width: 20px;
+            color: #ef0b0b;
+            width: 100px;
             height: 20px;
-            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1213,7 +1212,7 @@
             // Create remove button
             const removeButton = document.createElement('button');
             removeButton.className = 'remove-button';
-            removeButton.textContent = '×';
+            removeButton.textContent = 'х';
             removeButton.addEventListener('click', e => {
                 e.stopPropagation();
                 removePair(pairKey);
@@ -1363,7 +1362,7 @@
                 
                 const removeButton = document.createElement('button');
                 removeButton.className = 'remove-button';
-                removeButton.textContent = '×';
+                removeButton.textContent = 'Удалить';
                 removeButton.addEventListener('click', () => removeEquation(equation));
                 
                 header.appendChild(nameInput);
