@@ -295,9 +295,12 @@
         }
 
         .remove-button {
+            position: absolute;
+            top: 12px;
+            right: 12px;
             background: rgba(255, 255, 255, 0.1);
             border: none;
-            color: var(--tg-theme-hint-color);
+            color: #9ca3af;
             width: 20px;
             height: 20px;
             border-radius: 50%;
@@ -306,10 +309,7 @@
             justify-content: center;
             font-size: 14px;
             cursor: pointer;
-            transition: var(--transition-base);
             padding: 0;
-            flex-shrink: 0;
-            align-self: center;
         }
 
         .remove-button:active {
@@ -378,20 +378,23 @@
         }
 
         .equation-item {
-            background: var(--tg-theme-secondary-bg-color);
-            border-radius: var(--border-radius);
-            padding: 12px;
+            background: rgba(44, 46, 51, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            gap: 12px;
             margin-bottom: 8px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-
+        
         .equation-content {
+            flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 6px;
         }
+        
 
         .equation-header {
             display: flex;
@@ -402,9 +405,14 @@
         }
 
         .equation-name {
+            color: #ffffff;
             font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 4px;
+            font-weight: 500;
+            margin: 0;
+            background: transparent;
+            border: none;
+            padding: 0;
+            width: 100%;
         }
 
         .equation-name:focus {
@@ -413,19 +421,18 @@
         }
 
         .equation-text {
-            font-family: 'SF Mono', SFMono-Regular, monospace;
+            font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
             font-size: 11px;
-            color: var(--tg-theme-hint-color);
-            opacity: 0.8;
+            color: #9ca3af;
             line-height: 1.4;
             word-break: break-all;
         }
-
+        
         .result {
             font-family: 'SF Mono', SFMono-Regular, monospace;
             font-size: 13px;
-            font-weight: 500;
-            margin-top: 4px;
+            color: #10b981;
+            margin-top: 2px;
         }
 
         .error {
@@ -434,17 +441,12 @@
 
         .drag-handle {
             width: 24px;
-            height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: grab;
-            padding: 0 4px;
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
-            margin-right: 8px;
             opacity: 0.5;
-            transition: opacity 0.2s;
-            flex-shrink: 0;
+            padding: 0 4px;
         }
 
         .drag-handle:hover {
@@ -460,12 +462,12 @@
             flex-direction: column;
             gap: 3px;
         }
-
+        
         .handle-lines span {
             display: block;
             width: 2px;
             height: 8px;
-            background: currentColor;
+            background: #9ca3af;
             border-radius: 1px;
         }
 
