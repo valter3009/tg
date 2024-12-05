@@ -877,8 +877,11 @@
                 this.currentY = 0;
                 this.initialIndex = 0;
                 this.draggedRect = null;
+                this.placeholder = null;
+                this.itemHeight = 0;
+                this.isDragging = false;
+                this.touchStartY = 0;
                 
-                // Привязываем методы к контексту
                 this.handleTouchStart = this.handleTouchStart.bind(this);
                 this.handleTouchMove = this.handleTouchMove.bind(this);
                 this.handleTouchEnd = this.handleTouchEnd.bind(this);
@@ -890,18 +893,21 @@
             }
         
             setupEventListeners() {
-                // Обработчики для тач-событий
-                this.listElement.addEventListener('touchstart', this.handleTouchStart, { passive: false });
+                // Используем capture phase для более надежного перехвата событий
+                this.listElement.addEventListener('touchstart', this.handleTouchStart, { passive: false, capture: true });
                 document.addEventListener('touchmove', this.handleTouchMove, { passive: false });
                 document.addEventListener('touchend', this.handleTouchEnd);
+                document.addEventListener('touchcancel', this.handleTouchEnd);
                 
-                // Обработчики для мыши
-                this.listElement.addEventListener('mousedown', this.handleMouseDown);
+                this.listElement.addEventListener('mousedown', this.handleMouseDown, { capture: true });
                 document.addEventListener('mousemove', this.handleMouseMove);
                 document.addEventListener('mouseup', this.handleMouseUp);
             }
         
             startDragging(e, isTouchEvent) {
+                // Проверяем, не начали ли мы уже перетаскивание
+                if (this.isDragging) return false;
+        
                 const target = isTouchEvent ? e.target : e;
                 const dragHandle = target.closest('.drag-handle');
                 if (!dragHandle) return false;
@@ -909,151 +915,152 @@
                 const item = dragHandle.closest('.pair-item, .equation-item');
                 if (!item) return false;
         
-                // Сохраняем начальное состояние
+                this.isDragging = true;
                 this.draggedItem = item;
                 this.draggedRect = item.getBoundingClientRect();
+                this.itemHeight = this.draggedRect.height;
                 this.initialY = isTouchEvent ? e.touches[0].clientY : e.clientY;
                 this.currentY = this.initialY;
                 this.initialIndex = Array.from(this.listElement.children).indexOf(item);
         
-                // Применяем стили для перетаскиваемого элемента
+                // Создаем placeholder до изменения position элемента
+                this.placeholder = document.createElement('div');
+                this.placeholder.style.height = `${this.itemHeight}px`;
+                this.placeholder.style.margin = '5px 0';
+                this.placeholder.style.transition = 'all 0.2s ease-out';
+                this.draggedItem.before(this.placeholder);
+        
+                // Фиксируем элемент
                 this.draggedItem.style.position = 'fixed';
                 this.draggedItem.style.top = `${this.draggedRect.top}px`;
                 this.draggedItem.style.left = `${this.draggedRect.left}px`;
                 this.draggedItem.style.width = `${this.draggedRect.width}px`;
                 this.draggedItem.style.zIndex = '1000';
-        
-                // Создаем placeholder для сохранения места в списке
-                const placeholder = document.createElement('div');
-                placeholder.style.height = `${this.draggedRect.height}px`;
-                placeholder.style.margin = '5px 0';
-                placeholder.style.opacity = '0';
-                this.draggedItem.before(placeholder);
-        
+                this.draggedItem.style.margin = '0';
+                
                 return true;
             }
         
             handleMove(clientY) {
-                if (!this.draggedItem) return;
+                if (!this.isDragging || !this.draggedItem) return;
+        
+                this.currentY = clientY;
+                const deltaY = this.currentY - this.initialY;
         
                 // Обновляем позицию перетаскиваемого элемента
-                const deltaY = clientY - this.initialY;
                 requestAnimationFrame(() => {
                     this.draggedItem.style.transform = `translateY(${deltaY}px)`;
                 });
         
-                // Получаем все элементы списка для пересчета позиций
                 const items = Array.from(this.listElement.children);
-                const draggedIndex = items.indexOf(this.draggedItem);
+                const currentIndex = items.indexOf(this.placeholder);
                 
+                // Определяем новую позицию
+                let newIndex = currentIndex;
+                const draggedMiddle = clientY;
+        
                 items.forEach((item, index) => {
-                    if (item === this.draggedItem) return;
+                    if (item === this.placeholder || item === this.draggedItem) return;
         
                     const rect = item.getBoundingClientRect();
                     const itemMiddle = rect.top + rect.height / 2;
         
-                    if (clientY < itemMiddle && index < draggedIndex) {
-                        item.style.transform = `translateY(${this.draggedRect.height + 5}px)`;
-                    } else if (clientY > itemMiddle && index > draggedIndex) {
-                        item.style.transform = `translateY(-${this.draggedRect.height + 5}px)`;
-                    } else {
-                        item.style.transform = '';
+                    if (draggedMiddle < itemMiddle && index < currentIndex) {
+                        newIndex = index;
+                    } else if (draggedMiddle > itemMiddle && index > currentIndex) {
+                        newIndex = index;
                     }
                 });
+        
+                // Перемещаем placeholder только если индекс изменился
+                if (newIndex !== currentIndex) {
+                    const targetItem = items[newIndex];
+                    if (targetItem) {
+                        if (newIndex > currentIndex) {
+                            targetItem.after(this.placeholder);
+                        } else {
+                            targetItem.before(this.placeholder);
+                        }
+                    }
+                }
             }
         
             finishDragging() {
-                if (!this.draggedItem) return;
+                if (!this.isDragging || !this.draggedItem) return;
         
-                // Получаем конечную позицию
-                const items = Array.from(this.listElement.children);
-                let targetIndex = this.initialIndex;
-                
-                items.forEach((item, index) => {
-                    if (item === this.draggedItem) return;
-                    
-                    const rect = item.getBoundingClientRect();
-                    const itemMiddle = rect.top + rect.height / 2;
-                    
-                    if (this.currentY > itemMiddle) {
-                        targetIndex = index;
-                    }
-                });
+                // Определяем конечную позицию по положению placeholder
+                if (this.placeholder) {
+                    this.placeholder.before(this.draggedItem);
+                }
         
-                // Сбрасываем стили всех элементов
-                items.forEach(item => {
-                    item.style.transform = '';
-                });
-        
-                // Возвращаем элемент в нормальное состояние
+                // Восстанавливаем стили элемента
                 this.draggedItem.style.position = '';
                 this.draggedItem.style.top = '';
                 this.draggedItem.style.left = '';
                 this.draggedItem.style.width = '';
                 this.draggedItem.style.transform = '';
                 this.draggedItem.style.zIndex = '';
-        
-                // Перемещаем элемент на новую позицию
-                if (targetIndex !== this.initialIndex) {
-                    const target = items[targetIndex];
-                    if (targetIndex > this.initialIndex) {
-                        target.after(this.draggedItem);
-                    } else {
-                        target.before(this.draggedItem);
-                    }
-                }
+                this.draggedItem.style.margin = '';
         
                 // Удаляем placeholder
-                const placeholder = items.find(item => item.style.height === `${this.draggedRect.height}px`);
-                if (placeholder) {
-                    placeholder.remove();
+                if (this.placeholder) {
+                    this.placeholder.remove();
+                    this.placeholder = null;
                 }
         
                 // Сбрасываем состояние
                 this.draggedItem = null;
+                this.isDragging = false;
                 this.initialY = 0;
                 this.currentY = 0;
                 this.draggedRect = null;
                 
-                // Сохраняем новый порядок
                 saveState();
             }
         
-            // Обработчики тач-событий
             handleTouchStart(e) {
                 if (e.touches.length !== 1) return;
+                this.touchStartY = e.touches[0].clientY;
+                
                 if (this.startDragging(e, true)) {
                     e.preventDefault();
+                    e.stopPropagation();
                 }
             }
         
             handleTouchMove(e) {
-                if (!this.draggedItem) return;
+                if (!this.isDragging) return;
                 e.preventDefault();
-                this.currentY = e.touches[0].clientY;
-                this.handleMove(this.currentY);
+                e.stopPropagation();
+                this.handleMove(e.touches[0].clientY);
             }
         
-            handleTouchEnd() {
+            handleTouchEnd(e) {
+                if (!this.isDragging) return;
+                e.preventDefault();
+                e.stopPropagation();
                 this.finishDragging();
             }
         
-            // Обработчики событий мыши
             handleMouseDown(e) {
                 const dragHandle = e.target.closest('.drag-handle');
                 if (!dragHandle) return;
                 e.preventDefault();
+                e.stopPropagation();
                 this.startDragging(e.target, false);
             }
         
             handleMouseMove(e) {
-                if (!this.draggedItem) return;
+                if (!this.isDragging) return;
                 e.preventDefault();
-                this.currentY = e.clientY;
-                this.handleMove(this.currentY);
+                e.stopPropagation();
+                this.handleMove(e.clientY);
             }
         
-            handleMouseUp() {
+            handleMouseUp(e) {
+                if (!this.isDragging) return;
+                e.preventDefault();
+                e.stopPropagation();
                 this.finishDragging();
             }
         }
