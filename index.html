@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>IDTrade WebApp</title>
     <!-- Include Decimal.js for precise calculations -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/decimal.js/10.4.3/decimal.min.js"></script>
@@ -26,14 +26,11 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            height: 100vh;
             margin: 0;
             padding: 0;
-            background: #2c2e33;
-            color: var(--tg-theme-text-color);
-            min-height: 100vh;
-            line-height: 1.5;
-            padding-top: 140px;
+            padding-top: 0 !important; /* Remove existing padding-top */
+            overflow-y: auto;
         }
 
         input, select, button {
@@ -51,10 +48,8 @@
         }
 
         .container {
-            padding: 0;
-            padding-bottom: env(safe-area-inset-bottom);
-            max-width: 768px;
-            margin: 0 auto;
+            padding-top: 110px; /* Add padding to container instead */
+            height: 100%;
         }
 
         .top-panel {
@@ -387,19 +382,15 @@
             border-radius: var(--border-radius);
             padding: 12px;
             margin-bottom: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: var(--shadow-sm);
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 12px;
-            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         .equation-content {
             display: flex;
             flex-direction: column;
             gap: 4px;
-            width: 100%;
         }
 
         .equation-header {
@@ -411,14 +402,9 @@
         }
 
         .equation-name {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 600;
-            color: var(--tg-theme-text-color);
-            background: transparent;
-            border: 1px solid transparent;
-            padding: 2px 4px;
-            border-radius: 4px;
-            width: 100%;
+            margin-bottom: 4px;
         }
 
         .equation-name:focus {
@@ -427,20 +413,19 @@
         }
 
         .equation-text {
+            font-family: 'SF Mono', SFMono-Regular, monospace;
+            font-size: 11px;
             color: var(--tg-theme-hint-color);
-            font-size: 10px;
-            font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
-            width: 100%;
+            opacity: 0.8;
+            line-height: 1.4;
             word-break: break-all;
         }
 
         .result {
-            font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
-            font-size: 12px;
+            font-family: 'SF Mono', SFMono-Regular, monospace;
+            font-size: 13px;
             font-weight: 500;
-            color: #10b981;
             margin-top: 4px;
-            width: 100%;
         }
 
         .error {
@@ -829,142 +814,48 @@
         class DragDropManager {
             constructor(listId) {
                 this.listElement = document.getElementById(listId);
-                this.dragItem = null;
-                this.ghost = null;
-                this.initialMouseY = 0;
-                this.initialItemY = 0;
-                this.mouseOffsetY = 0;
-                this.currentIndex = null;
-                this.originalIndex = null;
+                this.draggedItem = null;
+                this.placeholder = null;
                 
-                this.boundMouseMove = this.handleMouseMove.bind(this);
-                this.boundMouseUp = this.handleMouseUp.bind(this);
+                this.init();
             }
-
+        
             init() {
-                this.listElement.addEventListener('mousedown', (e) => this.handleMouseDown(e));
-            }
-
-            handleMouseDown(e) {
-                if (!e.target.closest('.drag-handle')) return;
-
-                const item = e.target.closest('.pair-item, .equation-item');
-                if (!item) return;
-
-                e.preventDefault();
-
-                this.dragItem = item;
-                this.initialMouseY = e.clientY;
-                const rect = item.getBoundingClientRect();
-                this.initialItemY = rect.top;
-                this.mouseOffsetY = e.clientY - rect.top;
-
-                this.originalIndex = Array.from(this.listElement.children).indexOf(item);
-                this.currentIndex = this.originalIndex;
-
-                this.ghost = this.createGhost(item);
-                document.body.appendChild(this.ghost);
-
-                this.dragItem.style.opacity = '0';
-
-                document.addEventListener('mousemove', this.boundMouseMove);
-                document.addEventListener('mouseup', this.boundMouseUp);
-            }
-
-            createGhost(element) {
-                const ghost = element.cloneNode(true);
-                const rect = element.getBoundingClientRect();
-                
-                ghost.className = `${element.className} ghost`;
-                ghost.style.position = 'fixed';
-                ghost.style.top = `${rect.top}px`;
-                ghost.style.left = `${rect.left}px`;
-                ghost.style.width = `${rect.width}px`;
-                ghost.style.height = `${rect.height}px`;
-                ghost.style.margin = '0';
-                ghost.style.pointerEvents = 'none';
-                ghost.style.zIndex = '9999';
-                ghost.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
-                
-                return ghost;
-            }
-
-            handleMouseMove(e) {
-                if (!this.dragItem || !this.ghost) return;
-
-                const newY = e.clientY - this.mouseOffsetY;
-                this.ghost.style.top = `${newY}px`;
-
-                const ghostRect = this.ghost.getBoundingClientRect();
-                const ghostMiddle = ghostRect.top + (ghostRect.height / 2);
-                
-                const items = Array.from(this.listElement.children);
-                let newIndex = this.currentIndex;
-
-                for (let i = 0; i < items.length; i++) {
-                    if (items[i] === this.dragItem) continue;
-
-                    const rect = items[i].getBoundingClientRect();
-                    const middle = rect.top + (rect.height / 2);
-
-                    if ((ghostMiddle < middle && i < this.currentIndex) ||
-                        (ghostMiddle > middle && i > this.currentIndex)) {
-                        newIndex = i;
-                        break;
-                    }
-                }
-
-                if (newIndex !== this.currentIndex) {
-                    const moveUp = newIndex < this.currentIndex;
-                    const start = moveUp ? newIndex : this.currentIndex;
-                    const end = moveUp ? this.currentIndex : newIndex;
-
-                    items.forEach(item => {
-                        if (item !== this.dragItem) {
-                            item.style.transform = '';
-                            item.style.transition = 'transform 0.15s ease';
-                        }
-                    });
-
-                    for (let i = start; i <= end; i++) {
-                        const item = items[i];
-                        if (item === this.dragItem) continue;
-
-                        const shift = moveUp ? this.dragItem.offsetHeight : -this.dragItem.offsetHeight;
-                        item.style.transform = `translateY(${shift}px)`;
-                    }
-
-                    if (moveUp) {
-                        this.listElement.insertBefore(this.dragItem, items[newIndex]);
-                    } else {
-                        const nextItem = items[newIndex + 1];
-                        this.listElement.insertBefore(this.dragItem, nextItem);
-                    }
-
-                    this.currentIndex = newIndex;
-                }
-            }
-
-            handleMouseUp() {
-                if (!this.dragItem || !this.ghost) return;
-
-                this.dragItem.style.opacity = '1';
-                this.ghost.remove();
-
-                Array.from(this.listElement.children).forEach(item => {
-                    item.style.transform = '';
-                    item.style.transition = '';
+                this.listElement.addEventListener('dragstart', (e) => {
+                    if (!e.target.closest('.drag-handle')) return;
+                    
+                    this.draggedItem = e.target.closest('.pair-item, .equation-item');
+                    setTimeout(() => this.draggedItem.style.opacity = '0', 0);
                 });
-
-                document.removeEventListener('mousemove', this.boundMouseMove);
-                document.removeEventListener('mouseup', this.boundMouseUp);
-                
-                this.dragItem = null;
-                this.ghost = null;
-                this.currentIndex = null;
-                this.originalIndex = null;
-
-                saveState();
+        
+                this.listElement.addEventListener('dragend', (e) => {
+                    if (this.draggedItem) {
+                        this.draggedItem.style.opacity = '1';
+                        this.draggedItem = null;
+                    }
+                    if (this.placeholder) {
+                        this.placeholder.remove();
+                        this.placeholder = null;
+                    }
+                    saveState();
+                });
+        
+                this.listElement.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    if (!this.draggedItem) return;
+                    
+                    const targetItem = e.target.closest('.pair-item, .equation-item');
+                    if (!targetItem || targetItem === this.draggedItem) return;
+        
+                    const rect = targetItem.getBoundingClientRect();
+                    const midpoint = rect.top + rect.height / 2;
+                    
+                    if (e.clientY < midpoint) {
+                        targetItem.parentNode.insertBefore(this.draggedItem, targetItem);
+                    } else {
+                        targetItem.parentNode.insertBefore(this.draggedItem, targetItem.nextSibling);
+                    }
+                });
             }
         }
 
@@ -1222,27 +1113,37 @@
         // WebSocket connection management
         async function connectWebSocket(exchange, symbol) {
             const config = exchangeConfigs[exchange];
-            const ws = new WebSocket(config.wsUrl);
+            let ws = new WebSocket(config.wsUrl);
             
-            ws.onopen = () => {
-                ws.send(JSON.stringify(config.subscribeFormat(symbol)));
+            const connect = () => {
+                ws = new WebSocket(config.wsUrl);
+                
+                ws.onopen = () => {
+                    ws.send(JSON.stringify(config.subscribeFormat(symbol)));
+                };
+                
+                ws.onmessage = (event) => {
+                    const parsed = config.parseMessage(event.data);
+                    if (parsed) {
+                        updatePairPrices(exchange, parsed.symbol, parsed.bid, parsed.ask);
+                    }
+                };
+                
+                ws.onclose = () => {
+                    setTimeout(connect, 1000);
+                };
             };
+        
+            connect();
             
-            ws.onmessage = (event) => {
-                const parsed = config.parseMessage(event.data);
-                if (parsed) {
-                    updatePairPrices(exchange, parsed.symbol, parsed.bid, parsed.ask);
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    if (ws.readyState !== WebSocket.OPEN) {
+                        connect();
+                    }
                 }
-            };
-            
-            ws.onerror = (error) => {
-                console.error(`WebSocket error for ${exchange}:`, error);
-            };
-            
-            ws.onclose = () => {
-                setTimeout(() => connectWebSocket(exchange, symbol), 5000);
-            };
-            
+            });
+        
             return ws;
         }
 
