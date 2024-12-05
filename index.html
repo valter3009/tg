@@ -881,7 +881,9 @@
                 this.itemHeight = 0;
                 this.isDragging = false;
                 this.touchStartY = 0;
+                this.animationFrameId = null;
                 
+                // Bind methods
                 this.handleTouchStart = this.handleTouchStart.bind(this);
                 this.handleTouchMove = this.handleTouchMove.bind(this);
                 this.handleTouchEnd = this.handleTouchEnd.bind(this);
@@ -893,7 +895,6 @@
             }
         
             setupEventListeners() {
-                // Используем capture phase для более надежного перехвата событий
                 this.listElement.addEventListener('touchstart', this.handleTouchStart, { passive: false, capture: true });
                 document.addEventListener('touchmove', this.handleTouchMove, { passive: false });
                 document.addEventListener('touchend', this.handleTouchEnd);
@@ -905,7 +906,6 @@
             }
         
             startDragging(e, isTouchEvent) {
-                // Проверяем, не начали ли мы уже перетаскивание
                 if (this.isDragging) return false;
         
                 const target = isTouchEvent ? e.target : e;
@@ -915,6 +915,13 @@
                 const item = dragHandle.closest('.pair-item, .equation-item');
                 if (!item) return false;
         
+                // Apply smooth transitions to all items except the dragged one
+                Array.from(this.listElement.children).forEach(child => {
+                    if (child !== item) {
+                        child.style.transition = 'transform 0.2s ease-out';
+                    }
+                });
+        
                 this.isDragging = true;
                 this.draggedItem = item;
                 this.draggedRect = item.getBoundingClientRect();
@@ -923,20 +930,21 @@
                 this.currentY = this.initialY;
                 this.initialIndex = Array.from(this.listElement.children).indexOf(item);
         
-                // Создаем placeholder до изменения position элемента
+                // Create placeholder with smooth height transition
                 this.placeholder = document.createElement('div');
                 this.placeholder.style.height = `${this.itemHeight}px`;
                 this.placeholder.style.margin = '5px 0';
                 this.placeholder.style.transition = 'all 0.2s ease-out';
                 this.draggedItem.before(this.placeholder);
         
-                // Фиксируем элемент
+                // Set up dragged item styles
                 this.draggedItem.style.position = 'fixed';
                 this.draggedItem.style.top = `${this.draggedRect.top}px`;
                 this.draggedItem.style.left = `${this.draggedRect.left}px`;
                 this.draggedItem.style.width = `${this.draggedRect.width}px`;
                 this.draggedItem.style.zIndex = '1000';
                 this.draggedItem.style.margin = '0';
+                this.draggedItem.style.transition = 'none'; // Disable transition for dragged item
                 
                 return true;
             }
@@ -944,78 +952,101 @@
             handleMove(clientY) {
                 if (!this.isDragging || !this.draggedItem) return;
         
-                this.currentY = clientY;
-                const deltaY = this.currentY - this.initialY;
+                // Cancel any existing animation frame
+                if (this.animationFrameId) {
+                    cancelAnimationFrame(this.animationFrameId);
+                }
         
-                // Обновляем позицию перетаскиваемого элемента
-                requestAnimationFrame(() => {
+                // Schedule the next animation frame
+                this.animationFrameId = requestAnimationFrame(() => {
+                    this.currentY = clientY;
+                    const deltaY = this.currentY - this.initialY;
+        
+                    // Update dragged item position
                     this.draggedItem.style.transform = `translateY(${deltaY}px)`;
-                });
         
-                const items = Array.from(this.listElement.children);
-                const currentIndex = items.indexOf(this.placeholder);
-                
-                // Определяем новую позицию
-                let newIndex = currentIndex;
-                const draggedMiddle = clientY;
+                    const items = Array.from(this.listElement.children);
+                    const currentIndex = items.indexOf(this.placeholder);
+                    const draggedMiddle = clientY;
         
-                items.forEach((item, index) => {
-                    if (item === this.placeholder || item === this.draggedItem) return;
+                    // Calculate new position
+                    let newIndex = currentIndex;
+                    items.forEach((item, index) => {
+                        if (item === this.placeholder || item === this.draggedItem) return;
         
-                    const rect = item.getBoundingClientRect();
-                    const itemMiddle = rect.top + rect.height / 2;
+                        const rect = item.getBoundingClientRect();
+                        const itemMiddle = rect.top + rect.height / 2;
         
-                    if (draggedMiddle < itemMiddle && index < currentIndex) {
-                        newIndex = index;
-                    } else if (draggedMiddle > itemMiddle && index > currentIndex) {
-                        newIndex = index;
-                    }
-                });
+                        if (draggedMiddle < itemMiddle && index < currentIndex) {
+                            newIndex = index;
+                        } else if (draggedMiddle > itemMiddle && index > currentIndex) {
+                            newIndex = index;
+                        }
+                    });
         
-                // Перемещаем placeholder только если индекс изменился
-                if (newIndex !== currentIndex) {
-                    const targetItem = items[newIndex];
-                    if (targetItem) {
-                        if (newIndex > currentIndex) {
-                            targetItem.after(this.placeholder);
-                        } else {
-                            targetItem.before(this.placeholder);
+                    // Move placeholder with smooth transition
+                    if (newIndex !== currentIndex) {
+                        const targetItem = items[newIndex];
+                        if (targetItem) {
+                            if (newIndex > currentIndex) {
+                                targetItem.after(this.placeholder);
+                            } else {
+                                targetItem.before(this.placeholder);
+                            }
                         }
                     }
-                }
+                });
             }
         
             finishDragging() {
                 if (!this.isDragging || !this.draggedItem) return;
         
-                // Определяем конечную позицию по положению placeholder
-                if (this.placeholder) {
-                    this.placeholder.before(this.draggedItem);
+                // Cancel any pending animation frame
+                if (this.animationFrameId) {
+                    cancelAnimationFrame(this.animationFrameId);
+                    this.animationFrameId = null;
                 }
         
-                // Восстанавливаем стили элемента
-                this.draggedItem.style.position = '';
-                this.draggedItem.style.top = '';
-                this.draggedItem.style.left = '';
-                this.draggedItem.style.width = '';
-                this.draggedItem.style.transform = '';
-                this.draggedItem.style.zIndex = '';
-                this.draggedItem.style.margin = '';
+                // Get the final position of the placeholder
+                const placeholderRect = this.placeholder.getBoundingClientRect();
         
-                // Удаляем placeholder
-                if (this.placeholder) {
-                    this.placeholder.remove();
-                    this.placeholder = null;
-                }
+                // Animate the dragged item to its final position
+                this.draggedItem.style.transition = 'all 0.2s ease-out';
+                this.draggedItem.style.transform = `translateY(${placeholderRect.top - this.draggedRect.top}px)`;
         
-                // Сбрасываем состояние
-                this.draggedItem = null;
-                this.isDragging = false;
-                this.initialY = 0;
-                this.currentY = 0;
-                this.draggedRect = null;
-                
-                saveState();
+                // After animation completes, restore the DOM state
+                setTimeout(() => {
+                    if (this.placeholder) {
+                        this.placeholder.before(this.draggedItem);
+                        this.placeholder.remove();
+                        this.placeholder = null;
+                    }
+        
+                    // Reset dragged item styles
+                    this.draggedItem.style.position = '';
+                    this.draggedItem.style.top = '';
+                    this.draggedItem.style.left = '';
+                    this.draggedItem.style.width = '';
+                    this.draggedItem.style.transform = '';
+                    this.draggedItem.style.zIndex = '';
+                    this.draggedItem.style.margin = '';
+                    this.draggedItem.style.transition = '';
+        
+                    // Remove transitions from other items
+                    Array.from(this.listElement.children).forEach(child => {
+                        child.style.transition = '';
+                        child.style.transform = '';
+                    });
+        
+                    // Reset state
+                    this.draggedItem = null;
+                    this.isDragging = false;
+                    this.initialY = 0;
+                    this.currentY = 0;
+                    this.draggedRect = null;
+                    
+                    saveState();
+                }, 200); // Match the transition duration
             }
         
             handleTouchStart(e) {
