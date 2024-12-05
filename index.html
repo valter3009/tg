@@ -410,6 +410,8 @@
             position: relative;
             border: 1px solid rgba(255, 255, 255, 0.1);
             min-width: 0;
+            /* Обеспечиваем правильное поведение flexbox */
+            width: 100%;
         }
 
         .pair-item, .equation-item {
@@ -418,12 +420,20 @@
         }
 
         .equation-content {
+            /* Расширяем контейнер на всю доступную ширину */
             flex: 1;
             display: flex;
             flex-direction: column;
             gap: 8px;
             min-width: 0;
-            padding-right: 80px;
+            /* Увеличиваем правый отступ до конца кнопки удаления */
+            padding-right: 16px;
+            /* Добавляем отступ слева */
+            padding-left: 16px;
+            /* Общий отступ сверху и снизу */
+            padding-top: 8px;
+            padding-bottom: 8px;
+            width: 100%;
         }
 
         .equation-header {
@@ -435,21 +445,21 @@
         }
 
         .equation-name {
+            width: 100%;
+            background: transparent;
+            border: none;
             color: #ffffff;
             font-size: 13px;
             font-weight: 500;
+            padding: 4px 0;
             margin: 0;
-            background: transparent;
-            border: none;
-            padding: 0;
-            width: 100%;
+            /* Улучшаем обработку длинного текста */
             overflow-wrap: break-word;
             word-wrap: break-word;
             word-break: break-word;
             hyphens: auto;
             white-space: pre-wrap;
             line-height: 1.4;
-            min-width: 0;
         }
 
         .equation-name:focus {
@@ -458,19 +468,24 @@
         }
 
         .equation-text {
+            width: 100%;
             font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
             font-size: 11px;
             color: #9ca3af;
             line-height: 1.4;
+            /* Улучшаем обработку длинного текста */
             word-break: break-all;
             overflow-wrap: break-word;
+            padding: 4px 0;
         }
 
         .result {
+            width: 100%;
             font-family: 'SF Mono', SFMono-Regular, monospace;
             font-size: 13px;
             color: #10b981;
             margin-top: 2px;
+            padding: 4px 0;
         }
 
         .error {
