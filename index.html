@@ -296,19 +296,26 @@
 
         .equation-remove {
             position: absolute;
-            top: 77px;
-            right: 80px;
+            top: 50%; /* Center vertically */
+            transform: translateY(-50%); /* Ensure perfect vertical centering */
+            right: 16px; /* Align with padding */
             background: rgba(246, 4, 4, 0.1);
             border: none;
             color: #ef0b0b;
-            width: 100px;
-            height: 20px;
+            width: 70px; /* Slightly smaller width */
+            height: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 12px;
             cursor: pointer;
             padding: 0;
+            border-radius: 6px; /* Add slight rounding */
+            transition: background-color 0.2s ease;
+        }
+
+        .equation-remove:hover {
+            background: rgba(246, 4, 4, 0.15);
         }
 
         .pair-remove {
@@ -400,24 +407,26 @@
             margin-bottom: 8px;
             position: relative;
             border: 1px solid rgba(255, 255, 255, 0.1);
+            min-width: 0;
         }
         
         .equation-content {
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 8px; /* Increased gap for better separation */
+            min-width: 0;
+            padding-right: 80px;
         }
         
-
         .equation-header {
             display: flex;
-            align-items: center;
+            align-items: flex-start; /* Change from center to allow wrapping */
             gap: 8px;
             margin-bottom: 4px;
             width: 100%;
         }
-
+        
         .equation-name {
             color: #ffffff;
             font-size: 13px;
@@ -427,6 +436,13 @@
             border: none;
             padding: 0;
             width: 100%;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            word-break: break-word;
+            hyphens: auto;
+            white-space: pre-wrap;
+            line-height: 1.4;
+            min-width: 0;
         }
 
         .equation-name:focus {
@@ -440,6 +456,7 @@
             color: #9ca3af;
             line-height: 1.4;
             word-break: break-all;
+            overflow-wrap: break-word;
         }
         
         .result {
@@ -485,13 +502,33 @@
             border-radius: 1px;
         }
 
-        .ghost {
+        .dragging {
             opacity: 0.5;
-            position: absolute;
+            pointer-events: none;
+        }
+        
+        .ghost {
+            position: fixed;
+            opacity: 0.8;
             pointer-events: none;
             z-index: 9999;
             transform-origin: 50% 50%;
             transition: transform 0.2s ease-in-out;
+            background: var(--tg-theme-secondary-bg-color);
+            width: calc(100% - 32px); /* Accounting for padding */
+            will-change: transform;
+        }
+        
+        .drop-indicator {
+            height: 2px;
+            background-color: var(--tg-theme-button-color);
+            margin: 0;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        
+        .drop-indicator.active {
+            opacity: 1;
         }
 
         @supports (padding: max(0px)) {
@@ -831,47 +868,179 @@
             constructor(listId) {
                 this.listElement = document.getElementById(listId);
                 this.draggedItem = null;
-                this.placeholder = null;
+                this.ghostElement = null;
+                this.dropIndicator = document.createElement('div');
+                this.dropIndicator.className = 'drop-indicator';
+                this.touchTimeout = null;
+                this.initialY = 0;
+                this.currentY = 0;
                 
-                this.init();
+                this.setupEventListeners();
             }
         
-            init() {
-                this.listElement.addEventListener('dragstart', (e) => {
-                    if (!e.target.closest('.drag-handle')) return;
-                    
-                    this.draggedItem = e.target.closest('.pair-item, .equation-item');
-                    setTimeout(() => this.draggedItem.style.opacity = '0', 0);
-                });
+            setupEventListeners() {
+                // Touch event listeners
+                this.listElement.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
+                this.listElement.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
+                this.listElement.addEventListener('touchend', this.handleTouchEnd.bind(this));
+                
+                // Mouse event listeners for desktop compatibility
+                this.listElement.addEventListener('mousedown', this.handleMouseDown.bind(this));
+                document.addEventListener('mousemove', this.handleMouseMove.bind(this));
+                document.addEventListener('mouseup', this.handleMouseUp.bind(this));
+            }
         
-                this.listElement.addEventListener('dragend', (e) => {
-                    if (this.draggedItem) {
-                        this.draggedItem.style.opacity = '1';
-                        this.draggedItem = null;
-                    }
-                    if (this.placeholder) {
-                        this.placeholder.remove();
-                        this.placeholder = null;
-                    }
-                    saveState();
-                });
+            createGhost(element) {
+                this.ghostElement = element.cloneNode(true);
+                this.ghostElement.classList.add('ghost');
+                document.body.appendChild(this.ghostElement);
+                
+                // Match the original element's dimensions
+                const rect = element.getBoundingClientRect();
+                this.ghostElement.style.width = `${rect.width}px`;
+                this.ghostElement.style.height = `${rect.height}px`;
+                
+                return this.ghostElement;
+            }
         
-                this.listElement.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    if (!this.draggedItem) return;
-                    
-                    const targetItem = e.target.closest('.pair-item, .equation-item');
-                    if (!targetItem || targetItem === this.draggedItem) return;
+            updateGhostPosition(y) {
+                if (this.ghostElement) {
+                    const transform = `translate3d(0, ${y - this.initialY}px, 0)`;
+                    this.ghostElement.style.transform = transform;
+                }
+            }
         
-                    const rect = targetItem.getBoundingClientRect();
-                    const midpoint = rect.top + rect.height / 2;
+            handleDragStart(e, isTouchEvent) {
+                const target = isTouchEvent ? e.target : e;
+                const dragHandle = target.closest('.drag-handle');
+                if (!dragHandle) return false;
+        
+                const item = dragHandle.closest('.pair-item, .equation-item');
+                if (!item) return false;
+        
+                this.draggedItem = item;
+                this.draggedItem.classList.add('dragging');
+                this.createGhost(item);
+                
+                const rect = item.getBoundingClientRect();
+                this.initialY = isTouchEvent ? e.touches[0].clientY : e.clientY;
+                this.ghostElement.style.top = `${rect.top}px`;
+                this.ghostElement.style.left = `${rect.left}px`;
+                
+                return true;
+            }
+        
+            handleDragMove(clientY) {
+                if (!this.draggedItem || !this.ghostElement) return;
+                
+                this.currentY = clientY;
+                this.updateGhostPosition(clientY);
+                
+                // Find drop position
+                const items = Array.from(this.listElement.children);
+                const dragIndex = items.indexOf(this.draggedItem);
+                
+                items.forEach((item, index) => {
+                    if (item === this.draggedItem) return;
                     
-                    if (e.clientY < midpoint) {
-                        targetItem.parentNode.insertBefore(this.draggedItem, targetItem);
-                    } else {
-                        targetItem.parentNode.insertBefore(this.draggedItem, targetItem.nextSibling);
+                    const rect = item.getBoundingClientRect();
+                    const middle = rect.top + rect.height / 2;
+                    
+                    if (clientY < middle && index < dragIndex) {
+                        if (this.dropIndicator.parentElement !== item) {
+                            item.before(this.dropIndicator);
+                        }
+                    } else if (clientY > middle && index > dragIndex) {
+                        if (this.dropIndicator.parentElement !== item) {
+                            item.after(this.dropIndicator);
+                        }
                     }
                 });
+                
+                this.dropIndicator.classList.add('active');
+            }
+        
+            handleDragEnd() {
+                if (!this.draggedItem || !this.ghostElement) return;
+                
+                // Remove ghost and visual states
+                this.ghostElement.remove();
+                this.ghostElement = null;
+                this.draggedItem.classList.remove('dragging');
+                
+                // Move item to final position
+                if (this.dropIndicator.parentElement) {
+                    this.dropIndicator.parentElement.before(this.draggedItem);
+                }
+                
+                // Clean up
+                this.dropIndicator.remove();
+                this.draggedItem = null;
+                this.initialY = 0;
+                this.currentY = 0;
+                
+                // Save new order
+                saveState();
+            }
+        
+            // Touch event handlers
+            handleTouchStart(e) {
+                if (e.touches.length !== 1) return;
+                
+                // Clear any existing timeout
+                if (this.touchTimeout) {
+                    clearTimeout(this.touchTimeout);
+                }
+                
+                // Set a timeout to start dragging
+                this.touchTimeout = setTimeout(() => {
+                    if (this.handleDragStart(e, true)) {
+                        e.preventDefault();
+                    }
+                }, 150);
+            }
+        
+            handleTouchMove(e) {
+                if (!this.draggedItem) {
+                    // If we're still waiting to start drag, cancel it
+                    if (this.touchTimeout) {
+                        clearTimeout(this.touchTimeout);
+                        this.touchTimeout = null;
+                    }
+                    return;
+                }
+                
+                e.preventDefault();
+                this.handleDragMove(e.touches[0].clientY);
+            }
+        
+            handleTouchEnd() {
+                if (this.touchTimeout) {
+                    clearTimeout(this.touchTimeout);
+                    this.touchTimeout = null;
+                }
+                
+                this.handleDragEnd();
+            }
+        
+            // Mouse event handlers
+            handleMouseDown(e) {
+                const dragHandle = e.target.closest('.drag-handle');
+                if (!dragHandle) return;
+                
+                e.preventDefault();
+                this.handleDragStart(e.target, false);
+            }
+        
+            handleMouseMove(e) {
+                if (!this.draggedItem) return;
+                
+                e.preventDefault();
+                this.handleDragMove(e.clientY);
+            }
+        
+            handleMouseUp() {
+                this.handleDragEnd();
             }
         }
 
@@ -1064,7 +1233,6 @@
             
             if (!window.dragDropManagers[listId]) {
                 window.dragDropManagers[listId] = new DragDropManager(listId);
-                window.dragDropManagers[listId].init();
             }
         }
 
