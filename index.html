@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>IDTrade WebApp</title>
+    
     <!-- Include Decimal.js for precise calculations -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/decimal.js/10.4.3/decimal.min.js"></script>
+    
     <style>
         :root {
             --tg-theme-bg-color: #1a1b1e;
@@ -29,7 +31,7 @@
             height: 100vh;
             margin: 0;
             padding: 0;
-            padding-top: 0 !important; /* Remove existing padding-top */
+            padding-top: 0 !important;
             overflow-y: auto;
         }
 
@@ -48,7 +50,7 @@
         }
 
         .container {
-            padding-top: 110px; /* Add padding to container instead */
+            padding-top: 110px;
             height: 100%;
         }
 
@@ -296,19 +298,26 @@
 
         .equation-remove {
             position: absolute;
-            top: 77px;
-            right: 80px;
+            top: 50%;
+            transform: translateY(-50%);
+            right: 16px;
             background: rgba(246, 4, 4, 0.1);
             border: none;
             color: #ef0b0b;
-            width: 100px;
-            height: 20px;
+            width: 70px;
+            height: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 12px;
             cursor: pointer;
             padding: 0;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+        }
+
+        .equation-remove:hover {
+            background: rgba(246, 4, 4, 0.15);
         }
 
         .pair-remove {
@@ -400,19 +409,26 @@
             margin-bottom: 8px;
             position: relative;
             border: 1px solid rgba(255, 255, 255, 0.1);
+            min-width: 0;
         }
-        
+
+        .pair-item, .equation-item {
+            transition: transform 0.2s ease-out;
+            will-change: transform;
+        }
+
         .equation-content {
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 8px;
+            min-width: 0;
+            padding-right: 80px;
         }
-        
 
         .equation-header {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 8px;
             margin-bottom: 4px;
             width: 100%;
@@ -427,6 +443,13 @@
             border: none;
             padding: 0;
             width: 100%;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            word-break: break-word;
+            hyphens: auto;
+            white-space: pre-wrap;
+            line-height: 1.4;
+            min-width: 0;
         }
 
         .equation-name:focus {
@@ -440,8 +463,9 @@
             color: #9ca3af;
             line-height: 1.4;
             word-break: break-all;
+            overflow-wrap: break-word;
         }
-        
+
         .result {
             font-family: 'SF Mono', SFMono-Regular, monospace;
             font-size: 13px;
@@ -476,7 +500,7 @@
             flex-direction: column;
             gap: 3px;
         }
-        
+
         .handle-lines span {
             display: block;
             width: 2px;
@@ -485,13 +509,33 @@
             border-radius: 1px;
         }
 
-        .ghost {
+        .dragging {
             opacity: 0.5;
-            position: absolute;
+            pointer-events: none;
+        }
+
+        .ghost {
+            position: fixed;
+            opacity: 0.8;
             pointer-events: none;
             z-index: 9999;
             transform-origin: 50% 50%;
             transition: transform 0.2s ease-in-out;
+            background: var(--tg-theme-secondary-bg-color);
+            width: calc(100% - 32px);
+            will-change: transform;
+        }
+
+        .drop-indicator {
+            height: 2px;
+            background-color: var(--tg-theme-button-color);
+            margin: 0;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .drop-indicator.active {
+            opacity: 1;
         }
 
         @supports (padding: max(0px)) {
@@ -552,19 +596,17 @@
             <button id="add-pair-button" class="add-button">Добавить</button>
         </div>
     </div>
-
     <div class="container">
         <div id="pairs-screen" class="screen active">
             <div id="pairs-list" class="pairs-list"></div>
         </div>
-
         <div id="equations-screen" class="screen">
             <div id="equations-list" class="pairs-list"></div>
         </div>
     </div>
 
     <script>
-        // SafeCalculator class for precise mathematical calculations
+        // Class for safe mathematical calculations
         class SafeCalculator {
             constructor() {
                 this.operators = {
@@ -582,6 +624,7 @@
                 for (let i = 0; i < expression.length; i++) {
                     const char = expression[i];
                     if (char === ' ') continue;
+                    
                     if (char === '(' || char === ')' || Object.keys(this.operators).includes(char)) {
                         if (number) {
                             tokens.push(number);
@@ -596,46 +639,44 @@
                 if (number) {
                     tokens.push(number);
                 }
+                
                 return tokens;
             }
 
             toPostfix(tokens) {
-                const precedence = {
+                const priority = {
                     '+': 1,
                     '-': 1,
                     '*': 2,
                     '/': 2
                 };
-                
                 const output = [];
-                const operators = [];
-                
+                const operations = [];
+
                 for (const token of tokens) {
                     if (!(token in this.operators) && token !== '(' && token !== ')') {
                         output.push(token);
                     } else if (token === '(') {
-                        operators.push(token);
+                        operations.push(token);
                     } else if (token === ')') {
-                        while (operators.length && operators[operators.length - 1] !== '(') {
-                            output.push(operators.pop());
+                        while (operations.length && operations[operations.length - 1] !== '(') {
+                            output.push(operations.pop());
                         }
-                        operators.pop();
+                        operations.pop();
                     } else {
-                        while (
-                            operators.length && 
-                            operators[operators.length - 1] !== '(' &&
-                            precedence[operators[operators.length - 1]] >= precedence[token]
-                        ) {
-                            output.push(operators.pop());
+                        while (operations.length && 
+                               operations[operations.length - 1] !== '(' && 
+                               priority[operations[operations.length - 1]] >= priority[token]) {
+                            output.push(operations.pop());
                         }
-                        operators.push(token);
+                        operations.push(token);
                     }
                 }
-                
-                while (operators.length) {
-                    output.push(operators.pop());
+
+                while (operations.length) {
+                    output.push(operations.pop());
                 }
-                
+
                 return output;
             }
 
@@ -646,9 +687,11 @@
                     if (token in this.operators) {
                         const b = stack.pop();
                         const a = stack.pop();
+                        
                         if (token === '/' && new Decimal(b).isZero()) {
                             throw new Error('Division by zero');
                         }
+                        
                         stack.push(this.operators[token](a, b));
                     } else {
                         stack.push(token);
@@ -675,8 +718,10 @@
 
             extractVariables(equation) {
                 const variables = new Set();
-                const parts = equation.split(/([+\-*/()])/g).map(part => part.trim()).filter(Boolean);
-                
+                const parts = equation.split(/([+\-*/()])/g)
+                    .map(part => part.trim())
+                    .filter(Boolean);
+
                 for (const part of parts) {
                     if ((part.includes('_bid') || part.includes('_ask')) && !part.includes('_result')) {
                         try {
@@ -707,11 +752,13 @@
                 const checkCycle = (start, current, visited = new Set()) => {
                     if (current === start) return true;
                     visited.add(current);
+                    
                     for (const eqName of findDependencies(current)) {
                         if (!visited.has(eqName) && checkCycle(start, eqName, new Set([...visited]))) {
                             return true;
                         }
                     }
+                    
                     return false;
                 };
 
@@ -722,37 +769,38 @@
             evaluateEquation(equation) {
                 try {
                     let evalStr = equation;
-                    
+
                     for (const [eq, eqData] of Object.entries(this.equations)) {
                         const resultVar = `${eqData.name}_result`;
                         if (evalStr.includes(resultVar)) {
                             const resultValue = eqData.currentResult;
-                            if (resultValue === "н/д" || resultValue === "Загрузка..." || resultValue.startsWith("Ошибка")) {
+                            if (resultValue === "н/д" || 
+                                resultValue === "Загрузка..." || 
+                                resultValue.startsWith("Ошибка")) {
                                 return "н/д";
                             }
                             evalStr = evalStr.replace(new RegExp(resultVar, 'g'), resultValue);
                         }
                     }
-                    
+
                     for (const variable of this.equations[equation].variables) {
                         if (variable.includes('_bid') || variable.includes('_ask')) {
                             const [symbol, exchange, priceType] = variable.split('_');
                             const pairKey = `${exchange}_${symbol}`;
-                            
                             const priceElement = document.querySelector(
                                 `.pair-item[data-pair="${pairKey}"] .${priceType}`
                             );
                             
                             if (!priceElement) return "н/д";
-                            
                             const value = priceElement.textContent;
                             if (value === "Загрузка...") return "Загрузка...";
                             
                             evalStr = evalStr.replace(new RegExp(variable, 'g'), value);
                         }
                     }
-                    
+
                     evalStr = evalStr.replace(/\s+/g, '');
+                    
                     if (!/^[0-9.+\-*/() ]+$/.test(evalStr)) return "н/д";
                     if (['__', 'eval', 'exec', 'import'].some(s => evalStr.includes(s))) return "н/д";
                     
@@ -761,19 +809,17 @@
                     if (result.isNaN()) {
                         return "Ошибка: некорректное выражение";
                     }
+                    
                     if (!result.isFinite()) {
                         return "Ошибка: деление на ноль";
                     }
                     
                     return result.toFixed(8);
-                    
                 } catch (error) {
-                    console.error('Ошибка вычисления:', error);
-                    
+                    console.error('Calculation error:', error);
                     if (error.message === 'Division by zero') {
                         return "Ошибка: деление на ноль";
                     }
-                    
                     return "н/д";
                 }
             }
@@ -818,7 +864,6 @@
             updateResult(equation, result) {
                 if (equation in this.equations) {
                     this.equations[equation].currentResult = result;
-                    
                     for (const dependent of this.equations[equation].dependents) {
                         this.updateResult(dependent, this.evaluateEquation(dependent));
                     }
@@ -831,51 +876,206 @@
             constructor(listId) {
                 this.listElement = document.getElementById(listId);
                 this.draggedItem = null;
+                this.initialY = 0;
+                this.currentY = 0;
+                this.initialIndex = 0;
+                this.draggedRect = null;
                 this.placeholder = null;
-                
-                this.init();
+                this.itemHeight = 0;
+                this.isDragging = false;
+                this.touchStartY = 0;
+
+                this.handleTouchStart = this.handleTouchStart.bind(this);
+                this.handleTouchMove = this.handleTouchMove.bind(this);
+                this.handleTouchEnd = this.handleTouchEnd.bind(this);
+                this.handleMouseDown = this.handleMouseDown.bind(this);
+                this.handleMouseMove = this.handleMouseMove.bind(this);
+                this.handleMouseUp = this.handleMouseUp.bind(this);
+
+                this.setupEventListeners();
             }
-        
-            init() {
-                this.listElement.addEventListener('dragstart', (e) => {
-                    if (!e.target.closest('.drag-handle')) return;
-                    
-                    this.draggedItem = e.target.closest('.pair-item, .equation-item');
-                    setTimeout(() => this.draggedItem.style.opacity = '0', 0);
+
+            setupEventListeners() {
+                // Using capture phase for more reliable event handling
+                this.listElement.addEventListener('touchstart', this.handleTouchStart, {
+                    passive: false,
+                    capture: true
                 });
-        
-                this.listElement.addEventListener('dragend', (e) => {
-                    if (this.draggedItem) {
-                        this.draggedItem.style.opacity = '1';
-                        this.draggedItem = null;
-                    }
-                    if (this.placeholder) {
-                        this.placeholder.remove();
-                        this.placeholder = null;
-                    }
-                    saveState();
+                document.addEventListener('touchmove', this.handleTouchMove, {
+                    passive: false
                 });
-        
-                this.listElement.addEventListener('dragover', (e) => {
+                document.addEventListener('touchend', this.handleTouchEnd);
+                document.addEventListener('touchcancel', this.handleTouchEnd);
+                this.listElement.addEventListener('mousedown', this.handleMouseDown, {
+                    capture: true
+                });
+                document.addEventListener('mousemove', this.handleMouseMove);
+                document.addEventListener('mouseup', this.handleMouseUp);
+            }
+
+            startDragging(e, isTouchEvent) {
+                // Prevent multiple drag starts
+                if (this.isDragging) return false;
+
+                const target = isTouchEvent ? e.target : e;
+                const dragHandle = target.closest('.drag-handle');
+                if (!dragHandle) return false;
+
+                const item = dragHandle.closest('.pair-item, .equation-item');
+                if (!item) return false;
+
+                this.isDragging = true;
+                this.draggedItem = item;
+                this.draggedRect = item.getBoundingClientRect();
+                this.itemHeight = this.draggedRect.height;
+                this.initialY = isTouchEvent ? e.touches[0].clientY : e.clientY;
+                this.currentY = this.initialY;
+                this.initialIndex = Array.from(this.listElement.children).indexOf(item);
+
+                // Create placeholder before changing item position
+                this.placeholder = document.createElement('div');
+                this.placeholder.style.height = `${this.itemHeight}px`;
+                this.placeholder.style.margin = '5px 0';
+                this.placeholder.style.transition = 'all 0.2s ease-out';
+                this.draggedItem.before(this.placeholder);
+
+                // Fix the dragged element in position
+                this.draggedItem.style.position = 'fixed';
+                this.draggedItem.style.top = `${this.draggedRect.top}px`;
+                this.draggedItem.style.left = `${this.draggedRect.left}px`;
+                this.draggedItem.style.width = `${this.draggedRect.width}px`;
+                this.draggedItem.style.zIndex = '1000';
+                this.draggedItem.style.margin = '0';
+
+                return true;
+            }
+
+            handleMove(clientY) {
+                if (!this.isDragging || !this.draggedItem) return;
+
+                this.currentY = clientY;
+                const deltaY = this.currentY - this.initialY;
+
+                // Update dragged item position using requestAnimationFrame for smooth animation
+                requestAnimationFrame(() => {
+                    this.draggedItem.style.transform = `translateY(${deltaY}px)`;
+                });
+
+                const items = Array.from(this.listElement.children);
+                const currentIndex = items.indexOf(this.placeholder);
+
+                // Calculate new position
+                let newIndex = currentIndex;
+                const draggedMiddle = clientY;
+
+                items.forEach((item, index) => {
+                    if (item === this.placeholder || item === this.draggedItem) return;
+
+                    const rect = item.getBoundingClientRect();
+                    const itemMiddle = rect.top + rect.height / 2;
+
+                    if (draggedMiddle < itemMiddle && index < currentIndex) {
+                        newIndex = index;
+                    } else if (draggedMiddle > itemMiddle && index > currentIndex) {
+                        newIndex = index;
+                    }
+                });
+
+                // Move placeholder only if index has changed
+                if (newIndex !== currentIndex) {
+                    const targetItem = items[newIndex];
+                    if (targetItem) {
+                        if (newIndex > currentIndex) {
+                            targetItem.after(this.placeholder);
+                        } else {
+                            targetItem.before(this.placeholder);
+                        }
+                    }
+                }
+            }
+
+            finishDragging() {
+                if (!this.isDragging || !this.draggedItem) return;
+
+                // Place dragged item at final position
+                if (this.placeholder) {
+                    this.placeholder.before(this.draggedItem);
+                }
+
+                // Reset dragged item styles
+                this.draggedItem.style.position = '';
+                this.draggedItem.style.top = '';
+                this.draggedItem.style.left = '';
+                this.draggedItem.style.width = '';
+                this.draggedItem.style.transform = '';
+                this.draggedItem.style.zIndex = '';
+                this.draggedItem.style.margin = '';
+
+                // Remove placeholder
+                if (this.placeholder) {
+                    this.placeholder.remove();
+                    this.placeholder = null;
+                }
+
+                // Reset state
+                this.draggedItem = null;
+                this.isDragging = false;
+                this.initialY = 0;
+                this.currentY = 0;
+                this.draggedRect = null;
+
+                saveState();
+            }
+
+            handleTouchStart(e) {
+                if (e.touches.length !== 1) return;
+                this.touchStartY = e.touches[0].clientY;
+                
+                if (this.startDragging(e, true)) {
                     e.preventDefault();
-                    if (!this.draggedItem) return;
-                    
-                    const targetItem = e.target.closest('.pair-item, .equation-item');
-                    if (!targetItem || targetItem === this.draggedItem) return;
-        
-                    const rect = targetItem.getBoundingClientRect();
-                    const midpoint = rect.top + rect.height / 2;
-                    
-                    if (e.clientY < midpoint) {
-                        targetItem.parentNode.insertBefore(this.draggedItem, targetItem);
-                    } else {
-                        targetItem.parentNode.insertBefore(this.draggedItem, targetItem.nextSibling);
-                    }
-                });
+                    e.stopPropagation();
+                }
+            }
+
+            handleTouchMove(e) {
+                if (!this.isDragging) return;
+                e.preventDefault();
+                e.stopPropagation();
+                this.handleMove(e.touches[0].clientY);
+            }
+
+            handleTouchEnd(e) {
+                if (!this.isDragging) return;
+                e.preventDefault();
+                e.stopPropagation();
+                this.finishDragging();
+            }
+
+            handleMouseDown(e) {
+                const dragHandle = e.target.closest('.drag-handle');
+                if (!dragHandle) return;
+                
+                e.preventDefault();
+                e.stopPropagation();
+                this.startDragging(e.target, false);
+            }
+
+            handleMouseMove(e) {
+                if (!this.isDragging) return;
+                e.preventDefault();
+                e.stopPropagation();
+                this.handleMove(e.clientY);
+            }
+
+            handleMouseUp(e) {
+                if (!this.isDragging) return;
+                e.preventDefault();
+                e.stopPropagation();
+                this.finishDragging();
             }
         }
 
-        // Exchange configurations
+        // Exchange configuration for different platforms
         const exchangeConfigs = {
             'Mexc': {
                 wsUrl: 'wss://wbs.mexc.com/ws',
@@ -888,19 +1088,20 @@
                 parseMessage: (data) => {
                     try {
                         const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
-                        if (parsedData.s && parsedData.d && parsedData.d.b && parsedData.d.a) {
+                        if (parsedData.s && parsedData.d && parsedData.db && parsedData.da) {
                             return {
                                 symbol: parsedData.s,
-                                bid: parsedData.d.b,
-                                ask: parsedData.d.a
+                                bid: parsedData.db,
+                                ask: parsedData.da
                             };
                         }
                     } catch (e) {
-                        console.error('Error parsing MEXC message:', e);
+                        console.error('MEXC message parsing error:', e);
                     }
                     return null;
                 }
             },
+
             'Binance': {
                 wsUrl: 'wss://stream.binance.com:9443/ws',
                 tradingUrl: 'https://www.binance.com/ru/trade/',
@@ -921,11 +1122,12 @@
                             };
                         }
                     } catch (e) {
-                        console.error('Error parsing Binance message:', e);
+                        console.error('Binance message parsing error:', e);
                     }
                     return null;
                 }
             },
+
             'Bybit': {
                 wsUrl: 'wss://stream.bybit.com/v5/public/spot',
                 tradingUrl: 'https://www.bybit.com/ru-RU/trade/spot/',
@@ -940,12 +1142,9 @@
                         if (parsedData.type === 'ping' || parsedData.op === 'subscribe') {
                             return null;
                         }
-                        if (parsedData.data && 
-                            parsedData.data.s && 
-                            parsedData.data.b && 
-                            parsedData.data.b.length > 0 &&
-                            parsedData.data.a && 
-                            parsedData.data.a.length > 0) {
+                        if (parsedData.data && parsedData.data.s && 
+                            parsedData.data.b && parsedData.data.b.length > 0 && 
+                            parsedData.data.a && parsedData.data.a.length > 0) {
                             return {
                                 symbol: parsedData.data.s,
                                 bid: parsedData.data.b[0][0],
@@ -953,11 +1152,12 @@
                             };
                         }
                     } catch (e) {
-                        console.error('Error parsing Bybit message:', e);
+                        console.error('Bybit message parsing error:', e);
                     }
                     return null;
                 }
             },
+
             'OKX': {
                 wsUrl: 'wss://ws.okx.com:8443/ws/v5/public',
                 tradingUrl: 'https://www.okx.com/ru/trade-spot/',
@@ -981,11 +1181,12 @@
                             };
                         }
                     } catch (e) {
-                        console.error('Error parsing OKX message:', e);
+                        console.error('OKX message parsing error:', e);
                     }
                     return null;
                 }
             },
+
             'Bitget': {
                 wsUrl: 'wss://ws.bitget.com/v2/ws/public',
                 tradingUrl: 'https://www.bitget.com/ru/spot/',
@@ -1010,11 +1211,12 @@
                             };
                         }
                     } catch (e) {
-                        console.error('Error parsing Bitget message:', e);
+                        console.error('Bitget message parsing error:', e);
                     }
                     return null;
                 }
             },
+
             'Gate': {
                 wsUrl: 'wss://api.gateio.ws/ws/v4/',
                 tradingUrl: 'https://www.gate.io/ru/trade/',
@@ -1041,7 +1243,7 @@
                             };
                         }
                     } catch (e) {
-                        console.error('Error parsing Gate message:', e);
+                        console.error('Gate message parsing error:', e);
                     }
                     return null;
                 }
@@ -1056,19 +1258,17 @@
         let selectedExchange = 'Mexc';
         const equationManager = new EquationManager();
 
-        // Initialize drag and drop functionality
+        // Initialize drag-and-drop functionality
         function setupDragAndDrop(element, listId) {
             if (!window.dragDropManagers) {
                 window.dragDropManagers = {};
             }
-            
             if (!window.dragDropManagers[listId]) {
                 window.dragDropManagers[listId] = new DragDropManager(listId);
-                window.dragDropManagers[listId].init();
             }
         }
 
-        // Function to open trading page in new tab
+        // Open trading page in new tab
         function openTradingPage(exchange, symbol) {
             const config = exchangeConfigs[exchange];
             if (config && config.tradingUrl) {
@@ -1078,29 +1278,34 @@
             }
         }
 
-        // Initialize the application
         function init() {
+            // Set up main button handlers
             document.getElementById('add-pair-button').addEventListener('click', addPair);
             document.getElementById('done-button').addEventListener('click', addEquationFromBottom);
             document.getElementById('fees-toggle').addEventListener('click', toggleFees);
-            
+
+            // Set up navigation buttons
             document.querySelectorAll('.nav-button').forEach(button => {
                 button.addEventListener('click', () => showScreen(button.dataset.screen));
             });
 
+            // Initialize custom select dropdown for exchanges
             const customSelect = document.getElementById('exchange-select-container');
             const selectHeader = customSelect.querySelector('.custom-select-header');
-            
+
+            // Toggle dropdown on header click
             selectHeader.addEventListener('click', () => {
                 customSelect.classList.toggle('active');
             });
 
+            // Close dropdown when clicking outside
             document.addEventListener('click', (e) => {
                 if (!customSelect.contains(e.target)) {
                     customSelect.classList.remove('active');
                 }
             });
 
+            // Handle exchange selection
             const selectOptions = customSelect.querySelector('.custom-select-options');
             selectOptions.addEventListener('click', (e) => {
                 const option = e.target.closest('.custom-select-option');
@@ -1111,6 +1316,7 @@
                 }
             });
 
+            // Add Enter key handlers for inputs
             document.getElementById('pair-symbol').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     addPair();
@@ -1123,35 +1329,42 @@
                 }
             });
 
+            // Load saved state from localStorage
             loadState();
         }
 
-        // WebSocket connection management
+        // Create and manage WebSocket connections for real-time price updates
         async function connectWebSocket(exchange, symbol) {
             const config = exchangeConfigs[exchange];
             let ws = new WebSocket(config.wsUrl);
-            
+
+            // Function to establish or reconnect WebSocket
             const connect = () => {
                 ws = new WebSocket(config.wsUrl);
-                
+
                 ws.onopen = () => {
+                    // Subscribe to price updates when connection opens
                     ws.send(JSON.stringify(config.subscribeFormat(symbol)));
                 };
-                
+
                 ws.onmessage = (event) => {
+                    // Parse and handle incoming price data
                     const parsed = config.parseMessage(event.data);
                     if (parsed) {
                         updatePairPrices(exchange, parsed.symbol, parsed.bid, parsed.ask);
                     }
                 };
-                
+
                 ws.onclose = () => {
+                    // Attempt to reconnect if connection is lost
                     setTimeout(connect, 1000);
                 };
             };
-        
+
+            // Initial connection
             connect();
-            
+
+            // Reconnect when tab becomes visible
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'visible') {
                     if (ws.readyState !== WebSocket.OPEN) {
@@ -1159,11 +1372,11 @@
                     }
                 }
             });
-        
+
             return ws;
         }
 
-        // Add new trading pair
+        // Add a new trading pair to the interface
         function addPair() {
             const symbol = document.getElementById('pair-symbol').value.toUpperCase();
             const exchange = selectedExchange;
@@ -1180,15 +1393,17 @@
             }
 
             createPairElement(symbol, exchange);
+            
+            // Clear and blur input after adding
             document.getElementById('pair-symbol').value = '';
             document.getElementById('pair-symbol').blur();
+            
             saveState();
         }
 
-        // Create HTML element for a trading pair
+        // Create DOM element for a trading pair with all necessary event handlers
         function createPairElement(symbol, exchange) {
             const pairKey = `${exchange}_${symbol}`;
-
             const pairElement = document.createElement('div');
             pairElement.className = 'pair-item';
             pairElement.setAttribute('data-pair', pairKey);
@@ -1206,7 +1421,7 @@
             const priceContainer = document.createElement('div');
             priceContainer.className = 'price-container';
 
-            // Create bid button
+            // Create bid price button
             const bidButton = document.createElement('button');
             bidButton.className = 'price-button bid';
             bidButton.textContent = 'Загрузка...';
@@ -1215,7 +1430,7 @@
                 addToEquation(`${symbol}_${exchange}_bid`);
             });
 
-            // Create ask button
+            // Create ask price button
             const askButton = document.createElement('button');
             askButton.className = 'price-button ask';
             askButton.textContent = 'Загрузка...';
@@ -1227,7 +1442,7 @@
             // Create remove button
             const removeButton = document.createElement('button');
             removeButton.className = 'pair-remove';
-            removeButton.textContent = 'х';
+            removeButton.textContent = '×';
             removeButton.addEventListener('click', e => {
                 e.stopPropagation();
                 removePair(pairKey);
@@ -1238,11 +1453,12 @@
             pairName.className = 'pair-name';
             pairName.textContent = `${symbol} ${exchange}`;
 
-            // Assemble elements
+            // Assemble price container elements
             priceContainer.appendChild(bidButton);
             priceContainer.appendChild(askButton);
             priceContainer.appendChild(removeButton);
-            
+
+            // Assemble main pair element
             pairElement.appendChild(dragHandle);
             pairElement.appendChild(priceContainer);
             pairElement.appendChild(pairName);
@@ -1257,7 +1473,7 @@
                 }
             });
 
-            // Add to DOM and connect WebSocket
+            // Add to DOM and initialize WebSocket connection
             document.getElementById('pairs-list').appendChild(pairElement);
             pairs[pairKey] = pairElement;
 
@@ -1266,88 +1482,105 @@
             });
         }
 
-        // Remove trading pair
+        // Remove a trading pair and clean up its resources
         function removePair(pairKey) {
             if (pairs[pairKey]) {
+                // Remove DOM element
                 pairs[pairKey].remove();
                 delete pairs[pairKey];
-                
+
+                // Close WebSocket connection if it exists
                 if (connections[pairKey]) {
                     connections[pairKey].close();
                     delete connections[pairKey];
                 }
+
+                // Update equations that might use this pair
                 updateEquations();
                 saveState();
             }
         }
 
-        // Update price display for a trading pair
         function updatePairPrices(exchange, symbol, bid, ask) {
             const pairKey = `${exchange}_${symbol}`;
             const pairElement = pairs[pairKey];
-
+            
             if (pairElement) {
                 const bidButton = pairElement.querySelector('.bid');
                 const askButton = pairElement.querySelector('.ask');
-                
+
+                // Format price based on its magnitude for better readability
+                // Different decimal places are used depending on the price range
                 const formatPrice = (price) => {
                     const num = parseFloat(price);
-                    if (num < 0.001) return num.toFixed(8);
-                    if (num < 1) return num.toFixed(6);
-                    if (num < 100) return num.toFixed(4);
-                    return num.toFixed(2);
+                    if (num < 0.001) return num.toFixed(8);     // Very small prices (e.g., 0.00000123)
+                    if (num < 1) return num.toFixed(6);         // Small prices (e.g., 0.123456)
+                    if (num < 100) return num.toFixed(4);       // Medium prices (e.g., 12.3456)
+                    return num.toFixed(2);                      // Large prices (e.g., 123.45)
                 };
-                
+
                 bidButton.textContent = formatPrice(bid);
                 askButton.textContent = formatPrice(ask);
-                
+
+                // Recalculate all equations since prices have changed
                 updateEquations();
             }
         }
 
-        // Add price to equation input
+        // Add a price value to the equation input, handling fee calculations if enabled
         function addToEquation(value) {
             const equationInput = document.getElementById('equation-input-bottom');
             const [symbol, exchange, type] = value.split('_');
             let valueWithFee = value;
 
+            // If fees are enabled, adjust the price based on fee percentage
             if (feesEnabled) {
                 const feeInput = document.querySelector(`.exchange-fee[data-exchange="${exchange.toLowerCase()}"]`);
                 const fee = parseFloat(feeInput.value);
                 const feeMultiplier = (1 - fee/100).toFixed(4);
-                valueWithFee = type === 'bid' ? 
-                    `(${value}*${feeMultiplier})` : 
-                    `(${value}/${feeMultiplier})`;
+
+                // Apply fees differently for bid and ask prices
+                // For bid (selling): multiply by (1 - fee)
+                // For ask (buying): divide by (1 - fee) to get required input amount
+                valueWithFee = type === 'bid' 
+                    ? `(${value}*${feeMultiplier})` 
+                    : `(${value}/${feeMultiplier})`;
             }
 
+            // Insert the value at current cursor position
             const cursorPosition = equationInput.selectionStart;
             const currentText = equationInput.value;
-
             const newText = currentText.slice(0, cursorPosition) + 
                            valueWithFee + 
                            currentText.slice(cursorPosition);
 
             equationInput.value = newText;
             equationInput.focus();
+            
+            // Move cursor after the inserted value
             equationInput.setSelectionRange(
                 cursorPosition + valueWithFee.length,
                 cursorPosition + valueWithFee.length
             );
         }
 
-        // Add new equation from bottom input
+        // Add a new equation from the bottom input field
+        // This function creates the visual representation and sets up all necessary handlers
         function addEquationFromBottom() {
             const equation = document.getElementById('equation-input-bottom').value.trim();
             if (!equation) return;
 
             try {
+                // Add equation to manager and get generated name
                 const equationName = equationManager.addEquation(equation);
-                
+
+                // Create main equation container
                 const equationElement = document.createElement('div');
                 equationElement.className = 'equation-item';
                 equationElement.setAttribute('data-equation', equation);
                 equationElement.setAttribute('draggable', 'true');
 
+                // Create drag handle for reordering
                 const dragHandle = document.createElement('div');
                 dragHandle.className = 'drag-handle';
                 const handleLines = document.createElement('div');
@@ -1355,56 +1588,64 @@
                 handleLines.innerHTML = '<span></span>';
                 dragHandle.appendChild(handleLines);
 
+                // Create content container
                 const content = document.createElement('div');
                 content.className = 'equation-content';
-                
+
+                // Create header with name input
                 const header = document.createElement('div');
                 header.className = 'equation-header';
-                
                 const nameInput = document.createElement('input');
                 nameInput.type = 'text';
                 nameInput.className = 'equation-name';
                 nameInput.value = equationName;
                 nameInput.addEventListener('change', () => updateEquationName(nameInput, equation));
-                
+
+                // Create equation display
                 const equationText = document.createElement('div');
                 equationText.className = 'equation-text';
                 equationText.textContent = equation;
-                
+
+                // Create result display
                 const result = document.createElement('div');
                 result.className = 'result';
                 result.textContent = 'Вычисление...';
-                
+
+                // Create remove button
                 const removeButton = document.createElement('button');
                 removeButton.className = 'equation-remove';
                 removeButton.textContent = 'Удалить';
                 removeButton.addEventListener('click', () => removeEquation(equation));
-                
+
+                // Assemble all elements
                 header.appendChild(nameInput);
                 content.appendChild(header);
                 content.appendChild(equationText);
                 content.appendChild(result);
-
                 equationElement.appendChild(dragHandle);
                 equationElement.appendChild(content);
                 equationElement.appendChild(removeButton);
 
+                // Set up drag and drop functionality
                 setupDragAndDrop(equationElement, 'equations-list');
-                
+
+                // Add to DOM and store reference
                 document.getElementById('equations-list').appendChild(equationElement);
                 equations[equation] = equationElement;
-                
+
+                // Clear input and remove focus
                 document.getElementById('equation-input-bottom').value = '';
                 document.getElementById('equation-input-bottom').blur();
+
+                // Update calculations and save state
                 updateEquations();
                 saveState();
-                
             } catch (error) {
                 showAlert(error.message);
             }
         }
 
-        // Update equation name
+        // Update the name of an equation and ensure it's properly saved
         function updateEquationName(input, equation) {
             const newName = input.value.trim();
             if (newName && equation in equationManager.equations) {
@@ -1414,7 +1655,7 @@
             }
         }
 
-        // Remove equation
+        // Remove an equation and clean up related resources
         function removeEquation(equation) {
             if (equations[equation]) {
                 equations[equation].remove();
@@ -1425,21 +1666,27 @@
             }
         }
 
-        // Update all equations
         function updateEquations() {
+            // Iterate through each equation and update its result
             for (const [equation, element] of Object.entries(equations)) {
+                // Calculate new result using equation manager
                 const result = equationManager.evaluateEquation(equation);
-                const resultElement = element.querySelector('.result');
                 
+                // Update the visual display of the result
+                const resultElement = element.querySelector('.result');
                 resultElement.textContent = result;
+                
+                // Add error class if result is invalid or unavailable
                 resultElement.className = 'result' + 
                     (result === "н/д" || result.startsWith("Ошибка") ? ' error' : '');
                 
+                // Update the stored result in equation manager
                 equationManager.updateResult(equation, result);
             }
         }
 
-        // Add default trading pairs
+        // Add default trading pairs to the interface
+        // This function is called when the app is started for the first time
         function addDefaultPairs() {
             const defaultPairs = [
                 { symbol: 'BTCUSDT', exchange: 'Binance' },
@@ -1452,16 +1699,18 @@
                 { symbol: 'ETHUSDT', exchange: 'Bybit' }
             ];
 
+            // Add each default pair if it doesn't already exist
             for (const pair of defaultPairs) {
                 const pairKey = `${pair.exchange}_${pair.symbol}`;
                 if (pairs[pairKey]) continue;
                 createPairElement(pair.symbol, pair.exchange);
             }
-            
+
+            // Add default equations after a short delay to ensure pairs are loaded
             setTimeout(addDefaultEquations, 1000);
         }
 
-        // Add default equations
+        // Add default equations with predefined calculations
         function addDefaultEquations() {
             const defaultEquations = [
                 {
@@ -1474,7 +1723,7 @@
                 },
                 {
                     equation: "100/(BTCUSDT_Bybit_ask/0.9982)/(ETHBTC_Bybit_ask/0.9982)*(ETHUSDT_Bybit_bid*0.9982)",
-                    name: "3. Прям. треугольный USDT/BTC/ETH/USDT Bybit (нач. банк-100usdt)"
+                    name: "3. Прям.треугольный USDT/BTC/ETH/USDT Bybit (нач. банк-100usdt)"
                 },
                 {
                     equation: "100/(ETHUSDT_Bybit_ask/0.9982)*(ETHBTC_Bybit_bid*0.9982)*(BTCUSDT_Bybit_bid*0.9982)",
@@ -1482,11 +1731,16 @@
                 }
             ];
 
+            // Add each default equation
             for (const eq of defaultEquations) {
                 try {
+                    // Set equation in input field
                     document.getElementById('equation-input-bottom').value = eq.equation;
+                    
+                    // Add equation through normal flow
                     addEquationFromBottom();
                     
+                    // Update equation name if successfully added
                     const element = equations[eq.equation];
                     if (element) {
                         const nameInput = element.querySelector('.equation-name');
@@ -1499,40 +1753,55 @@
             }
         }
 
-        // Save application state
+        // Save current application state to localStorage
         function saveState() {
             const state = {
-                pairs: Array.from(document.getElementById('pairs-list').children).map(el => el.dataset.pair),
-                equations: Array.from(document.getElementById('equations-list').children).map(el => ({
-                    equation: el.dataset.equation,
-                    name: el.querySelector('.equation-name').value
-                })),
+                // Save pairs in order they appear in the list
+                pairs: Array.from(document.getElementById('pairs-list').children)
+                    .map(el => el.dataset.pair),
+                
+                // Save equations with their names
+                equations: Array.from(document.getElementById('equations-list').children)
+                    .map(el => ({
+                        equation: el.dataset.equation,
+                        name: el.querySelector('.equation-name').value
+                    })),
+                
+                // Save fees configuration
                 fees: {
                     enabled: feesEnabled,
-                    values: Array.from(document.querySelectorAll('.exchange-fee')).map(input => ({
-                        exchange: input.dataset.exchange,
-                        value: input.value
-                    }))
+                    values: Array.from(document.querySelectorAll('.exchange-fee'))
+                        .map(input => ({
+                            exchange: input.dataset.exchange,
+                            value: input.value
+                        }))
                 }
             };
+
             localStorage.setItem('idtrade-state', JSON.stringify(state));
         }
 
-        // Load application state
+        // Load saved application state from localStorage
         function loadState() {
             const savedState = localStorage.getItem('idtrade-state');
+            
             if (savedState) {
                 const state = JSON.parse(savedState);
+
+                // Restore fees configuration if it exists
                 if (state.fees) {
                     feesEnabled = state.fees.enabled;
                     const feesToggle = document.getElementById('fees-toggle');
                     feesToggle.classList.toggle('active', feesEnabled);
+                    
+                    // Restore individual exchange fee values
                     state.fees.values.forEach(fee => {
                         const input = document.querySelector(`.exchange-fee[data-exchange="${fee.exchange}"]`);
                         if (input) input.value = fee.value;
                     });
                 }
 
+                // Restore saved pairs
                 if (state.pairs) {
                     state.pairs.forEach(pairKey => {
                         const [exchange, symbol] = pairKey.split('_');
@@ -1542,10 +1811,12 @@
                     });
                 }
 
+                // Restore saved equations
                 if (state.equations) {
                     state.equations.forEach(eq => {
                         document.getElementById('equation-input-bottom').value = eq.equation;
                         addEquationFromBottom();
+                        
                         const element = equations[eq.equation];
                         if (element) {
                             const nameInput = element.querySelector('.equation-name');
@@ -1555,6 +1826,7 @@
                     });
                 }
             } else {
+                // If no saved state exists, add default pairs and equations
                 addDefaultPairs();
             }
         }
@@ -1566,33 +1838,45 @@
             
             feesEnabled = !feesEnabled;
             feesToggle.classList.toggle('active');
+            
+            // Toggle disabled state on fee inputs
             feeInputs.forEach(input => {
                 input.classList.toggle('disabled');
             });
+
+            // Recalculate equations with new fee settings
             updateEquations();
             saveState();
         }
 
-        // Show screen based on navigation
+        // Show different screens based on navigation
         function showScreen(screenName) {
-            document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
-            document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+            // Hide all screens and deactivate all nav buttons
+            document.querySelectorAll('.screen').forEach(screen => 
+                screen.classList.remove('active')
+            );
+            document.querySelectorAll('.nav-button').forEach(btn => 
+                btn.classList.remove('active')
+            );
+
+            // Show selected screen and activate corresponding nav button
             document.getElementById(`${screenName}-screen`).classList.add('active');
-            document.querySelector(`.nav-button[data-screen="${screenName}"]`).classList.add('active');
+            document.querySelector(`.nav-button[data-screen="${screenName}"]`)
+                .classList.add('active');
         }
 
-        // Show alert message
+        // Display alert message
         function showAlert(message) {
             alert(message);
         }
 
-        // Set up regular updates
+        // Set up periodic updates
         setInterval(updateEquations, 1000);
 
-        // Initialize when document is loaded
+        // Initialize app when document is loaded
         document.addEventListener('DOMContentLoaded', init);
 
-        // Prevent gesture events
+        // Prevent gesture events on mobile devices
         document.addEventListener('gesturestart', (e) => {
             e.preventDefault();
         });
