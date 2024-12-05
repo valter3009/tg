@@ -296,26 +296,19 @@
 
         .equation-remove {
             position: absolute;
-            top: 50%; /* Center vertically */
-            transform: translateY(-50%); /* Ensure perfect vertical centering */
-            right: 16px; /* Align with padding */
+            top: 77px;
+            right: 80px;
             background: rgba(246, 4, 4, 0.1);
             border: none;
             color: #ef0b0b;
-            width: 70px; /* Slightly smaller width */
-            height: 24px;
+            width: 100px;
+            height: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 14px;
             cursor: pointer;
             padding: 0;
-            border-radius: 6px; /* Add slight rounding */
-            transition: background-color 0.2s ease;
-        }
-
-        .equation-remove:hover {
-            background: rgba(246, 4, 4, 0.15);
         }
 
         .pair-remove {
@@ -407,31 +400,24 @@
             margin-bottom: 8px;
             position: relative;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            min-width: 0;
-        }
-
-        .pair-item, .equation-item {
-            transition: transform 0.2s ease-out;
-            will-change: transform;
         }
         
         .equation-content {
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 8px; /* Increased gap for better separation */
-            min-width: 0;
-            padding-right: 80px;
+            gap: 6px;
         }
         
+
         .equation-header {
             display: flex;
-            align-items: flex-start; /* Change from center to allow wrapping */
+            align-items: center;
             gap: 8px;
             margin-bottom: 4px;
             width: 100%;
         }
-        
+
         .equation-name {
             color: #ffffff;
             font-size: 13px;
@@ -441,13 +427,6 @@
             border: none;
             padding: 0;
             width: 100%;
-            overflow-wrap: break-word;
-            word-wrap: break-word;
-            word-break: break-word;
-            hyphens: auto;
-            white-space: pre-wrap;
-            line-height: 1.4;
-            min-width: 0;
         }
 
         .equation-name:focus {
@@ -461,7 +440,6 @@
             color: #9ca3af;
             line-height: 1.4;
             word-break: break-all;
-            overflow-wrap: break-word;
         }
         
         .result {
@@ -507,33 +485,13 @@
             border-radius: 1px;
         }
 
-        .dragging {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-        
         .ghost {
-            position: fixed;
-            opacity: 0.8;
+            opacity: 0.5;
+            position: absolute;
             pointer-events: none;
             z-index: 9999;
             transform-origin: 50% 50%;
             transition: transform 0.2s ease-in-out;
-            background: var(--tg-theme-secondary-bg-color);
-            width: calc(100% - 32px); /* Accounting for padding */
-            will-change: transform;
-        }
-        
-        .drop-indicator {
-            height: 2px;
-            background-color: var(--tg-theme-button-color);
-            margin: 0;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-        }
-        
-        .drop-indicator.active {
-            opacity: 1;
         }
 
         @supports (padding: max(0px)) {
@@ -873,243 +831,47 @@
             constructor(listId) {
                 this.listElement = document.getElementById(listId);
                 this.draggedItem = null;
-                this.initialY = 0;
-                this.currentY = 0;
-                this.initialIndex = 0;
-                this.draggedRect = null;
                 this.placeholder = null;
-                this.itemHeight = 0;
-                this.isDragging = false;
-                this.touchStartY = 0;
-                this.animationFrameId = null;
                 
-                // Bind all handlers to maintain correct 'this' context
-                this.handleTouchStart = this.handleTouchStart.bind(this);
-                this.handleTouchMove = this.handleTouchMove.bind(this);
-                this.handleTouchEnd = this.handleTouchEnd.bind(this);
-                this.handleMouseDown = this.handleMouseDown.bind(this);
-                this.handleMouseMove = this.handleMouseMove.bind(this);
-                this.handleMouseUp = this.handleMouseUp.bind(this);
-                
-                this.setupEventListeners();
+                this.init();
             }
         
-            setupEventListeners() {
-                this.listElement.addEventListener('touchstart', this.handleTouchStart, { passive: false, capture: true });
-                document.addEventListener('touchmove', this.handleTouchMove, { passive: false });
-                document.addEventListener('touchend', this.handleTouchEnd);
-                document.addEventListener('touchcancel', this.handleTouchEnd);
-                
-                this.listElement.addEventListener('mousedown', this.handleMouseDown, { capture: true });
-                document.addEventListener('mousemove', this.handleMouseMove);
-                document.addEventListener('mouseup', this.handleMouseUp);
-            }
-        
-            startDragging(e, isTouchEvent) {
-                if (this.isDragging) return false;
-        
-                const target = isTouchEvent ? e.target : e;
-                const dragHandle = target.closest('.drag-handle');
-                if (!dragHandle) return false;
-        
-                const item = dragHandle.closest('.pair-item, .equation-item');
-                if (!item) return false;
-        
-                this.isDragging = true;
-                this.draggedItem = item;
-                this.draggedRect = item.getBoundingClientRect();
-                this.itemHeight = this.draggedRect.height + 5; // Include margin
-                this.initialY = isTouchEvent ? e.touches[0].clientY : e.clientY;
-                this.currentY = this.initialY;
-                this.initialIndex = Array.from(this.listElement.children).indexOf(item);
-        
-                // Set up transitions for all non-dragged items
-                Array.from(this.listElement.children).forEach(child => {
-                    if (child !== item) {
-                        child.style.transition = 'transform 0.2s ease-out';
-                        child.style.transform = 'translate(0, 0)';
-                    }
+            init() {
+                this.listElement.addEventListener('dragstart', (e) => {
+                    if (!e.target.closest('.drag-handle')) return;
+                    
+                    this.draggedItem = e.target.closest('.pair-item, .equation-item');
+                    setTimeout(() => this.draggedItem.style.opacity = '0', 0);
                 });
         
-                // Create and insert placeholder
-                this.placeholder = document.createElement('div');
-                this.placeholder.style.height = `${this.itemHeight - 5}px`;
-                this.placeholder.style.margin = '5px 0';
-                this.placeholder.style.transition = 'all 0.2s ease-out';
-                this.draggedItem.before(this.placeholder);
-        
-                // Style dragged item
-                this.draggedItem.style.position = 'fixed';
-                this.draggedItem.style.top = `${this.draggedRect.top}px`;
-                this.draggedItem.style.left = `${this.draggedRect.left}px`;
-                this.draggedItem.style.width = `${this.draggedRect.width}px`;
-                this.draggedItem.style.zIndex = '1000';
-                this.draggedItem.style.margin = '0';
-                this.draggedItem.style.transition = 'none';
-                
-                return true;
-            }
-        
-            handleMove(clientY) {
-                if (!this.isDragging || !this.draggedItem) return;
-        
-                if (this.animationFrameId) {
-                    cancelAnimationFrame(this.animationFrameId);
-                }
-        
-                this.animationFrameId = requestAnimationFrame(() => {
-                    this.currentY = clientY;
-                    const deltaY = this.currentY - this.initialY;
-        
-                    // Update dragged item position
-                    this.draggedItem.style.transform = `translateY(${deltaY}px)`;
-        
-                    const items = Array.from(this.listElement.children);
-                    const currentPlaceholderIndex = items.indexOf(this.placeholder);
-                    const draggedCenter = clientY;
-        
-                    // Find the best position for the placeholder
-                    let targetIndex = currentPlaceholderIndex;
-                    items.forEach((item, index) => {
-                        if (item === this.placeholder || item === this.draggedItem) return;
-        
-                        const rect = item.getBoundingClientRect();
-                        const itemCenter = rect.top + (rect.height / 2);
-        
-                        if (draggedCenter < itemCenter && index < currentPlaceholderIndex) {
-                            targetIndex = index;
-                        } else if (draggedCenter > itemCenter && index > currentPlaceholderIndex) {
-                            targetIndex = index;
-                        }
-                    });
-        
-                    // If we need to move the placeholder
-                    if (targetIndex !== currentPlaceholderIndex) {
-                        // Calculate movement direction and distance
-                        const moveDistance = this.itemHeight;
-                        const movingDown = targetIndex > currentPlaceholderIndex;
-        
-                        // Update transforms for all affected items
-                        items.forEach((item, index) => {
-                            if (item === this.draggedItem || item === this.placeholder) return;
-        
-                            let transform = 'translateY(0)';
-                            if (movingDown) {
-                                if (index > currentPlaceholderIndex && index <= targetIndex) {
-                                    transform = `translateY(${-moveDistance}px)`;
-                                }
-                            } else {
-                                if (index >= targetIndex && index < currentPlaceholderIndex) {
-                                    transform = `translateY(${moveDistance}px)`;
-                                }
-                            }
-                            item.style.transform = transform;
-                        });
-        
-                        // Move placeholder
-                        const targetItem = items[targetIndex];
-                        if (movingDown) {
-                            targetItem.after(this.placeholder);
-                        } else {
-                            targetItem.before(this.placeholder);
-                        }
+                this.listElement.addEventListener('dragend', (e) => {
+                    if (this.draggedItem) {
+                        this.draggedItem.style.opacity = '1';
+                        this.draggedItem = null;
                     }
-                });
-            }
-        
-            finishDragging() {
-                if (!this.isDragging || !this.draggedItem) return;
-        
-                if (this.animationFrameId) {
-                    cancelAnimationFrame(this.animationFrameId);
-                    this.animationFrameId = null;
-                }
-        
-                const placeholderRect = this.placeholder.getBoundingClientRect();
-        
-                // Animate dragged item to final position
-                this.draggedItem.style.transition = 'all 0.2s ease-out';
-                this.draggedItem.style.transform = `translateY(${placeholderRect.top - this.draggedRect.top}px)`;
-        
-                // Complete the animation and cleanup
-                setTimeout(() => {
                     if (this.placeholder) {
-                        this.placeholder.before(this.draggedItem);
                         this.placeholder.remove();
                         this.placeholder = null;
                     }
-        
-                    // Reset all items
-                    Array.from(this.listElement.children).forEach(child => {
-                        child.style.transition = '';
-                        child.style.transform = '';
-                    });
-        
-                    // Reset dragged item styles
-                    this.draggedItem.style.position = '';
-                    this.draggedItem.style.top = '';
-                    this.draggedItem.style.left = '';
-                    this.draggedItem.style.width = '';
-                    this.draggedItem.style.transform = '';
-                    this.draggedItem.style.zIndex = '';
-                    this.draggedItem.style.margin = '';
-                    this.draggedItem.style.transition = '';
-        
-                    // Reset state
-                    this.draggedItem = null;
-                    this.isDragging = false;
-                    this.initialY = 0;
-                    this.currentY = 0;
-                    this.draggedRect = null;
-                    
                     saveState();
-                }, 200);
-            }
+                });
         
-            handleTouchStart(e) {
-                if (e.touches.length !== 1) return;
-                this.touchStartY = e.touches[0].clientY;
-                
-                if (this.startDragging(e, true)) {
+                this.listElement.addEventListener('dragover', (e) => {
                     e.preventDefault();
-                    e.stopPropagation();
-                }
-            }
+                    if (!this.draggedItem) return;
+                    
+                    const targetItem = e.target.closest('.pair-item, .equation-item');
+                    if (!targetItem || targetItem === this.draggedItem) return;
         
-            handleTouchMove(e) {
-                if (!this.isDragging) return;
-                e.preventDefault();
-                e.stopPropagation();
-                this.handleMove(e.touches[0].clientY);
-            }
-        
-            handleTouchEnd(e) {
-                if (!this.isDragging) return;
-                e.preventDefault();
-                e.stopPropagation();
-                this.finishDragging();
-            }
-        
-            handleMouseDown(e) {
-                const dragHandle = e.target.closest('.drag-handle');
-                if (!dragHandle) return;
-                e.preventDefault();
-                e.stopPropagation();
-                this.startDragging(e.target, false);
-            }
-        
-            handleMouseMove(e) {
-                if (!this.isDragging) return;
-                e.preventDefault();
-                e.stopPropagation();
-                this.handleMove(e.clientY);
-            }
-        
-            handleMouseUp(e) {
-                if (!this.isDragging) return;
-                e.preventDefault();
-                e.stopPropagation();
-                this.finishDragging();
+                    const rect = targetItem.getBoundingClientRect();
+                    const midpoint = rect.top + rect.height / 2;
+                    
+                    if (e.clientY < midpoint) {
+                        targetItem.parentNode.insertBefore(this.draggedItem, targetItem);
+                    } else {
+                        targetItem.parentNode.insertBefore(this.draggedItem, targetItem.nextSibling);
+                    }
+                });
             }
         }
 
@@ -1302,6 +1064,7 @@
             
             if (!window.dragDropManagers[listId]) {
                 window.dragDropManagers[listId] = new DragDropManager(listId);
+                window.dragDropManagers[listId].init();
             }
         }
 
