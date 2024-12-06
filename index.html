@@ -21,12 +21,12 @@
             --border-radius: 12px;
             --transition-base: all 0.2s ease-in-out;
         }
-
+        
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
-
+        
         body {
             height: 100vh;
             margin: 0;
@@ -34,13 +34,13 @@
             padding-top: 0 !important;
             overflow-y: auto;
         }
-
+        
         input, select, button {
             font-size: 12px;
             font-family: inherit;
             transition: var(--transition-base);
         }
-
+        
         .fixed-header {
             position: fixed;
             top: 0;
@@ -48,12 +48,12 @@
             right: 0;
             z-index: 1000;
         }
-
+        
         .container {
             padding-top: 110px;
             height: 100%;
         }
-
+        
         .top-panel {
             background: rgba(44, 46, 51, 0.3);
             padding: 8px;
@@ -61,7 +61,7 @@
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
         }
-
+        
         .header {
             padding: 8px;
             display: grid;
@@ -72,7 +72,7 @@
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
         }
-
+        
         .symbol-input {
             background: var(--tg-theme-secondary-bg-color);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -83,13 +83,13 @@
             height: 30px;
             font-size: 12px;
         }
-
+        
         .symbol-input:focus {
             border-color: var(--tg-theme-button-color);
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
             outline: none;
         }
-
+        
         .custom-select-container {
             position: relative;
             display: flex;
@@ -97,7 +97,7 @@
             gap: 4px;
             width: 180px;
         }
-
+        
         .custom-select-header {
             background: var(--tg-theme-secondary-bg-color);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -113,7 +113,7 @@
             position: relative;
             flex: 1;
         }
-
+        
         .fees-toggle {
             background: var(--tg-theme-secondary-bg-color);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -126,17 +126,17 @@
             white-space: nowrap;
             transition: var(--transition-base);
         }
-
+        
         .fees-toggle.active {
             background: var(--tg-theme-button-color);
             color: var(--tg-theme-button-text-color);
         }
-
+        
         .exchange-fee.disabled {
             opacity: 0.5;
             pointer-events: none;
         }
-
+        
         .custom-select-header::after {
             content: '';
             width: 12px;
@@ -149,7 +149,7 @@
             top: 50%;
             transform: translateY(-50%);
         }
-
+        
         .custom-select-options {
             position: absolute;
             top: 100%;
@@ -162,7 +162,7 @@
             display: none;
             z-index: 1000;
         }
-
+        
         .custom-select-option {
             padding: 8px;
             display: flex;
@@ -171,11 +171,11 @@
             cursor: pointer;
             transition: background-color 0.2s;
         }
-
+        
         .custom-select-option:hover {
             background: rgba(255, 255, 255, 0.1);
         }
-
+        
         .custom-select-option input {
             width: 45px;
             height: 20px;
@@ -188,11 +188,11 @@
             padding: 0 4px;
             margin-left: 8px;
         }
-
+        
         .custom-select-container.active .custom-select-options {
             display: block;
         }
-
+        
         .add-button {
             background: var(--tg-theme-button-color);
             border: none;
@@ -204,27 +204,27 @@
             cursor: pointer;
             font-size: 12px;
         }
-
+        
         .add-button:active {
             transform: scale(0.98);
             background: #2563eb;
         }
-
+        
         .screen {
             display: none;
         }
-
+        
         .screen.active {
             display: block;
         }
-
+        
         .pairs-list {
             display: flex;
             flex-direction: column;
             gap: 5px;
             padding: 16px;
         }
-
+        
         .pair-item {
             background: var(--tg-theme-secondary-bg-color);
             border-radius: var(--border-radius);
@@ -236,19 +236,22 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             transition: var(--transition-base);
             flex-direction: row-reverse;
+            cursor: grab;
+            user-select: none;
         }
-
+        
         .pair-item:active {
+            cursor: grabbing;
             transform: scale(0.995);
         }
-
+        
         .pair-name {
             font-size: 12px;
             font-weight: 600;
             color: var(--tg-theme-text-color);
             margin-left: 16px;
         }
-
+        
         .price-container {
             display: flex;
             gap: 8px;
@@ -256,7 +259,7 @@
             min-width: 220px;
             justify-content: flex-end;
         }
-
+        
         .price-button {
             border: none;
             border-radius: var(--border-radius);
@@ -273,29 +276,29 @@
             justify-content: center;
             align-items: center;
         }
-
+        
         .price-button:active {
             transform: scale(0.98);
         }
-
+        
         .bid {
             background: #059669;
             color: white;
         }
-
+        
         .bid:active {
             background: #047857;
         }
-
+        
         .ask {
             background: #dc2626;
             color: white;
         }
-
+        
         .ask:active {
             background: #b91c1c;
         }
-
+        
         .equation-remove {
             position: absolute;
             top: 80%;
@@ -315,11 +318,11 @@
             border-radius: 6px;
             transition: background-color 0.2s ease;
         }
-
+        
         .equation-remove:hover {
             background: rgba(246, 4, 4, 0.15);
         }
-
+        
         .pair-remove {
             background: rgba(255, 255, 255, 0.1);
             border: none;
@@ -334,25 +337,25 @@
             cursor: pointer;
             padding: 0;
         }
-
+        
         .remove-button:active {
             background: rgba(255, 255, 255, 0.2);
             transform: scale(0.95);
         }
-
+        
         .bottom-controls {
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
-
+        
         .equation-row {
             display: flex;
             align-items: center;
             gap: 8px;
             height: 30px;
         }
-
+        
         .equation-input {
             flex: 1;
             height: 30px;
@@ -363,7 +366,7 @@
             font-size: 12px;
             padding: 0 8px;
         }
-
+        
         .done-button {
             height: 30px;
             padding: 0 12px;
@@ -375,7 +378,7 @@
             cursor: pointer;
             white-space: nowrap;
         }
-
+        
         .nav {
             display: flex;
             justify-content: space-around;
@@ -383,7 +386,7 @@
             padding-top: 8px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
-
+        
         .nav-button {
             background: none;
             border: none;
@@ -394,12 +397,12 @@
             border-radius: var(--border-radius);
             cursor: pointer;
         }
-
+        
         .nav-button.active {
             color: var(--tg-theme-button-color);
             background: rgba(59, 130, 246, 0.1);
         }
-
+        
         .equation-item {
             background: rgba(44, 46, 51, 0.3);
             border-radius: 12px;
@@ -410,32 +413,33 @@
             position: relative;
             border: 1px solid rgba(255, 255, 255, 0.1);
             min-width: 0;
-            /* Обеспечиваем правильное поведение flexbox */
             width: 100%;
+            cursor: grab;
+            user-select: none;
         }
-
+        
+        .equation-item:active {
+            cursor: grabbing;
+        }
+        
         .pair-item, .equation-item {
             transition: transform 0.2s ease-out;
             will-change: transform;
         }
-
+        
         .equation-content {
-            /* Расширяем контейнер на всю доступную ширину */
             flex: 1;
             display: flex;
             flex-direction: column;
             gap: 8px;
             min-width: 0;
-            /* Увеличиваем правый отступ до конца кнопки удаления */
             padding-right: 16px;
-            /* Добавляем отступ слева */
             padding-left: 16px;
-            /* Общий отступ сверху и снизу */
             padding-top: 8px;
             padding-bottom: 8px;
             width: 100%;
         }
-
+        
         .equation-header {
             display: flex;
             align-items: flex-start;
@@ -443,7 +447,7 @@
             margin-bottom: 4px;
             width: 100%;
         }
-
+        
         .equation-name {
             width: 100%;
             background: transparent;
@@ -453,7 +457,6 @@
             font-weight: 500;
             padding: 4px 0;
             margin: 0;
-            /* Улучшаем обработку длинного текста */
             overflow-wrap: break-word;
             word-wrap: break-word;
             word-break: break-word;
@@ -461,24 +464,23 @@
             white-space: pre-wrap;
             line-height: 1.4;
         }
-
+        
         .equation-name:focus {
             border-color: var(--tg-theme-button-color);
             outline: none;
         }
-
+        
         .equation-text {
             width: 100%;
             font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
             font-size: 11px;
             color: #9ca3af;
             line-height: 1.4;
-            /* Улучшаем обработку длинного текста */
             word-break: break-all;
             overflow-wrap: break-word;
             padding: 4px 0;
         }
-
+        
         .result {
             width: 100%;
             font-family: 'SF Mono', SFMono-Regular, monospace;
@@ -487,48 +489,16 @@
             margin-top: 2px;
             padding: 4px 0;
         }
-
+        
         .error {
             color: #ef4444;
         }
-
-        .drag-handle {
-            width: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: grab;
-            opacity: 0.5;
-            padding: 0 4px;
-        }
-
-        .drag-handle:hover {
-            opacity: 1;
-        }
-
-        .drag-handle:active {
-            cursor: grabbing;
-        }
-
-        .handle-lines {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-        }
-
-        .handle-lines span {
-            display: block;
-            width: 2px;
-            height: 8px;
-            background: #9ca3af;
-            border-radius: 1px;
-        }
-
+        
         .dragging {
             opacity: 0.5;
             pointer-events: none;
         }
-
+        
         .ghost {
             position: fixed;
             opacity: 0.8;
@@ -899,19 +869,18 @@
                 this.itemHeight = 0;
                 this.isDragging = false;
                 this.touchStartY = 0;
-
+        
                 this.handleTouchStart = this.handleTouchStart.bind(this);
                 this.handleTouchMove = this.handleTouchMove.bind(this);
                 this.handleTouchEnd = this.handleTouchEnd.bind(this);
                 this.handleMouseDown = this.handleMouseDown.bind(this);
                 this.handleMouseMove = this.handleMouseMove.bind(this);
                 this.handleMouseUp = this.handleMouseUp.bind(this);
-
+        
                 this.setupEventListeners();
             }
-
+        
             setupEventListeners() {
-                // Using capture phase for more reliable event handling
                 this.listElement.addEventListener('touchstart', this.handleTouchStart, {
                     passive: false,
                     capture: true
@@ -927,18 +896,22 @@
                 document.addEventListener('mousemove', this.handleMouseMove);
                 document.addEventListener('mouseup', this.handleMouseUp);
             }
-
+        
             startDragging(e, isTouchEvent) {
-                // Prevent multiple drag starts
                 if (this.isDragging) return false;
-
+        
                 const target = isTouchEvent ? e.target : e;
-                const dragHandle = target.closest('.drag-handle');
-                if (!dragHandle) return false;
-
-                const item = dragHandle.closest('.pair-item, .equation-item');
-                if (!item) return false;
-
+                const item = target.closest('.pair-item, .equation-item');
+                
+                // Don't start drag if clicking on interactive elements
+                if (!item || 
+                    target.closest('.price-button') || 
+                    target.closest('.pair-remove') || 
+                    target.closest('.equation-remove') ||
+                    target.closest('input')) {
+                    return false;
+                }
+        
                 this.isDragging = true;
                 this.draggedItem = item;
                 this.draggedRect = item.getBoundingClientRect();
@@ -946,57 +919,52 @@
                 this.initialY = isTouchEvent ? e.touches[0].clientY : e.clientY;
                 this.currentY = this.initialY;
                 this.initialIndex = Array.from(this.listElement.children).indexOf(item);
-
-                // Create placeholder before changing item position
+        
                 this.placeholder = document.createElement('div');
                 this.placeholder.style.height = `${this.itemHeight}px`;
                 this.placeholder.style.margin = '5px 0';
                 this.placeholder.style.transition = 'all 0.2s ease-out';
                 this.draggedItem.before(this.placeholder);
-
-                // Fix the dragged element in position
+        
                 this.draggedItem.style.position = 'fixed';
                 this.draggedItem.style.top = `${this.draggedRect.top}px`;
                 this.draggedItem.style.left = `${this.draggedRect.left}px`;
                 this.draggedItem.style.width = `${this.draggedRect.width}px`;
                 this.draggedItem.style.zIndex = '1000';
                 this.draggedItem.style.margin = '0';
-
+                this.draggedItem.classList.add('dragging');
+        
                 return true;
             }
-
+        
             handleMove(clientY) {
                 if (!this.isDragging || !this.draggedItem) return;
-
+        
                 this.currentY = clientY;
                 const deltaY = this.currentY - this.initialY;
-
-                // Update dragged item position using requestAnimationFrame for smooth animation
+        
                 requestAnimationFrame(() => {
                     this.draggedItem.style.transform = `translateY(${deltaY}px)`;
                 });
-
+        
                 const items = Array.from(this.listElement.children);
                 const currentIndex = items.indexOf(this.placeholder);
-
-                // Calculate new position
                 let newIndex = currentIndex;
                 const draggedMiddle = clientY;
-
+        
                 items.forEach((item, index) => {
                     if (item === this.placeholder || item === this.draggedItem) return;
-
+        
                     const rect = item.getBoundingClientRect();
                     const itemMiddle = rect.top + rect.height / 2;
-
+        
                     if (draggedMiddle < itemMiddle && index < currentIndex) {
                         newIndex = index;
                     } else if (draggedMiddle > itemMiddle && index > currentIndex) {
                         newIndex = index;
                     }
                 });
-
-                // Move placeholder only if index has changed
+        
                 if (newIndex !== currentIndex) {
                     const targetItem = items[newIndex];
                     if (targetItem) {
@@ -1008,16 +976,14 @@
                     }
                 }
             }
-
+        
             finishDragging() {
                 if (!this.isDragging || !this.draggedItem) return;
-
-                // Place dragged item at final position
+        
                 if (this.placeholder) {
                     this.placeholder.before(this.draggedItem);
                 }
-
-                // Reset dragged item styles
+        
                 this.draggedItem.style.position = '';
                 this.draggedItem.style.top = '';
                 this.draggedItem.style.left = '';
@@ -1025,23 +991,22 @@
                 this.draggedItem.style.transform = '';
                 this.draggedItem.style.zIndex = '';
                 this.draggedItem.style.margin = '';
-
-                // Remove placeholder
+                this.draggedItem.classList.remove('dragging');
+        
                 if (this.placeholder) {
                     this.placeholder.remove();
                     this.placeholder = null;
                 }
-
-                // Reset state
+        
                 this.draggedItem = null;
                 this.isDragging = false;
                 this.initialY = 0;
                 this.currentY = 0;
                 this.draggedRect = null;
-
+        
                 saveState();
             }
-
+        
             handleTouchStart(e) {
                 if (e.touches.length !== 1) return;
                 this.touchStartY = e.touches[0].clientY;
@@ -1051,37 +1016,35 @@
                     e.stopPropagation();
                 }
             }
-
+        
             handleTouchMove(e) {
                 if (!this.isDragging) return;
                 e.preventDefault();
                 e.stopPropagation();
                 this.handleMove(e.touches[0].clientY);
             }
-
+        
             handleTouchEnd(e) {
                 if (!this.isDragging) return;
                 e.preventDefault();
                 e.stopPropagation();
                 this.finishDragging();
             }
-
+        
             handleMouseDown(e) {
-                const dragHandle = e.target.closest('.drag-handle');
-                if (!dragHandle) return;
-                
-                e.preventDefault();
-                e.stopPropagation();
-                this.startDragging(e.target, false);
+                if (this.startDragging(e, false)) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
             }
-
+        
             handleMouseMove(e) {
                 if (!this.isDragging) return;
                 e.preventDefault();
                 e.stopPropagation();
                 this.handleMove(e.clientY);
             }
-
+        
             handleMouseUp(e) {
                 if (!this.isDragging) return;
                 e.preventDefault();
