@@ -314,24 +314,18 @@
         }
         
         .equation-remove {
-            position: absolute;
-            top: 75%;
-            transform: translateY(-50%);
-            right: 30px;
-            background: rgba(246, 4, 4, 0.1);
+            background: rgba(255, 255, 255, 0.1);
             border: none;
-            color: #ef0b0b;
-            width: 60px;
-            height: 20px;
+            color: #9ca3af;
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
             cursor: pointer;
             padding: 0;
-            border-radius: 12px;
-            border: 1px solid rgba(239, 11, 11, 0.3);
-            transition: background-color 0.2s ease;
+            transition: all 0.2s ease-in-out;
         }
         
         .equation-remove:hover {
@@ -342,15 +336,15 @@
             background: rgba(255, 255, 255, 0.1);
             border: none;
             color: #9ca3af;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
             cursor: pointer;
             padding: 0;
+            transition: all 0.2s ease-in-out;
         }
         
         .remove-button:active {
@@ -543,6 +537,11 @@
 </head>
 <body>
     <script>
+        const trashIconSvg = `
+        <svg class="trash-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`;
+
         const translations = {
             'ru': {
                 'pairs': 'Пары',
@@ -1544,7 +1543,7 @@
 
             const removeButton = document.createElement('button');
             removeButton.className = 'pair-remove';
-            removeButton.textContent = '×';
+            removeButton.innerHTML = trashIconSvg;  // Используем SVG вместо текста
             removeButton.addEventListener('click', e => {
                 e.stopPropagation();
                 removePair(pairKey);
@@ -1686,7 +1685,7 @@
 
                 const removeButton = document.createElement('button');
                 removeButton.className = 'equation-remove';
-                removeButton.textContent = t('delete');
+                removeButton.innerHTML = trashIconSvg;  // Используем SVG вместо текста
                 removeButton.addEventListener('click', () => removeEquation(equation));
 
                 header.appendChild(nameInput);
