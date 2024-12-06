@@ -869,6 +869,9 @@
                 this.itemHeight = 0;
                 this.isDragging = false;
                 this.touchStartY = 0;
+                this.dragTimeout = null;
+                this.dragStartEvent = null;
+                this.DRAG_DELAY = 200;
         
                 this.handleTouchStart = this.handleTouchStart.bind(this);
                 this.handleTouchMove = this.handleTouchMove.bind(this);
@@ -903,7 +906,6 @@
                 const target = isTouchEvent ? e.target : e;
                 const item = target.closest('.pair-item, .equation-item');
                 
-                // Don't start drag if clicking on interactive elements
                 if (!item || 
                     target.closest('.price-button') || 
                     target.closest('.pair-remove') || 
@@ -978,6 +980,11 @@
             }
         
             finishDragging() {
+                if (this.dragTimeout) {
+                    clearTimeout(this.dragTimeout);
+                    this.dragTimeout = null;
+                }
+        
                 if (!this.isDragging || !this.draggedItem) return;
         
                 if (this.placeholder) {
@@ -1003,21 +1010,38 @@
                 this.initialY = 0;
                 this.currentY = 0;
                 this.draggedRect = null;
+                this.dragStartEvent = null;
         
                 saveState();
             }
         
             handleTouchStart(e) {
                 if (e.touches.length !== 1) return;
-                this.touchStartY = e.touches[0].clientY;
                 
-                if (this.startDragging(e, true)) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                if (this.dragTimeout) {
+                    clearTimeout(this.dragTimeout);
                 }
+        
+                this.touchStartY = e.touches[0].clientY;
+                this.dragStartEvent = e;
+                
+                this.dragTimeout = setTimeout(() => {
+                    if (this.dragStartEvent) {
+                        if (this.startDragging(this.dragStartEvent, true)) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }
+                    }
+                }, this.DRAG_DELAY);
             }
         
             handleTouchMove(e) {
+                if (this.dragTimeout) {
+                    clearTimeout(this.dragTimeout);
+                    this.dragTimeout = null;
+                    this.dragStartEvent = null;
+                }
+        
                 if (!this.isDragging) return;
                 e.preventDefault();
                 e.stopPropagation();
@@ -1025,6 +1049,12 @@
             }
         
             handleTouchEnd(e) {
+                if (this.dragTimeout) {
+                    clearTimeout(this.dragTimeout);
+                    this.dragTimeout = null;
+                    this.dragStartEvent = null;
+                }
+        
                 if (!this.isDragging) return;
                 e.preventDefault();
                 e.stopPropagation();
@@ -1032,13 +1062,29 @@
             }
         
             handleMouseDown(e) {
-                if (this.startDragging(e, false)) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                if (this.dragTimeout) {
+                    clearTimeout(this.dragTimeout);
                 }
+        
+                this.dragStartEvent = e;
+                
+                this.dragTimeout = setTimeout(() => {
+                    if (this.dragStartEvent) {
+                        if (this.startDragging(this.dragStartEvent, false)) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }
+                    }
+                }, this.DRAG_DELAY);
             }
         
             handleMouseMove(e) {
+                if (this.dragTimeout) {
+                    clearTimeout(this.dragTimeout);
+                    this.dragTimeout = null;
+                    this.dragStartEvent = null;
+                }
+        
                 if (!this.isDragging) return;
                 e.preventDefault();
                 e.stopPropagation();
@@ -1046,6 +1092,12 @@
             }
         
             handleMouseUp(e) {
+                if (this.dragTimeout) {
+                    clearTimeout(this.dragTimeout);
+                    this.dragTimeout = null;
+                    this.dragStartEvent = null;
+                }
+        
                 if (!this.isDragging) return;
                 e.preventDefault();
                 e.stopPropagation();
