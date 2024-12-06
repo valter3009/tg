@@ -31,7 +31,7 @@
             padding-top: 0 !important;
             overflow-y: auto;
         }
-        
+               
         input, select, button {
             font-size: 12px;
             font-family: inherit;
@@ -44,6 +44,12 @@
             left: 0;
             right: 0;
             z-index: 1000;
+        }
+
+        .trash-icon {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
         }
         
         .container {
@@ -314,6 +320,10 @@
         }
         
         .equation-remove {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            right: 12px;
             background: rgba(255, 255, 255, 0.1);
             border: none;
             color: #9ca3af;
@@ -329,7 +339,8 @@
         }
         
         .equation-remove:hover {
-            background: rgba(246, 4, 4, 0.15);
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
         }
         
         .pair-remove {
@@ -345,6 +356,11 @@
             cursor: pointer;
             padding: 0;
             transition: all 0.2s ease-in-out;
+        }
+
+        .pair-remove:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
         }
         
         .remove-button:active {
