@@ -4,10 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>IDTrade WebApp</title>
-    
-    <!-- Include Decimal.js for precise calculations -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/decimal.js/10.4.3/decimal.min.js"></script>
-    
     <style>
         :root {
             --tg-theme-bg-color: #1e3991;
@@ -50,7 +47,7 @@
         }
         
         .container {
-            padding-top: 127px;
+            padding-top: 132px;
             height: 100%;
         }
         
@@ -128,6 +125,23 @@
         }
         
         .fees-toggle.active {
+            background: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+        }
+        
+        .language-toggle {
+            background: var(--tg-theme-secondary-bg-color);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius);
+            color: var(--tg-theme-text-color);
+            padding: 0 8px;
+            height: 30px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-right: 8px;
+        }
+
+        .language-toggle.active {
             background: var(--tg-theme-button-color);
             color: var(--tg-theme-button-text-color);
         }
@@ -301,21 +315,21 @@
         
         .equation-remove {
             position: absolute;
-            top: 75%; /* Changed from 80% */
+            top: 75%;
             transform: translateY(-50%);
-            right: 30px; /* Reduced from 100px */
+            right: 30px;
             background: rgba(246, 4, 4, 0.1);
             border: none;
             color: #ef0b0b;
-            width: 60px; /* Reduced from 70px */
-            height: 20px; /* Reduced from 24px */
+            width: 60px;
+            height: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px; /* Reduced from 12px */
+            font-size: 10px;
             cursor: pointer;
             padding: 0;
-            border-radius: 12px; /* Reduced from 6px */
+            border-radius: 12px;
             border: 1px solid rgba(239, 11, 11, 0.3);
             transition: background-color 0.2s ease;
         }
@@ -405,12 +419,12 @@
         }
         
         .equation-item {
-            background: rgb(7 7 51 / 67%);
-            border-radius: 8px; /* Reduced from 12px */
-            padding: 10px; /* Reduced from 16px */
+            background: rgba(44, 46, 51, 0.3);
+            border-radius: 8px;
+            padding: 10px;
             display: flex;
-            gap: 8px; /* Reduced from 12px */
-            margin-bottom: 4px; /* Reduced from 8px */
+            gap: 8px;
+            margin-bottom: 4px;
             position: relative;
             border: 1px solid rgba(255, 255, 255, 0.1);
             min-width: 0;
@@ -423,8 +437,7 @@
             cursor: grabbing;
         }
         
-        .pair-item, .equation-item {
-            transition: transform 0.2s ease-out;
+        .pair-item, .equation-item {transition: transform 0.2s ease-out;
             will-change: transform;
         }
         
@@ -432,17 +445,17 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 4px; /* Reduced from 8px */
+            gap: 4px;
             min-width: 0;
-            padding: 4px 12px; /* Reduced padding */
+            padding: 4px 12px;
             width: 100%;
         }
         
         .equation-header {
             display: flex;
             align-items: flex-start;
-            gap: 6px; /* Reduced from 8px */
-            margin-bottom: 2px; /* Reduced from 4px */
+            gap: 6px;
+            margin-bottom: 2px;
             width: 100%;
         }
         
@@ -451,16 +464,16 @@
             background: transparent;
             border: none;
             color: #ffffff;
-            font-size: 11px; /* Reduced from 13px */
+            font-size: 11px;
             font-weight: 500;
-            padding: 2px 0; /* Reduced from 4px */
+            padding: 2px 0;
             margin: 0;
             overflow-wrap: break-word;
             word-wrap: break-word;
             word-break: break-word;
             hyphens: auto;
             white-space: pre-wrap;
-            line-height: 1.3; /* Reduced from 1.4 */
+            line-height: 1.3;
         }
         
         .equation-name:focus {
@@ -471,21 +484,21 @@
         .equation-text {
             width: 100%;
             font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
-            font-size: 10px; /* Reduced from 11px */
+            font-size: 10px;
             color: #9ca3af;
-            line-height: 1.3; /* Reduced from 1.4 */
+            line-height: 1.3;
             word-break: break-all;
             overflow-wrap: break-word;
-            padding: 2px 0; /* Reduced from 4px */
+            padding: 2px 0;
         }
         
         .result {
             width: 100%;
             font-family: 'SF Mono', SFMono-Regular, monospace;
-            font-size: 11px; /* Reduced from 13px */
+            font-size: 11px;
             color: #10b981;
-            margin-top: 1px; /* Reduced from 2px */
-            padding: 2px 0; /* Reduced from 4px */
+            margin-top: 1px;
+            padding: 2px 0;
         }
         
         .error {
@@ -529,26 +542,88 @@
     </style>
 </head>
 <body>
+    <script>
+        const translations = {
+            'ru': {
+                'pairs': 'Пары',
+                'equations': 'Связки',
+                'addPair': 'Добавить',
+                'symbolPlaceholder': 'Символ (например, BTCUSDT)',
+                'feesToggle': 'Откл. ком-ии.',
+                'equationPlaceholder': 'Введите связку...',
+                'done': 'Готово',
+                'delete': 'Удалить',
+                'loading': 'Загрузка...',
+                'calculating': 'Вычисление...',
+                'invalidValue': 'н/д',
+                'error': 'Ошибка',
+                'pairExists': 'Эта пара уже добавлена',
+                'enterSymbol': 'Введите символ пары',
+                'defaultEquations': {
+                    'eq1': "1. Купить Bybit - Продать ОКХ BTCUSDT (нач. банк-100usdt)",
+                    'eq2': "2. Купить Gate - Продать ОКХ BTCUSDT (нач. банк-100usdt)",
+                    'eq3': "3. Прям.треугольный USDT/BTC/ETH/USDT Bybit (нач. банк-100usdt)",
+                    'eq4': "4. Обр. треугольный USDT/ETH/BTC/USDT Bybit (нач. банк-100usdt)"
+                }
+            },
+            'en': {
+                'pairs': 'Pairs',
+                'equations': 'Equations',
+                'addPair': 'Add',
+                'symbolPlaceholder': 'Symbol (e.g., BTCUSDT)',
+                'feesToggle': 'Fees Off',
+                'equationPlaceholder': 'Enter equation...',
+                'done': 'Done',
+                'delete': 'Delete',
+                'loading': 'Loading...',
+                'calculating': 'Calculating...',
+                'invalidValue': 'n/a',
+                'error': 'Error',
+                'pairExists': 'This pair already exists',
+                'enterSymbol': 'Enter pair symbol',
+                'defaultEquations': {
+                    'eq1': "1. Buy Bybit - Sell OKX BTCUSDT (initial bank-100usdt)",
+                    'eq2': "2. Buy Gate - Sell OKX BTCUSDT (initial bank-100usdt)",
+                    'eq3': "3. Direct triangular USDT/BTC/ETH/USDT Bybit (initial bank-100usdt)",
+                    'eq4': "4. Reverse triangular USDT/ETH/BTC/USDT Bybit (initial bank-100usdt)"
+                }
+            }
+        };
+
+        let currentLanguage = 'ru';
+
+        function t(key) {
+            const keys = key.split('.');
+            let value = translations[currentLanguage];
+            for (const k of keys) {
+                value = value[k];
+                if (!value) return key;
+            }
+            return value;
+        }
+    </script>
+
     <div class="fixed-header">
         <div class="top-panel">
             <div class="bottom-controls">
                 <div class="equation-row">
-                    <input type="text" id="equation-input-bottom" class="equation-input" placeholder="Введите связку...">
-                    <button class="done-button" id="done-button">Готово</button>
+                    <input type="text" id="equation-input-bottom" class="equation-input" placeholder="">
+                    <button class="done-button" id="done-button"></button>
                 </div>
             </div>
             <div class="nav">
-                <button class="nav-button active" data-screen="pairs">Пары</button>
-                <button class="nav-button" data-screen="equations">Связки</button>
+                <button class="language-toggle" id="language-toggle">EN</button>
+                <button class="nav-button active" data-screen="pairs"></button>
+                <button class="nav-button" data-screen="equations"></button>
             </div>
         </div>
         <div class="header">
-            <input type="text" id="pair-symbol" class="symbol-input" placeholder="Символ (например, BTCUSDT)">
+            <input type="text" id="pair-symbol" class="symbol-input" placeholder="">
             <div class="custom-select-container" id="exchange-select-container">
                 <div class="custom-select-header">
                     <span>Mexc</span>
                 </div>
-                <button class="fees-toggle" id="fees-toggle">Откл. ком-ии.</button>
+                <button class="fees-toggle" id="fees-toggle"></button>
                 <div class="custom-select-options">
                     <div class="custom-select-option" data-value="Binance">
                         <span>Binance</span>
@@ -576,7 +651,7 @@
                     </div>
                 </div>
             </div>
-            <button id="add-pair-button" class="add-button">Добавить</button>
+            <button id="add-pair-button" class="add-button"></button>
         </div>
     </div>
     <div class="container">
@@ -589,7 +664,6 @@
     </div>
 
     <script>
-        // Class for safe mathematical calculations
         class SafeCalculator {
             constructor() {
                 this.operators = {
@@ -691,7 +765,6 @@
             }
         }
 
-        // Equation Manager class for handling trading equations
         class EquationManager {
             constructor() {
                 this.equations = {};
@@ -757,10 +830,10 @@
                         const resultVar = `${eqData.name}_result`;
                         if (evalStr.includes(resultVar)) {
                             const resultValue = eqData.currentResult;
-                            if (resultValue === "н/д" || 
-                                resultValue === "Загрузка..." || 
-                                resultValue.startsWith("Ошибка")) {
-                                return "н/д";
+                            if (resultValue === t('invalidValue') || 
+                                resultValue === t('loading') || 
+                                resultValue.startsWith(t('error'))) {
+                                return t('invalidValue');
                             }
                             evalStr = evalStr.replace(new RegExp(resultVar, 'g'), resultValue);
                         }
@@ -774,9 +847,9 @@
                                 `.pair-item[data-pair="${pairKey}"] .${priceType}`
                             );
                             
-                            if (!priceElement) return "н/д";
+                            if (!priceElement) return t('invalidValue');
                             const value = priceElement.textContent;
-                            if (value === "Загрузка...") return "Загрузка...";
+                            if (value === t('loading')) return t('loading');
                             
                             evalStr = evalStr.replace(new RegExp(variable, 'g'), value);
                         }
@@ -784,31 +857,31 @@
 
                     evalStr = evalStr.replace(/\s+/g, '');
                     
-                    if (!/^[0-9.+\-*/() ]+$/.test(evalStr)) return "н/д";
-                    if (['__', 'eval', 'exec', 'import'].some(s => evalStr.includes(s))) return "н/д";
+                    if (!/^[0-9.+\-*/() ]+$/.test(evalStr)) return t('invalidValue');
+                    if (['__', 'eval', 'exec', 'import'].some(s => evalStr.includes(s))) return t('invalidValue');
                     
                     const result = this.calculator.calculate(evalStr);
                     
                     if (result.isNaN()) {
-                        return "Ошибка: некорректное выражение";
+                        return `${t('error')}: некорректное выражение`;
                     }
                     
                     if (!result.isFinite()) {
-                        return "Ошибка: деление на ноль";
+                        return `${t('error')}: деление на ноль`;
                     }
                     
                     return result.toFixed(8);
                 } catch (error) {
                     console.error('Calculation error:', error);
                     if (error.message === 'Division by zero') {
-                        return "Ошибка: деление на ноль";
+                        return `${t('error')}: деление на ноль`;
                     }
-                    return "н/д";
+                    return t('invalidValue');
                 }
             }
 
             addEquation(equation) {
-                let baseName = "Уравнение";
+                let baseName = "Equation";
                 let counter = 1;
                 let equationName = `${baseName}_${counter}`;
                 
@@ -824,7 +897,7 @@
                 this.equations[equation] = {
                     name: equationName,
                     variables: this.extractVariables(equation),
-                    currentResult: "Загрузка...",
+                    currentResult: t('loading'),
                     dependents: new Set()
                 };
 
@@ -838,7 +911,7 @@
                     
                     for (const eq in this.equations) {
                         if (eq.includes(`${equationName}_result`)) {
-                            this.equations[eq].currentResult = "н/д";
+                            this.equations[eq].currentResult = t('invalidValue');
                         }
                     }
                 }
@@ -854,7 +927,6 @@
             }
         }
 
-        // Class for managing drag and drop functionality
         class DragDropManager {
             constructor(listId) {
                 this.listElement = document.getElementById(listId);
@@ -1103,7 +1175,6 @@
             }
         }
 
-        // Exchange configuration for different platforms
         const exchangeConfigs = {
             'Mexc': {
                 wsUrl: 'wss://wbs.mexc.com/ws',
@@ -1278,7 +1349,6 @@
             }
         };
 
-        // Global variables
         let pairs = {};
         let equations = {};
         let connections = {};
@@ -1286,7 +1356,6 @@
         let selectedExchange = 'Mexc';
         const equationManager = new EquationManager();
 
-        // Initialize drag-and-drop functionality
         function setupDragAndDrop(element, listId) {
             if (!window.dragDropManagers) {
                 window.dragDropManagers = {};
@@ -1296,7 +1365,6 @@
             }
         }
 
-        // Open trading page in new tab
         function openTradingPage(exchange, symbol) {
             const config = exchangeConfigs[exchange];
             if (config && config.tradingUrl) {
@@ -1306,34 +1374,56 @@
             }
         }
 
+        function updateInterface() {
+            document.querySelector('[data-screen="pairs"]').textContent = t('pairs');
+            document.querySelector('[data-screen="equations"]').textContent = t('equations');
+            document.getElementById('add-pair-button').textContent = t('addPair');
+            document.getElementById('done-button').textContent = t('done');
+            document.getElementById('fees-toggle').textContent = t('feesToggle');
+            
+            document.getElementById('pair-symbol').placeholder = t('symbolPlaceholder');
+            document.getElementById('equation-input-bottom').placeholder = t('equationPlaceholder');
+            
+            document.getElementById('language-toggle').textContent = 
+                currentLanguage === 'ru' ? 'EN' : 'RU';
+            
+            updateEquationTexts();
+        }
+
+        function toggleLanguage() {
+            currentLanguage = currentLanguage === 'ru' ? 'en' : 'ru';
+            updateInterface();
+            localStorage.setItem('idtrade-language', currentLanguage);
+        }
+
         function init() {
-            // Set up main button handlers
+            const savedLanguage = localStorage.getItem('idtrade-language');
+            if (savedLanguage) {
+                currentLanguage = savedLanguage;
+            }
+
+            document.getElementById('language-toggle').addEventListener('click', toggleLanguage);
             document.getElementById('add-pair-button').addEventListener('click', addPair);
             document.getElementById('done-button').addEventListener('click', addEquationFromBottom);
             document.getElementById('fees-toggle').addEventListener('click', toggleFees);
 
-            // Set up navigation buttons
             document.querySelectorAll('.nav-button').forEach(button => {
                 button.addEventListener('click', () => showScreen(button.dataset.screen));
             });
 
-            // Initialize custom select dropdown for exchanges
             const customSelect = document.getElementById('exchange-select-container');
             const selectHeader = customSelect.querySelector('.custom-select-header');
 
-            // Toggle dropdown on header click
             selectHeader.addEventListener('click', () => {
                 customSelect.classList.toggle('active');
             });
 
-            // Close dropdown when clicking outside
             document.addEventListener('click', (e) => {
                 if (!customSelect.contains(e.target)) {
                     customSelect.classList.remove('active');
                 }
             });
 
-            // Handle exchange selection
             const selectOptions = customSelect.querySelector('.custom-select-options');
             selectOptions.addEventListener('click', (e) => {
                 const option = e.target.closest('.custom-select-option');
@@ -1344,7 +1434,6 @@
                 }
             });
 
-            // Add Enter key handlers for inputs
             document.getElementById('pair-symbol').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     addPair();
@@ -1357,26 +1446,22 @@
                 }
             });
 
-            // Load saved state from localStorage
+            updateInterface();
             loadState();
         }
 
-        // Create and manage WebSocket connections for real-time price updates
         async function connectWebSocket(exchange, symbol) {
             const config = exchangeConfigs[exchange];
             let ws = new WebSocket(config.wsUrl);
 
-            // Function to establish or reconnect WebSocket
             const connect = () => {
                 ws = new WebSocket(config.wsUrl);
 
                 ws.onopen = () => {
-                    // Subscribe to price updates when connection opens
                     ws.send(JSON.stringify(config.subscribeFormat(symbol)));
                 };
 
                 ws.onmessage = (event) => {
-                    // Parse and handle incoming price data
                     const parsed = config.parseMessage(event.data);
                     if (parsed) {
                         updatePairPrices(exchange, parsed.symbol, parsed.bid, parsed.ask);
@@ -1384,15 +1469,12 @@
                 };
 
                 ws.onclose = () => {
-                    // Attempt to reconnect if connection is lost
                     setTimeout(connect, 1000);
                 };
             };
 
-            // Initial connection
             connect();
 
-            // Reconnect when tab becomes visible
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'visible') {
                     if (ws.readyState !== WebSocket.OPEN) {
@@ -1404,32 +1486,29 @@
             return ws;
         }
 
-        // Add a new trading pair to the interface
         function addPair() {
             const symbol = document.getElementById('pair-symbol').value.toUpperCase();
             const exchange = selectedExchange;
 
             if (!symbol) {
-                showAlert('Введите символ пары');
+                showAlert('enterSymbol');
                 return;
             }
 
             const pairKey = `${exchange}_${symbol}`;
             if (pairs[pairKey]) {
-                showAlert('Эта пара уже добавлена');
+                showAlert('pairExists');
                 return;
             }
 
             createPairElement(symbol, exchange);
             
-            // Clear and blur input after adding
             document.getElementById('pair-symbol').value = '';
             document.getElementById('pair-symbol').blur();
             
             saveState();
         }
 
-        // Create DOM element for a trading pair with all necessary event handlers
         function createPairElement(symbol, exchange) {
             const pairKey = `${exchange}_${symbol}`;
             const pairElement = document.createElement('div');
@@ -1437,7 +1516,6 @@
             pairElement.setAttribute('data-pair', pairKey);
             pairElement.setAttribute('draggable', 'true');
 
-            // Create drag handle for reordering
             const dragHandle = document.createElement('div');
             dragHandle.className = 'drag-handle';
             const handleLines = document.createElement('div');
@@ -1445,29 +1523,25 @@
             handleLines.innerHTML = '<span></span>';
             dragHandle.appendChild(handleLines);
 
-            // Create container for price buttons
             const priceContainer = document.createElement('div');
             priceContainer.className = 'price-container';
 
-            // Create bid price button
             const bidButton = document.createElement('button');
             bidButton.className = 'price-button bid';
-            bidButton.textContent = 'Загрузка...';
+            bidButton.textContent = t('loading');
             bidButton.addEventListener('click', e => {
                 e.stopPropagation();
                 addToEquation(`${symbol}_${exchange}_bid`);
             });
 
-            // Create ask price button
             const askButton = document.createElement('button');
             askButton.className = 'price-button ask';
-            askButton.textContent = 'Загрузка...';
+            askButton.textContent = t('loading');
             askButton.addEventListener('click', e => {
                 e.stopPropagation();
                 addToEquation(`${symbol}_${exchange}_ask`);
             });
 
-            // Create remove button
             const removeButton = document.createElement('button');
             removeButton.className = 'pair-remove';
             removeButton.textContent = '×';
@@ -1476,32 +1550,26 @@
                 removePair(pairKey);
             });
 
-            // Create pair name label
             const pairName = document.createElement('div');
             pairName.className = 'pair-name';
             pairName.textContent = `${symbol} ${exchange}`;
 
-            // Assemble price container elements
             priceContainer.appendChild(bidButton);
             priceContainer.appendChild(askButton);
             priceContainer.appendChild(removeButton);
 
-            // Assemble main pair element
             pairElement.appendChild(dragHandle);
             pairElement.appendChild(priceContainer);
             pairElement.appendChild(pairName);
 
-            // Set up drag and drop functionality
             setupDragAndDrop(pairElement, 'pairs-list');
 
-            // Add click handler for opening trading page
             pairElement.addEventListener('click', e => {
                 if (!e.target.matches('.drag-handle, .handle-lines, .handle-lines span')) {
                     openTradingPage(exchange, symbol);
                 }
             });
 
-            // Add to DOM and initialize WebSocket connection
             document.getElementById('pairs-list').appendChild(pairElement);
             pairs[pairKey] = pairElement;
 
@@ -1510,20 +1578,16 @@
             });
         }
 
-        // Remove a trading pair and clean up its resources
         function removePair(pairKey) {
             if (pairs[pairKey]) {
-                // Remove DOM element
                 pairs[pairKey].remove();
                 delete pairs[pairKey];
 
-                // Close WebSocket connection if it exists
                 if (connections[pairKey]) {
                     connections[pairKey].close();
                     delete connections[pairKey];
                 }
 
-                // Update equations that might use this pair
                 updateEquations();
                 saveState();
             }
@@ -1537,45 +1601,36 @@
                 const bidButton = pairElement.querySelector('.bid');
                 const askButton = pairElement.querySelector('.ask');
 
-                // Format price based on its magnitude for better readability
-                // Different decimal places are used depending on the price range
                 const formatPrice = (price) => {
                     const num = parseFloat(price);
-                    if (num < 0.001) return num.toFixed(8);     // Very small prices (e.g., 0.00000123)
-                    if (num < 1) return num.toFixed(6);         // Small prices (e.g., 0.123456)
-                    if (num < 100) return num.toFixed(4);       // Medium prices (e.g., 12.3456)
-                    return num.toFixed(2);                      // Large prices (e.g., 123.45)
+                    if (num < 0.001) return num.toFixed(8);
+                    if (num < 1) return num.toFixed(6);
+                    if (num < 100) return num.toFixed(4);
+                    return num.toFixed(2);
                 };
 
                 bidButton.textContent = formatPrice(bid);
                 askButton.textContent = formatPrice(ask);
 
-                // Recalculate all equations since prices have changed
                 updateEquations();
             }
         }
 
-        // Add a price value to the equation input, handling fee calculations if enabled
         function addToEquation(value) {
             const equationInput = document.getElementById('equation-input-bottom');
             const [symbol, exchange, type] = value.split('_');
             let valueWithFee = value;
 
-            // If fees are enabled, adjust the price based on fee percentage
             if (feesEnabled) {
                 const feeInput = document.querySelector(`.exchange-fee[data-exchange="${exchange.toLowerCase()}"]`);
                 const fee = parseFloat(feeInput.value);
                 const feeMultiplier = (1 - fee/100).toFixed(4);
 
-                // Apply fees differently for bid and ask prices
-                // For bid (selling): multiply by (1 - fee)
-                // For ask (buying): divide by (1 - fee) to get required input amount
                 valueWithFee = type === 'bid' 
                     ? `(${value}*${feeMultiplier})` 
                     : `(${value}/${feeMultiplier})`;
             }
 
-            // Insert the value at current cursor position
             const cursorPosition = equationInput.selectionStart;
             const currentText = equationInput.value;
             const newText = currentText.slice(0, cursorPosition) + 
@@ -1585,30 +1640,24 @@
             equationInput.value = newText;
             equationInput.focus();
             
-            // Move cursor after the inserted value
             equationInput.setSelectionRange(
                 cursorPosition + valueWithFee.length,
                 cursorPosition + valueWithFee.length
             );
         }
 
-        // Add a new equation from the bottom input field
-        // This function creates the visual representation and sets up all necessary handlers
         function addEquationFromBottom() {
             const equation = document.getElementById('equation-input-bottom').value.trim();
             if (!equation) return;
 
             try {
-                // Add equation to manager and get generated name
                 const equationName = equationManager.addEquation(equation);
 
-                // Create main equation container
                 const equationElement = document.createElement('div');
                 equationElement.className = 'equation-item';
                 equationElement.setAttribute('data-equation', equation);
                 equationElement.setAttribute('draggable', 'true');
 
-                // Create drag handle for reordering
                 const dragHandle = document.createElement('div');
                 dragHandle.className = 'drag-handle';
                 const handleLines = document.createElement('div');
@@ -1616,11 +1665,9 @@
                 handleLines.innerHTML = '<span></span>';
                 dragHandle.appendChild(handleLines);
 
-                // Create content container
                 const content = document.createElement('div');
                 content.className = 'equation-content';
 
-                // Create header with name input
                 const header = document.createElement('div');
                 header.className = 'equation-header';
                 const nameInput = document.createElement('input');
@@ -1629,23 +1676,19 @@
                 nameInput.value = equationName;
                 nameInput.addEventListener('change', () => updateEquationName(nameInput, equation));
 
-                // Create equation display
                 const equationText = document.createElement('div');
                 equationText.className = 'equation-text';
                 equationText.textContent = equation;
 
-                // Create result display
                 const result = document.createElement('div');
                 result.className = 'result';
-                result.textContent = 'Вычисление...';
+                result.textContent = t('calculating');
 
-                // Create remove button
                 const removeButton = document.createElement('button');
                 removeButton.className = 'equation-remove';
-                removeButton.textContent = 'Удалить';
+                removeButton.textContent = t('delete');
                 removeButton.addEventListener('click', () => removeEquation(equation));
 
-                // Assemble all elements
                 header.appendChild(nameInput);
                 content.appendChild(header);
                 content.appendChild(equationText);
@@ -1654,18 +1697,14 @@
                 equationElement.appendChild(content);
                 equationElement.appendChild(removeButton);
 
-                // Set up drag and drop functionality
                 setupDragAndDrop(equationElement, 'equations-list');
 
-                // Add to DOM and store reference
                 document.getElementById('equations-list').appendChild(equationElement);
                 equations[equation] = equationElement;
 
-                // Clear input and remove focus
                 document.getElementById('equation-input-bottom').value = '';
                 document.getElementById('equation-input-bottom').blur();
 
-                // Update calculations and save state
                 updateEquations();
                 saveState();
             } catch (error) {
@@ -1673,7 +1712,6 @@
             }
         }
 
-        // Update the name of an equation and ensure it's properly saved
         function updateEquationName(input, equation) {
             const newName = input.value.trim();
             if (newName && equation in equationManager.equations) {
@@ -1683,7 +1721,6 @@
             }
         }
 
-        // Remove an equation and clean up related resources
         function removeEquation(equation) {
             if (equations[equation]) {
                 equations[equation].remove();
@@ -1695,26 +1732,19 @@
         }
 
         function updateEquations() {
-            // Iterate through each equation and update its result
             for (const [equation, element] of Object.entries(equations)) {
-                // Calculate new result using equation manager
                 const result = equationManager.evaluateEquation(equation);
                 
-                // Update the visual display of the result
                 const resultElement = element.querySelector('.result');
                 resultElement.textContent = result;
                 
-                // Add error class if result is invalid or unavailable
                 resultElement.className = 'result' + 
-                    (result === "н/д" || result.startsWith("Ошибка") ? ' error' : '');
+                    (result === t('invalidValue') || result.startsWith(t('error')) ? ' error' : '');
                 
-                // Update the stored result in equation manager
                 equationManager.updateResult(equation, result);
             }
         }
 
-        // Add default trading pairs to the interface
-        // This function is called when the app is started for the first time
         function addDefaultPairs() {
             const defaultPairs = [
                 { symbol: 'BTCUSDT', exchange: 'Binance' },
@@ -1727,75 +1757,76 @@
                 { symbol: 'ETHUSDT', exchange: 'Bybit' }
             ];
 
-            // Add each default pair if it doesn't already exist
             for (const pair of defaultPairs) {
                 const pairKey = `${pair.exchange}_${pair.symbol}`;
                 if (pairs[pairKey]) continue;
                 createPairElement(pair.symbol, pair.exchange);
             }
 
-            // Add default equations after a short delay to ensure pairs are loaded
             setTimeout(addDefaultEquations, 1000);
         }
 
-        // Add default equations with predefined calculations
         function addDefaultEquations() {
             const defaultEquations = [
                 {
                     equation: "100/(BTCUSDT_Bybit_ask/0.9982)*(BTCUSDT_OKX_bid*0.9990)",
-                    name: "1. Купить Bybit - Продать ОКХ BTCUSDT (нач. банк-100usdt)"
+                    nameKey: 'eq1'
                 },
                 {
                     equation: "100/(BTCUSDT_Gate_ask/0.9980)*(BTCUSDT_OKX_bid*0.9990)",
-                    name: "2. Купить Gate - Продать ОКХ BTCUSDT (нач. банк-100usdt)"
+                    nameKey: 'eq2'
                 },
                 {
                     equation: "100/(BTCUSDT_Bybit_ask/0.9982)/(ETHBTC_Bybit_ask/0.9982)*(ETHUSDT_Bybit_bid*0.9982)",
-                    name: "3. Прям.треугольный USDT/BTC/ETH/USDT Bybit (нач. банк-100usdt)"
+                    nameKey: 'eq3'
                 },
                 {
                     equation: "100/(ETHUSDT_Bybit_ask/0.9982)*(ETHBTC_Bybit_bid*0.9982)*(BTCUSDT_Bybit_bid*0.9982)",
-                    name: "4. Обр. треугольный USDT/ETH/BTC/USDT Bybit (нач. банк-100usdt)"
+                    nameKey: 'eq4'
                 }
             ];
 
-            // Add each default equation
             for (const eq of defaultEquations) {
                 try {
-                    // Set equation in input field
                     document.getElementById('equation-input-bottom').value = eq.equation;
-                    
-                    // Add equation through normal flow
                     addEquationFromBottom();
                     
-                    // Update equation name if successfully added
                     const element = equations[eq.equation];
                     if (element) {
                         const nameInput = element.querySelector('.equation-name');
-                        nameInput.value = eq.name;
+                        nameInput.value = t(`defaultEquations.${eq.nameKey}`);
                         updateEquationName(nameInput, eq.equation);
                     }
                 } catch (error) {
-                    console.error(`Error adding default equation: ${eq.name}`, error);
+                    console.error(`Error adding default equation: ${eq.nameKey}`, error);
                 }
             }
         }
 
-        // Save current application state to localStorage
+        function updateEquationTexts() {
+            Object.entries(equations).forEach(([equation, element]) => {
+                const nameInput = element.querySelector('.equation-name');
+                const currentName = nameInput.value;
+                
+                Object.entries(translations.ru.defaultEquations).forEach(([key, ruText]) => {
+                    if (currentName === ruText || currentName === translations.en.defaultEquations[key]) {
+                        nameInput.value = t(`defaultEquations.${key}`);
+                    }
+                });
+            });
+        }
+
         function saveState() {
             const state = {
-                // Save pairs in order they appear in the list
                 pairs: Array.from(document.getElementById('pairs-list').children)
                     .map(el => el.dataset.pair),
                 
-                // Save equations with their names
                 equations: Array.from(document.getElementById('equations-list').children)
                     .map(el => ({
                         equation: el.dataset.equation,
                         name: el.querySelector('.equation-name').value
                     })),
                 
-                // Save fees configuration
                 fees: {
                     enabled: feesEnabled,
                     values: Array.from(document.querySelectorAll('.exchange-fee'))
@@ -1803,33 +1834,36 @@
                             exchange: input.dataset.exchange,
                             value: input.value
                         }))
-                }
+                },
+                
+                language: currentLanguage
             };
 
             localStorage.setItem('idtrade-state', JSON.stringify(state));
         }
 
-        // Load saved application state from localStorage
         function loadState() {
             const savedState = localStorage.getItem('idtrade-state');
             
             if (savedState) {
                 const state = JSON.parse(savedState);
 
-                // Restore fees configuration if it exists
                 if (state.fees) {
                     feesEnabled = state.fees.enabled;
                     const feesToggle = document.getElementById('fees-toggle');
                     feesToggle.classList.toggle('active', feesEnabled);
                     
-                    // Restore individual exchange fee values
                     state.fees.values.forEach(fee => {
                         const input = document.querySelector(`.exchange-fee[data-exchange="${fee.exchange}"]`);
                         if (input) input.value = fee.value;
                     });
                 }
 
-                // Restore saved pairs
+                if (state.language) {
+                    currentLanguage = state.language;
+                    updateInterface();
+                }
+
                 if (state.pairs) {
                     state.pairs.forEach(pairKey => {
                         const [exchange, symbol] = pairKey.split('_');
@@ -1839,7 +1873,6 @@
                     });
                 }
 
-                // Restore saved equations
                 if (state.equations) {
                     state.equations.forEach(eq => {
                         document.getElementById('equation-input-bottom').value = eq.equation;
@@ -1854,12 +1887,10 @@
                     });
                 }
             } else {
-                // If no saved state exists, add default pairs and equations
                 addDefaultPairs();
             }
         }
 
-        // Toggle fees functionality
         function toggleFees() {
             const feesToggle = document.getElementById('fees-toggle');
             const feeInputs = document.querySelectorAll('.exchange-fee');
@@ -1867,19 +1898,15 @@
             feesEnabled = !feesEnabled;
             feesToggle.classList.toggle('active');
             
-            // Toggle disabled state on fee inputs
             feeInputs.forEach(input => {
                 input.classList.toggle('disabled');
             });
 
-            // Recalculate equations with new fee settings
             updateEquations();
             saveState();
         }
 
-        // Show different screens based on navigation
         function showScreen(screenName) {
-            // Hide all screens and deactivate all nav buttons
             document.querySelectorAll('.screen').forEach(screen => 
                 screen.classList.remove('active')
             );
@@ -1887,24 +1914,19 @@
                 btn.classList.remove('active')
             );
 
-            // Show selected screen and activate corresponding nav button
             document.getElementById(`${screenName}-screen`).classList.add('active');
             document.querySelector(`.nav-button[data-screen="${screenName}"]`)
                 .classList.add('active');
         }
 
-        // Display alert message
-        function showAlert(message) {
-            alert(message);
+        function showAlert(messageKey) {
+            alert(t(messageKey));
         }
 
-        // Set up periodic updates
         setInterval(updateEquations, 1000);
 
-        // Initialize app when document is loaded
         document.addEventListener('DOMContentLoaded', init);
 
-        // Prevent gesture events on mobile devices
         document.addEventListener('gesturestart', (e) => {
             e.preventDefault();
         });
