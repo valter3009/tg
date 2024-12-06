@@ -50,7 +50,7 @@
         }
         
         .container {
-            padding-top: 110px;
+            padding-top: 120px;
             height: 100%;
         }
         
@@ -301,21 +301,22 @@
         
         .equation-remove {
             position: absolute;
-            top: 80%;
+            top: 75%; /* Changed from 80% */
             transform: translateY(-50%);
-            right: 100px;
+            right: 30px; /* Reduced from 100px */
             background: rgba(246, 4, 4, 0.1);
             border: none;
             color: #ef0b0b;
-            width: 70px;
-            height: 24px;
+            width: 60px; /* Reduced from 70px */
+            height: 20px; /* Reduced from 24px */
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 10px; /* Reduced from 12px */
             cursor: pointer;
             padding: 0;
-            border-radius: 6px;
+            border-radius: 12px; /* Reduced from 6px */
+            border: 1px solid rgba(239, 11, 11, 0.3);
             transition: background-color 0.2s ease;
         }
         
@@ -405,11 +406,11 @@
         
         .equation-item {
             background: rgba(44, 46, 51, 0.3);
-            border-radius: 12px;
-            padding: 16px;
+            border-radius: 8px; /* Reduced from 12px */
+            padding: 10px; /* Reduced from 16px */
             display: flex;
-            gap: 12px;
-            margin-bottom: 8px;
+            gap: 8px; /* Reduced from 12px */
+            margin-bottom: 4px; /* Reduced from 8px */
             position: relative;
             border: 1px solid rgba(255, 255, 255, 0.1);
             min-width: 0;
@@ -431,20 +432,17 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 4px; /* Reduced from 8px */
             min-width: 0;
-            padding-right: 16px;
-            padding-left: 16px;
-            padding-top: 8px;
-            padding-bottom: 8px;
+            padding: 4px 12px; /* Reduced padding */
             width: 100%;
         }
         
         .equation-header {
             display: flex;
             align-items: flex-start;
-            gap: 8px;
-            margin-bottom: 4px;
+            gap: 6px; /* Reduced from 8px */
+            margin-bottom: 2px; /* Reduced from 4px */
             width: 100%;
         }
         
@@ -453,16 +451,16 @@
             background: transparent;
             border: none;
             color: #ffffff;
-            font-size: 13px;
+            font-size: 11px; /* Reduced from 13px */
             font-weight: 500;
-            padding: 4px 0;
+            padding: 2px 0; /* Reduced from 4px */
             margin: 0;
             overflow-wrap: break-word;
             word-wrap: break-word;
             word-break: break-word;
             hyphens: auto;
             white-space: pre-wrap;
-            line-height: 1.4;
+            line-height: 1.3; /* Reduced from 1.4 */
         }
         
         .equation-name:focus {
@@ -473,21 +471,21 @@
         .equation-text {
             width: 100%;
             font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
-            font-size: 11px;
+            font-size: 10px; /* Reduced from 11px */
             color: #9ca3af;
-            line-height: 1.4;
+            line-height: 1.3; /* Reduced from 1.4 */
             word-break: break-all;
             overflow-wrap: break-word;
-            padding: 4px 0;
+            padding: 2px 0; /* Reduced from 4px */
         }
         
         .result {
             width: 100%;
             font-family: 'SF Mono', SFMono-Regular, monospace;
-            font-size: 13px;
+            font-size: 11px; /* Reduced from 13px */
             color: #10b981;
-            margin-top: 2px;
-            padding: 4px 0;
+            margin-top: 1px; /* Reduced from 2px */
+            padding: 2px 0; /* Reduced from 4px */
         }
         
         .error {
