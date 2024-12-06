@@ -1103,15 +1103,15 @@
                 parseMessage: (data) => {
                     try {
                         const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
-                        if (parsedData.s && parsedData.d && parsedData.db && parsedData.da) {
+                        if (parsedData.s && parsedData.d && parsedData.d.b && parsedData.d.a) {
                             return {
                                 symbol: parsedData.s,
-                                bid: parsedData.db,
-                                ask: parsedData.da
+                                bid: parsedData.d.b,
+                                ask: parsedData.d.a
                             };
                         }
                     } catch (e) {
-                        console.error('MEXC message parsing error:', e);
+                        console.error('Error parsing MEXC message:', e);
                     }
                     return null;
                 }
