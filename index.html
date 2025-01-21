@@ -288,8 +288,6 @@
             cursor: grab;
             user-select: none;
             box-shadow: 0 0 5px var(--neon-blue), 0 0 10px var(--neon-blue);
-            position: relative;
-            overflow: hidden;
         }
 
         .pair-item:active {
@@ -407,21 +405,11 @@
             cursor: pointer;
             padding: 0;
             transition: all 0.2s ease-in-out;
-            position: absolute;
-            right: -50px;
-            top: 50%;
-            transform: translateY(-50%);
-            opacity: 0;
-            transition: all 0.3s ease-in-out;
         }
 
-        .pair-item.swiped .pair-remove {
-            right: 16px;
-            opacity: 1;
-        }
-
-        .pair-item.swiped {
-            transform: translateX(-50px);
+        .pair-remove:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
         }
 
         .remove-button:active {
@@ -520,7 +508,6 @@
             cursor: grab;
             user-select: none;
             box-shadow: 0 0 5px var(--neon-blue), 0 0 10px var(--neon-blue);
-            overflow: hidden;
         }
 
         .equation-item:active {
@@ -1780,14 +1767,6 @@
                 openOrderModal(symbol, exchange, 'sell');
             });
 
-            const removeButton = document.createElement('button');
-            removeButton.className = 'pair-remove';
-            removeButton.innerHTML = trashIconSvg;
-            removeButton.addEventListener('click', e => {
-                e.stopPropagation();
-                removePair(pairKey);
-            });
-
             const pairName = document.createElement('div');
             pairName.className = 'pair-name';
             pairName.textContent = `${symbol} ${exchange}`;
@@ -1796,7 +1775,6 @@
             priceContainer.appendChild(bidButtonRight);
             priceContainer.appendChild(askButtonLeft);
             priceContainer.appendChild(askButtonRight);
-            priceContainer.appendChild(removeButton);
 
             pairElement.appendChild(dragHandle);
             pairElement.appendChild(priceContainer);
@@ -1810,12 +1788,52 @@
                 }
             });
 
+            // Добавляем обработчик долгого нажатия для удаления пары
+            let longPressTimer;
+            pairElement.addEventListener('mousedown', () => {
+                longPressTimer = setTimeout(() => {
+                    showRemoveButton(pairElement, pairKey);
+                }, 1000);
+            });
+
+            pairElement.addEventListener('mouseup', () => {
+                clearTimeout(longPressTimer);
+            });
+
+            pairElement.addEventListener('mouseleave', () => {
+                clearTimeout(longPressTimer);
+            });
+
             document.getElementById('pairs-list').appendChild(pairElement);
             pairs[pairKey] = pairElement;
 
             connectWebSocket(exchange, symbol).then(ws => {
                 connections[pairKey] = ws;
             });
+        }
+
+        function showRemoveButton(element, pairKey) {
+            const removeButton = document.createElement('button');
+            removeButton.className = 'pair-remove';
+            removeButton.innerHTML = trashIconSvg;
+            removeButton.addEventListener('click', e => {
+                e.stopPropagation();
+                removePair(pairKey);
+            });
+
+            element.appendChild(removeButton);
+        }
+
+        function removePair(pairKey) {
+            if (pairs[pairKey]) {
+                pairs[pairKey].remove();
+                delete pairs[pairKey];
+                if (connections[pairKey]) {
+                    connections[pairKey].close();
+                    delete connections[pairKey];
+                }
+                saveState();
+            }
         }
 
         function updatePairPrices(exchange, symbol, bid, ask) {
@@ -1942,6 +1960,22 @@
 
                 setupDragAndDrop(equationElement, 'equations-list');
 
+                // Добавляем обработчик долгого нажатия для удаления связки
+                let longPressTimer;
+                equationElement.addEventListener('mousedown', () => {
+                    longPressTimer = setTimeout(() => {
+                        showRemoveButton(equationElement, equation);
+                    }, 1000);
+                });
+
+                equationElement.addEventListener('mouseup', () => {
+                    clearTimeout(longPressTimer);
+                });
+
+                equationElement.addEventListener('mouseleave', () => {
+                    clearTimeout(longPressTimer);
+                });
+
                 document.getElementById('equations-list').appendChild(equationElement);
                 equations[equation] = equationElement;
 
@@ -1955,13 +1989,16 @@
             }
         }
 
-        function updateEquationName(input, equation) {
-            const newName = input.value.trim();
-            if (newName && equation in equationManager.equations) {
-                equationManager.equations[equation].name = newName;
-                updateEquations();
-                saveState();
-            }
+        function showRemoveButton(element, equation) {
+            const removeButton = document.createElement('button');
+            removeButton.className = 'equation-remove';
+            removeButton.innerHTML = trashIconSvg;
+            removeButton.addEventListener('click', e => {
+                e.stopPropagation();
+                removeEquation(equation);
+            });
+
+            element.appendChild(removeButton);
         }
 
         function removeEquation(equation) {
