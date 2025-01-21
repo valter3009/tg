@@ -288,6 +288,8 @@
             cursor: grab;
             user-select: none;
             box-shadow: 0 0 5px var(--neon-blue), 0 0 10px var(--neon-blue);
+            position: relative;
+            overflow: hidden;
         }
 
         .pair-item:active {
@@ -405,11 +407,21 @@
             cursor: pointer;
             padding: 0;
             transition: all 0.2s ease-in-out;
+            position: absolute;
+            right: -50px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: all 0.3s ease-in-out;
         }
 
-        .pair-remove:hover {
-            background: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
+        .pair-item.swiped .pair-remove {
+            right: 16px;
+            opacity: 1;
+        }
+
+        .pair-item.swiped {
+            transform: translateX(-50px);
         }
 
         .remove-button:active {
@@ -508,6 +520,7 @@
             cursor: grab;
             user-select: none;
             box-shadow: 0 0 5px var(--neon-blue), 0 0 10px var(--neon-blue);
+            overflow: hidden;
         }
 
         .equation-item:active {
