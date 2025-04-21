@@ -1,29 +1,322 @@
-import telebot
-from telebot import types
-from config import BOT_TOKEN
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Змейка в Telegram</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f5f5f5;
+            font-family: Arial, sans-serif;
+            touch-action: manipulation;
+        }
+        
+        #game-container {
+            position: relative;
+        }
+        
+        #game-canvas {
+            border: 2px solid #333;
+            background-color: #fff;
+        }
+        
+        #score {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        #controls {
+            display: flex;
+            flex-direction: column;
+            margin-top: 20px;
+            gap: 10px;
+        }
+        
+        .row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 15px 25px;
+            font-size: 18px;
+            background-color: #0088cc;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        
+        button:active {
+            background-color: #006699;
+        }
+        
+        #start-btn {
+            background-color: #4CAF50;
+        }
+        
+        #start-btn:active {
+            background-color: #3e8e41;
+        }
+        
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">Счёт: 0</div>
+    <div id="game-container">
+        <canvas id="game-canvas" width="300" height="300"></canvas>
+        <div id="game-over">
+            <h2>Игра окончена!</h2>
+            <p id="final-score">Ваш счёт: 0</p>
+            <button id="restart-btn">Играть снова</button>
+        </div>
+    </div>
+    <div id="controls">
+        <div class="row">
+            <button id="up-btn">↑</button>
+        </div>
+        <div class="row">
+            <button id="left-btn">←</button>
+            <button id="down-btn">↓</button>
+            <button id="right-btn">→</button>
+        </div>
+        <button id="start-btn">Начать игру</button>
+    </div>
 
-bot = telebot.TeleBot(BOT_TOKEN)
-
-@bot.message_handler(commands=['start'])
-def send_welcome(message):
-    # Убираем стандартную клавиатуру (кнопку Menu)
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    
-    # Создаем кнопку с веб-приложением (замените URL на свой)
-    web_app_btn = types.KeyboardButton(
-        text="IDTrade", 
-        web_app=types.WebAppInfo(url="https://example.com")  # Ваш URL веб-приложения
-    )
-    markup.add(web_app_btn)  # Добавляем кнопку
-    
-    # Отправляем сообщение с новой кнопкой
-    bot.send_message(
-        message.chat.id,
-        "👋 Привет! Нажми кнопку **IDTrade**, чтобы открыть приложение.",
-        reply_markup=markup,
-        parse_mode="Markdown"
-    )
-
-if __name__ == "__main__":
-    print("Бот запущен...")
-    bot.infinity_polling()
+    <script>
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        
+        // Получаем элементы
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const finalScoreElement = document.getElementById('final-score');
+        const gameOverElement = document.getElementById('game-over');
+        
+        // Кнопки управления
+        const upBtn = document.getElementById('up-btn');
+        const downBtn = document.getElementById('down-btn');
+        const leftBtn = document.getElementById('left-btn');
+        const rightBtn = document.getElementById('right-btn');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        
+        // Параметры игры
+        const gridSize = 20;
+        const tileCount = canvas.width / gridSize;
+        let speed = 7;
+        
+        // Переменные игры
+        let snake = [];
+        let food = {};
+        let direction = 'right';
+        let nextDirection = 'right';
+        let score = 0;
+        let gameRunning = false;
+        let gameLoop;
+        
+        // Инициализация игры
+        function initGame() {
+            snake = [
+                {x: 5, y: 10},
+                {x: 4, y: 10},
+                {x: 3, y: 10}
+            ];
+            
+            direction = 'right';
+            nextDirection = 'right';
+            score = 0;
+            scoreElement.textContent = `Счёт: ${score}`;
+            
+            generateFood();
+            gameRunning = true;
+            gameOverElement.style.display = 'none';
+            
+            if (gameLoop) clearInterval(gameLoop);
+            gameLoop = setInterval(gameStep, 1000 / speed);
+        }
+        
+        // Генерация еды
+        function generateFood() {
+            food = {
+                x: Math.floor(Math.random() * tileCount),
+                y: Math.floor(Math.random() * tileCount)
+            };
+            
+            // Проверяем, чтобы еда не появилась на змейке
+            for (let i = 0; i < snake.length; i++) {
+                if (food.x === snake[i].x && food.y === snake[i].y) {
+                    generateFood();
+                    return;
+                }
+            }
+        }
+        
+        // Основной игровой цикл
+        function gameStep() {
+            direction = nextDirection;
+            
+            // Перемещаем змейку
+            const head = {x: snake[0].x, y: snake[0].y};
+            
+            switch (direction) {
+                case 'up':
+                    head.y--;
+                    break;
+                case 'down':
+                    head.y++;
+                    break;
+                case 'left':
+                    head.x--;
+                    break;
+                case 'right':
+                    head.x++;
+                    break;
+            }
+            
+            // Проверка на столкновение с границами
+            if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+                gameOver();
+                return;
+            }
+            
+            // Проверка на столкновение с собой
+            for (let i = 0; i < snake.length; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) {
+                    gameOver();
+                    return;
+                }
+            }
+            
+            // Добавляем новую голову
+            snake.unshift(head);
+            
+            // Проверка на съедение еды
+            if (head.x === food.x && head.y === food.y) {
+                score++;
+                scoreElement.textContent = `Счёт: ${score}`;
+                generateFood();
+                
+                // Увеличиваем скорость каждые 5 очков
+                if (score % 5 === 0) {
+                    speed += 1;
+                    clearInterval(gameLoop);
+                    gameLoop = setInterval(gameStep, 1000 / speed);
+                }
+            } else {
+                // Удаляем хвост, если не съели еду
+                snake.pop();
+            }
+            
+            // Отрисовка игры
+            drawGame();
+        }
+        
+        // Отрисовка игры
+        function drawGame() {
+            // Очищаем canvas
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Рисуем змейку
+            for (let i = 0; i < snake.length; i++) {
+                const segment = snake[i];
+                ctx.fillStyle = (i === 0) ? '#4CAF50' : '#8BC34A';
+                ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize, gridSize);
+                
+                ctx.strokeStyle = '#fff';
+                ctx.strokeRect(segment.x * gridSize, segment.y * gridSize, gridSize, gridSize);
+            }
+            
+            // Рисуем еду
+            ctx.fillStyle = '#FF5722';
+            ctx.beginPath();
+            const centerX = food.x * gridSize + gridSize / 2;
+            const centerY = food.y * gridSize + gridSize / 2;
+            const radius = gridSize / 2;
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+        
+        // Конец игры
+        function gameOver() {
+            gameRunning = false;
+            clearInterval(gameLoop);
+            finalScoreElement.textContent = `Ваш счёт: ${score}`;
+            gameOverElement.style.display = 'block';
+            
+            // Отправляем данные в Telegram (если нужно)
+            if (tg.sendData) {
+                tg.sendData(JSON.stringify({score: score}));
+            }
+        }
+        
+        // Обработчики событий для кнопок
+        startBtn.addEventListener('click', initGame);
+        restartBtn.addEventListener('click', initGame);
+        
+        upBtn.addEventListener('click', () => {
+            if (direction !== 'down' && gameRunning) nextDirection = 'up';
+        });
+        
+        downBtn.addEventListener('click', () => {
+            if (direction !== 'up' && gameRunning) nextDirection = 'down';
+        });
+        
+        leftBtn.addEventListener('click', () => {
+            if (direction !== 'right' && gameRunning) nextDirection = 'left';
+        });
+        
+        rightBtn.addEventListener('click', () => {
+            if (direction !== 'left' && gameRunning) nextDirection = 'right';
+        });
+        
+        // Обработчики событий клавиатуры
+        document.addEventListener('keydown', (e) => {
+            if (!gameRunning) return;
+            
+            switch (e.key) {
+                case 'ArrowUp':
+                    if (direction !== 'down') nextDirection = 'up';
+                    break;
+                case 'ArrowDown':
+                    if (direction !== 'up') nextDirection = 'down';
+                    break;
+                case 'ArrowLeft':
+                    if (direction !== 'right') nextDirection = 'left';
+                    break;
+                case 'ArrowRight':
+                    if (direction !== 'left') nextDirection = 'right';
+                    break;
+            }
+        });
+        
+        // Первоначальная отрисовка
+        drawGame();
+    </script>
+</body>
+</html>
