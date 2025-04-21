@@ -3,106 +3,450 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Змейка в Telegram</title>
+    <title>Telegram Auction</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
+        :root {
+            --primary-color: #0088cc;
+            --secondary-color: #f0f0f0;
+            --accent-color: #ff6b00;
+            --text-color: #333;
+            --light-text: #777;
+            --border-color: #ddd;
+            --success-color: #4CAF50;
+            --danger-color: #f44336;
+        }
+        
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background-color: #f5f5f5;
-            font-family: Arial, sans-serif;
-            touch-action: manipulation;
         }
         
-        #game-container {
-            position: relative;
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: var(--text-color);
+            line-height: 1.6;
         }
         
-        #game-canvas {
-            border: 2px solid #333;
-            background-color: #fff;
+        .container {
+            max-width: 100%;
+            padding: 15px;
+            margin: 0 auto;
         }
         
-        #score {
-            font-size: 24px;
-            margin-bottom: 10px;
-            color: #333;
-        }
-        
-        #controls {
-            display: flex;
-            flex-direction: column;
-            margin-top: 20px;
-            gap: 10px;
-        }
-        
-        .row {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
-        
-        button {
-            padding: 15px 25px;
-            font-size: 18px;
-            background-color: #0088cc;
+        header {
+            background-color: var(--primary-color);
             color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-        }
-        
-        button:active {
-            background-color: #006699;
-        }
-        
-        #start-btn {
-            background-color: #4CAF50;
-        }
-        
-        #start-btn:active {
-            background-color: #3e8e41;
-        }
-        
-        #game-over {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
+            padding: 15px 0;
             text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            flex: 1;
+            text-align: center;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid var(--primary-color);
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .tab-content {
             display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        
+        .card-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+        
+        .card-body {
+            padding: 15px;
+        }
+        
+        .card-title {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .card-text {
+            color: var(--light-text);
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .card-price {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-bottom: 10px;
+        }
+        
+        .card-time {
+            font-size: 0.8rem;
+            color: var(--light-text);
+            margin-bottom: 10px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.9rem;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        .btn-accent {
+            background-color: var(--accent-color);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-family: inherit;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .preview-image {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: none;
+        }
+        
+        .auction-bid {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .auction-bid input {
+            flex: 1;
+        }
+        
+        .bid-history {
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .bid-item {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .bid-user {
+            font-weight: 500;
+        }
+        
+        .bid-amount {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+        
+        .bid-time {
+            font-size: 0.8rem;
+            color: var(--light-text);
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 10px;
+            object-fit: cover;
+        }
+        
+        .user-name {
+            font-weight: 500;
+        }
+        
+        .user-rating {
+            color: var(--light-text);
+            font-size: 0.9rem;
+        }
+        
+        .no-items {
+            text-align: center;
+            padding: 30px;
+            color: var(--light-text);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 3px solid var(--primary-color);
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <div id="score">Счёт: 0</div>
-    <div id="game-container">
-        <canvas id="game-canvas" width="300" height="300"></canvas>
-        <div id="game-over">
-            <h2>Игра окончена!</h2>
-            <p id="final-score">Ваш счёт: 0</p>
-            <button id="restart-btn">Играть снова</button>
+    <header>
+        <div class="container">
+            <h1>Telegram Auction</h1>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" data-tab="auctions">Аукционы</div>
+            <div class="tab" data-tab="my-lots">Мои лоты</div>
+            <div class="tab" data-tab="add-lot">Добавить лот</div>
+            <div class="tab" data-tab="profile">Профиль</div>
+        </div>
+        
+        <!-- Вкладка Аукционы -->
+        <div id="auctions" class="tab-content active">
+            <div id="auctions-list">
+                <!-- Лоты будут загружены здесь -->
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Загрузка аукционов...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Вкладка Мои лоты -->
+        <div id="my-lots" class="tab-content">
+            <div id="my-lots-list">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Загрузка ваших лотов...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Вкладка Добавление лота -->
+        <div id="add-lot" class="tab-content">
+            <form id="lot-form">
+                <div class="form-group">
+                    <label for="lot-title">Название лота</label>
+                    <input type="text" id="lot-title" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="lot-description">Описание</label>
+                    <textarea id="lot-description" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="lot-category">Категория</label>
+                    <select id="lot-category" required>
+                        <option value="">Выберите категорию</option>
+                        <option value="electronics">Электроника</option>
+                        <option value="fashion">Мода</option>
+                        <option value="home">Дом и сад</option>
+                        <option value="collectibles">Коллекционные</option>
+                        <option value="sports">Спорт</option>
+                        <option value="other">Другое</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="lot-start-price">Начальная цена</label>
+                    <input type="number" id="lot-start-price" min="1" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="lot-min-bid">Минимальная ставка</label>
+                    <input type="number" id="lot-min-bid" min="1" value="10">
+                </div>
+                
+                <div class="form-group">
+                    <label for="lot-end-date">Дата окончания аукциона</label>
+                    <input type="datetime-local" id="lot-end-date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="lot-image">Изображение лота</label>
+                    <input type="file" id="lot-image" accept="image/*">
+                    <img id="image-preview" class="preview-image">
+                </div>
+                
+                <button type="submit" class="btn btn-accent">Разместить лот</button>
+            </form>
+        </div>
+        
+        <!-- Вкладка Профиль -->
+        <div id="profile" class="tab-content">
+            <div class="user-profile">
+                <img id="user-avatar" class="user-avatar" src="https://via.placeholder.com/50" alt="Аватар">
+                <div>
+                    <div id="user-name" class="user-name">Имя пользователя</div>
+                    <div class="user-rating">Рейтинг: <span id="user-rating">5.0</span> ★</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title">Мои данные</h3>
+                    <div class="form-group">
+                        <label for="profile-phone">Телефон</label>
+                        <input type="tel" id="profile-phone" placeholder="+7 (XXX) XXX-XX-XX">
+                    </div>
+                    <div class="form-group">
+                        <label for="profile-address">Адрес</label>
+                        <textarea id="profile-address" placeholder="Ваш адрес для доставки"></textarea>
+                    </div>
+                    <button id="save-profile" class="btn">Сохранить</button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title">Мои ставки</h3>
+                    <div id="user-bids">
+                        <div class="bid-item">
+                            <div>
+                                <div class="bid-user">Лот #123</div>
+                                <div class="bid-time">12.05.2023 14:30</div>
+                            </div>
+                            <div class="bid-amount">1 250 ₽</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    <div id="controls">
-        <div class="row">
-            <button id="up-btn">↑</button>
+    
+    <!-- Модальное окно лота -->
+    <div id="lot-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto; padding: 20px;">
+        <div style="background: white; border-radius: 10px; max-width: 500px; margin: 20px auto; overflow: hidden;">
+            <div style="position: relative;">
+                <img id="modal-lot-image" src="" style="width: 100%; height: 250px; object-fit: cover;">
+                <button id="close-modal" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 16px; cursor: pointer;">×</button>
+            </div>
+            
+            <div style="padding: 15px;">
+                <h2 id="modal-lot-title" style="margin-bottom: 10px;"></h2>
+                <div id="modal-lot-description" style="margin-bottom: 15px; color: #666;"></div>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                    <div>
+                        <div style="font-size: 0.9rem; color: #777;">Текущая цена</div>
+                        <div id="modal-lot-price" style="font-size: 1.5rem; font-weight: bold; color: #ff6b00;"></div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9rem; color: #777;">До конца</div>
+                        <div id="modal-lot-time" style="font-size: 1.1rem; font-weight: bold;"></div>
+                    </div>
+                </div>
+                
+                <div class="auction-bid">
+                    <input type="number" id="bid-amount" placeholder="Ваша ставка" style="flex: 1;">
+                    <button id="place-bid" class="btn btn-accent">Ставка</button>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 10px; font-size: 1.1rem;">История ставок</h3>
+                    <div id="modal-bid-history" class="bid-history">
+                        <!-- История ставок будет здесь -->
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+                    <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                        <img id="modal-seller-avatar" src="https://via.placeholder.com/40" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px;">
+                        <div>
+                            <div id="modal-seller-name" style="font-weight: 500;"></div>
+                            <div id="modal-seller-rating" style="font-size: 0.8rem; color: #777;">Рейтинг: 4.9 ★ (24 отзыва)</div>
+                        </div>
+                    </div>
+                    <button id="contact-seller" class="btn" style="margin-top: 10px;">Связаться с продавцом</button>
+                </div>
+            </div>
         </div>
-        <div class="row">
-            <button id="left-btn">←</button>
-            <button id="down-btn">↓</button>
-            <button id="right-btn">→</button>
-        </div>
-        <button id="start-btn">Начать игру</button>
     </div>
 
     <script>
@@ -110,213 +454,383 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
         
-        // Получаем элементы
-        const canvas = document.getElementById('game-canvas');
-        const ctx = canvas.getContext('2d');
-        const scoreElement = document.getElementById('score');
-        const finalScoreElement = document.getElementById('final-score');
-        const gameOverElement = document.getElementById('game-over');
+        // Получаем данные пользователя
+        const user = tg.initDataUnsafe.user || {
+            id: 123456789,
+            first_name: "Тестовый",
+            last_name: "Пользователь",
+            username: "testuser",
+            photo_url: "https://via.placeholder.com/150"
+        };
         
-        // Кнопки управления
-        const upBtn = document.getElementById('up-btn');
-        const downBtn = document.getElementById('down-btn');
-        const leftBtn = document.getElementById('left-btn');
-        const rightBtn = document.getElementById('right-btn');
-        const startBtn = document.getElementById('start-btn');
-        const restartBtn = document.getElementById('restart-btn');
+        // Элементы интерфейса
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const lotForm = document.getElementById('lot-form');
+        const imageInput = document.getElementById('lot-image');
+        const imagePreview = document.getElementById('image-preview');
+        const auctionsList = document.getElementById('auctions-list');
+        const myLotsList = document.getElementById('my-lots-list');
+        const lotModal = document.getElementById('lot-modal');
+        const closeModal = document.getElementById('close-modal');
         
-        // Параметры игры
-        const gridSize = 20;
-        const tileCount = canvas.width / gridSize;
-        let speed = 7;
+        // Данные приложения (в реальном приложении будут запрашиваться с сервера)
+        let auctions = [];
+        let myLots = [];
+        let bids = [];
         
-        // Переменные игры
-        let snake = [];
-        let food = {};
-        let direction = 'right';
-        let nextDirection = 'right';
-        let score = 0;
-        let gameRunning = false;
-        let gameLoop;
-        
-        // Инициализация игры
-        function initGame() {
-            snake = [
-                {x: 5, y: 10},
-                {x: 4, y: 10},
-                {x: 3, y: 10}
-            ];
+        // Инициализация приложения
+        document.addEventListener('DOMContentLoaded', function() {
+            // Настройка вкладок
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    tab.classList.add('active');
+                    const tabId = tab.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                    
+                    // При переключении на "Мои лоты" обновляем список
+                    if (tabId === 'my-lots') {
+                        loadMyLots();
+                    }
+                });
+            });
             
-            direction = 'right';
-            nextDirection = 'right';
-            score = 0;
-            scoreElement.textContent = `Счёт: ${score}`;
-            
-            generateFood();
-            gameRunning = true;
-            gameOverElement.style.display = 'none';
-            
-            if (gameLoop) clearInterval(gameLoop);
-            gameLoop = setInterval(gameStep, 1000 / speed);
-        }
-        
-        // Генерация еды
-        function generateFood() {
-            food = {
-                x: Math.floor(Math.random() * tileCount),
-                y: Math.floor(Math.random() * tileCount)
-            };
-            
-            // Проверяем, чтобы еда не появилась на змейке
-            for (let i = 0; i < snake.length; i++) {
-                if (food.x === snake[i].x && food.y === snake[i].y) {
-                    generateFood();
-                    return;
+            // Загрузка изображения для лота
+            imageInput.addEventListener('change', function(e) {
+                if (e.target.files && e.target.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        imagePreview.src = event.target.result;
+                        imagePreview.style.display = 'block';
+                    };
+                    reader.readAsDataURL(e.target.files[0]);
                 }
+            });
+            
+            // Отправка формы добавления лота
+            lotForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const newLot = {
+                    id: Date.now(),
+                    title: document.getElementById('lot-title').value,
+                    description: document.getElementById('lot-description').value,
+                    category: document.getElementById('lot-category').value,
+                    startPrice: parseInt(document.getElementById('lot-start-price').value),
+                    minBid: parseInt(document.getElementById('lot-min-bid').value),
+                    endDate: new Date(document.getElementById('lot-end-date').value),
+                    image: imagePreview.src || 'https://via.placeholder.com/300',
+                    seller: {
+                        id: user.id,
+                        name: `${user.first_name} ${user.last_name || ''}`,
+                        avatar: user.photo_url || 'https://via.placeholder.com/150',
+                        rating: 5.0
+                    },
+                    bids: [],
+                    currentPrice: parseInt(document.getElementById('lot-start-price').value),
+                    createdAt: new Date()
+                };
+                
+                // Добавляем лот в "мои лоты"
+                myLots.push(newLot);
+                auctions.push(newLot);
+                
+                // Очищаем форму
+                lotForm.reset();
+                imagePreview.style.display = 'none';
+                imagePreview.src = '';
+                
+                // Показываем уведомление
+                alert('Лот успешно добавлен!');
+                
+                // Переключаем на вкладку "Мои лоты"
+                document.querySelector('.tab[data-tab="my-lots"]').click();
+            });
+            
+            // Закрытие модального окна
+            closeModal.addEventListener('click', function() {
+                lotModal.classList.add('hidden');
+            });
+            
+            // Загрузка данных
+            loadAuctions();
+            loadProfile();
+        });
+        
+        // Загрузка списка аукционов
+        function loadAuctions() {
+            // В реальном приложении здесь будет запрос к серверу
+            setTimeout(() => {
+                // Пример данных
+                auctions = [
+                    {
+                        id: 1,
+                        title: "Apple iPhone 13 Pro 128GB",
+                        description: "Новый, в оригинальной упаковке. Гарантия 12 месяцев.",
+                        category: "electronics",
+                        startPrice: 75000,
+                        minBid: 1000,
+                        currentPrice: 82000,
+                        endDate: new Date(Date.now() + 86400000 * 3), // Через 3 дня
+                        image: "https://via.placeholder.com/300x200?text=iPhone+13+Pro",
+                        seller: {
+                            id: 987654321,
+                            name: "Иван Петров",
+                            avatar: "https://via.placeholder.com/150",
+                            rating: 4.8
+                        },
+                        bids: [
+                            { userId: 111111111, amount: 80000, time: new Date(Date.now() - 3600000) },
+                            { userId: 222222222, amount: 82000, time: new Date(Date.now() - 1800000) }
+                        ],
+                        createdAt: new Date(Date.now() - 86400000)
+                    },
+                    {
+                        id: 2,
+                        title: "Наручные часы Rolex Submariner",
+                        description: "Отличное состояние, полный комплект. 2018 год выпуска.",
+                        category: "collectibles",
+                        startPrice: 450000,
+                        minBid: 5000,
+                        currentPrice: 480000,
+                        endDate: new Date(Date.now() + 86400000), // Через 1 день
+                        image: "https://via.placeholder.com/300x200?text=Rolex+Submariner",
+                        seller: {
+                            id: 555555555,
+                            name: "Алексей Смирнов",
+                            avatar: "https://via.placeholder.com/150",
+                            rating: 4.9
+                        },
+                        bids: [
+                            { userId: 333333333, amount: 460000, time: new Date(Date.now() - 7200000) },
+                            { userId: 444444444, amount: 470000, time: new Date(Date.now() - 3600000) },
+                            { userId: 111111111, amount: 480000, time: new Date(Date.now() - 1800000) }
+                        ],
+                        createdAt: new Date(Date.now() - 86400000 * 2)
+                    }
+                ];
+                
+                renderAuctions();
+            }, 1000);
+        }
+        
+        // Загрузка "моих лотов"
+        function loadMyLots() {
+            // В реальном приложении здесь будет запрос к серверу с фильтрацией по seller.id
+            setTimeout(() => {
+                // Фильтруем лоты текущего пользователя
+                myLots = auctions.filter(lot => lot.seller.id === user.id);
+                
+                if (myLots.length === 0) {
+                    myLotsList.innerHTML = '<div class="no-items">У вас пока нет активных лотов</div>';
+                } else {
+                    renderMyLots();
+                }
+            }, 500);
+        }
+        
+        // Загрузка профиля пользователя
+        function loadProfile() {
+            document.getElementById('user-name').textContent = `${user.first_name} ${user.last_name || ''}`;
+            if (user.photo_url) {
+                document.getElementById('user-avatar').src = user.photo_url;
             }
         }
         
-        // Основной игровой цикл
-        function gameStep() {
-            direction = nextDirection;
-            
-            // Перемещаем змейку
-            const head = {x: snake[0].x, y: snake[0].y};
-            
-            switch (direction) {
-                case 'up':
-                    head.y--;
-                    break;
-                case 'down':
-                    head.y++;
-                    break;
-                case 'left':
-                    head.x--;
-                    break;
-                case 'right':
-                    head.x++;
-                    break;
-            }
-            
-            // Проверка на столкновение с границами
-            if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
-                gameOver();
+        // Отрисовка списка аукционов
+        function renderAuctions() {
+            if (auctions.length === 0) {
+                auctionsList.innerHTML = '<div class="no-items">Нет активных аукционов</div>';
                 return;
             }
             
-            // Проверка на столкновение с собой
-            for (let i = 0; i < snake.length; i++) {
-                if (head.x === snake[i].x && head.y === snake[i].y) {
-                    gameOver();
+            let html = '';
+            auctions.forEach(lot => {
+                const timeLeft = getTimeLeft(lot.endDate);
+                
+                html += `
+                    <div class="card" data-id="${lot.id}">
+                        <img src="${lot.image}" class="card-img" alt="${lot.title}">
+                        <div class="card-body">
+                            <h3 class="card-title">${lot.title}</h3>
+                            <p class="card-text">${lot.description.substring(0, 60)}...</p>
+                            <div class="card-price">${formatPrice(lot.currentPrice)} ₽</div>
+                            <div class="card-time">До конца: ${timeLeft}</div>
+                            <button class="btn btn-view-lot">Подробнее</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            auctionsList.innerHTML = html;
+            
+            // Добавляем обработчики для кнопок "Подробнее"
+            document.querySelectorAll('.btn-view-lot').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const lotId = parseInt(this.closest('.card').getAttribute('data-id'));
+                    openLotModal(lotId);
+                });
+            });
+        }
+        
+        // Отрисовка "моих лотов"
+        function renderMyLots() {
+            let html = '';
+            myLots.forEach(lot => {
+                const timeLeft = getTimeLeft(lot.endDate);
+                const bidCount = lot.bids.length;
+                
+                html += `
+                    <div class="card" data-id="${lot.id}">
+                        <img src="${lot.image}" class="card-img" alt="${lot.title}">
+                        <div class="card-body">
+                            <h3 class="card-title">${lot.title}</h3>
+                            <p class="card-text">${lot.description.substring(0, 60)}...</p>
+                            <div class="card-price">${formatPrice(lot.currentPrice)} ₽</div>
+                            <div class="card-time">До конца: ${timeLeft}</div>
+                            <div class="card-text">Ставок: ${bidCount}</div>
+                            <button class="btn btn-view-lot">Подробнее</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            myLotsList.innerHTML = html;
+            
+            // Добавляем обработчики для кнопок "Подробнее"
+            document.querySelectorAll('.btn-view-lot').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const lotId = parseInt(this.closest('.card').getAttribute('data-id'));
+                    openLotModal(lotId);
+                });
+            });
+        }
+        
+        // Открытие модального окна лота
+        function openLotModal(lotId) {
+            const lot = auctions.find(l => l.id === lotId);
+            if (!lot) return;
+            
+            // Заполняем данные лота
+            document.getElementById('modal-lot-title').textContent = lot.title;
+            document.getElementById('modal-lot-description').textContent = lot.description;
+            document.getElementById('modal-lot-price').textContent = `${formatPrice(lot.currentPrice)} ₽`;
+            document.getElementById('modal-lot-time').textContent = getTimeLeft(lot.endDate);
+            document.getElementById('modal-lot-image').src = lot.image;
+            document.getElementById('modal-seller-name').textContent = lot.seller.name;
+            document.getElementById('modal-seller-avatar').src = lot.seller.avatar;
+            document.getElementById('modal-seller-rating').textContent = `Рейтинг: ${lot.seller.rating} ★`;
+            
+            // Заполняем историю ставок
+            const bidHistory = document.getElementById('modal-bid-history');
+            bidHistory.innerHTML = '';
+            
+            if (lot.bids.length === 0) {
+                bidHistory.innerHTML = '<div style="padding: 10px; text-align: center; color: #777;">Ставок пока нет</div>';
+            } else {
+                lot.bids.forEach(bid => {
+                    const bidItem = document.createElement('div');
+                    bidItem.className = 'bid-item';
+                    bidItem.innerHTML = `
+                        <div>
+                            <div class="bid-user">Пользователь #${bid.userId.toString().substring(0, 3)}</div>
+                            <div class="bid-time">${formatDate(bid.time)}</div>
+                        </div>
+                        <div class="bid-amount">${formatPrice(bid.amount)} ₽</div>
+                    `;
+                    bidHistory.appendChild(bidItem);
+                });
+            }
+            
+            // Настройка кнопки ставки
+            const placeBidBtn = document.getElementById('place-bid');
+            const bidAmountInput = document.getElementById('bid-amount');
+            
+            placeBidBtn.onclick = function() {
+                const bidAmount = parseInt(bidAmountInput.value);
+                if (isNaN(bidAmount) || bidAmount <= lot.currentPrice) {
+                    alert(`Ваша ставка должна быть выше текущей цены (${lot.currentPrice} ₽)`);
                     return;
                 }
-            }
-            
-            // Добавляем новую голову
-            snake.unshift(head);
-            
-            // Проверка на съедение еды
-            if (head.x === food.x && head.y === food.y) {
-                score++;
-                scoreElement.textContent = `Счёт: ${score}`;
-                generateFood();
                 
-                // Увеличиваем скорость каждые 5 очков
-                if (score % 5 === 0) {
-                    speed += 1;
-                    clearInterval(gameLoop);
-                    gameLoop = setInterval(gameStep, 1000 / speed);
+                if (bidAmount < lot.currentPrice + lot.minBid) {
+                    alert(`Минимальная ставка: ${lot.currentPrice + lot.minBid} ₽`);
+                    return;
                 }
-            } else {
-                // Удаляем хвост, если не съели еду
-                snake.pop();
-            }
-            
-            // Отрисовка игры
-            drawGame();
-        }
-        
-        // Отрисовка игры
-        function drawGame() {
-            // Очищаем canvas
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Рисуем змейку
-            for (let i = 0; i < snake.length; i++) {
-                const segment = snake[i];
-                ctx.fillStyle = (i === 0) ? '#4CAF50' : '#8BC34A';
-                ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize, gridSize);
                 
-                ctx.strokeStyle = '#fff';
-                ctx.strokeRect(segment.x * gridSize, segment.y * gridSize, gridSize, gridSize);
-            }
+                // Добавляем ставку
+                const newBid = {
+                    userId: user.id,
+                    amount: bidAmount,
+                    time: new Date()
+                };
+                
+                lot.bids.push(newBid);
+                lot.currentPrice = bidAmount;
+                
+                // Обновляем данные в модальном окне
+                document.getElementById('modal-lot-price').textContent = `${formatPrice(lot.currentPrice)} ₽`;
+                
+                // Добавляем новую ставку в историю
+                const bidItem = document.createElement('div');
+                bidItem.className = 'bid-item';
+                bidItem.innerHTML = `
+                    <div>
+                        <div class="bid-user">Вы</div>
+                        <div class="bid-time">Только что</div>
+                    </div>
+                    <div class="bid-amount">${formatPrice(bidAmount)} ₽</div>
+                `;
+                bidHistory.insertBefore(bidItem, bidHistory.firstChild);
+                
+                // Очищаем поле ввода
+                bidAmountInput.value = '';
+                
+                // Обновляем списки лотов
+                renderAuctions();
+                if (document.querySelector('.tab.active').getAttribute('data-tab') === 'my-lots') {
+                    renderMyLots();
+                }
+                
+                alert('Ваша ставка принята!');
+            };
             
-            // Рисуем еду
-            ctx.fillStyle = '#FF5722';
-            ctx.beginPath();
-            const centerX = food.x * gridSize + gridSize / 2;
-            const centerY = food.y * gridSize + gridSize / 2;
-            const radius = gridSize / 2;
-            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-            ctx.fill();
+            // Показываем модальное окно
+            lotModal.classList.remove('hidden');
         }
         
-        // Конец игры
-        function gameOver() {
-            gameRunning = false;
-            clearInterval(gameLoop);
-            finalScoreElement.textContent = `Ваш счёт: ${score}`;
-            gameOverElement.style.display = 'block';
-            
-            // Отправляем данные в Telegram (если нужно)
-            if (tg.sendData) {
-                tg.sendData(JSON.stringify({score: score}));
-            }
+        // Вспомогательные функции
+        function formatPrice(price) {
+            return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
         }
         
-        // Обработчики событий для кнопок
-        startBtn.addEventListener('click', initGame);
-        restartBtn.addEventListener('click', initGame);
+        function formatDate(date) {
+            return date.toLocaleString('ru-RU', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
         
-        upBtn.addEventListener('click', () => {
-            if (direction !== 'down' && gameRunning) nextDirection = 'up';
-        });
-        
-        downBtn.addEventListener('click', () => {
-            if (direction !== 'up' && gameRunning) nextDirection = 'down';
-        });
-        
-        leftBtn.addEventListener('click', () => {
-            if (direction !== 'right' && gameRunning) nextDirection = 'left';
-        });
-        
-        rightBtn.addEventListener('click', () => {
-            if (direction !== 'left' && gameRunning) nextDirection = 'right';
-        });
-        
-        // Обработчики событий клавиатуры
-        document.addEventListener('keydown', (e) => {
-            if (!gameRunning) return;
+        function getTimeLeft(endDate) {
+            const now = new Date();
+            const diff = endDate - now;
             
-            switch (e.key) {
-                case 'ArrowUp':
-                    if (direction !== 'down') nextDirection = 'up';
-                    break;
-                case 'ArrowDown':
-                    if (direction !== 'up') nextDirection = 'down';
-                    break;
-                case 'ArrowLeft':
-                    if (direction !== 'right') nextDirection = 'left';
-                    break;
-                case 'ArrowRight':
-                    if (direction !== 'left') nextDirection = 'right';
-                    break;
-            }
-        });
-        
-        // Первоначальная отрисовка
-        drawGame();
+            if (diff <= 0) return 'Аукцион завершен';
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            
+            if (days > 0) return `${days}д ${hours}ч`;
+            if (hours > 0) return `${hours}ч ${minutes}м`;
+            return `${minutes} минут`;
+        }
     </script>
 </body>
 </html>
