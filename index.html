@@ -3,834 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Auction</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>Telegram WebApp</title>
     <style>
-        :root {
-            --primary-color: #0088cc;
-            --secondary-color: #f0f0f0;
-            --accent-color: #ff6b00;
-            --text-color: #333;
-            --light-text: #777;
-            --border-color: #ddd;
-            --success-color: #4CAF50;
-            --danger-color: #f44336;
-        }
-        
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
         }
-        
+
         body {
-            font-family: 'Roboto', Arial, sans-serif;
-            background-color: #f9f9f9;
-            color: var(--text-color);
-            line-height: 1.6;
-        }
-        
-        .container {
-            max-width: 100%;
-            padding: 15px;
-            margin: 0 auto;
-        }
-        
-        header {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 15px 0;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        h1 {
-            font-size: 1.5rem;
-        }
-        
-        .tabs {
+            height: 100vh;
+            background: #1a1a2f;
             display: flex;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 20px;
+            flex-direction: column;
         }
-        
-        .tab {
-            padding: 10px 15px;
-            cursor: pointer;
-            flex: 1;
-            text-align: center;
-            border-bottom: 3px solid transparent;
+
+        .header {
+            height: 10%;
+            padding: 12px;
+            background: #2a2a4a;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
-        
-        .tab.active {
-            border-bottom: 3px solid var(--primary-color);
-            font-weight: bold;
-            color: var(--primary-color);
-        }
-        
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
-        .card {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            margin-bottom: 15px;
-            overflow: hidden;
-        }
-        
-        .card-img {
+
+        .search-input {
             width: 100%;
-            height: 180px;
-            object-fit: cover;
-        }
-        
-        .card-body {
-            padding: 15px;
-        }
-        
-        .card-title {
-            font-size: 1.1rem;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-        
-        .card-text {
-            color: var(--light-text);
-            margin-bottom: 10px;
-            font-size: 0.9rem;
-        }
-        
-        .card-price {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--accent-color);
-            margin-bottom: 10px;
-        }
-        
-        .card-time {
-            font-size: 0.8rem;
-            color: var(--light-text);
-            margin-bottom: 10px;
-        }
-        
-        .btn {
-            display: inline-block;
-            padding: 10px 15px;
+            height: 100%;
+            padding: 8px 16px;
             border: none;
-            border-radius: 5px;
-            background-color: var(--primary-color);
-            color: white;
-            text-align: center;
-            cursor: pointer;
-            font-size: 0.9rem;
-            width: 100%;
+            border-radius: 25px;
+            background: #3a3a5a;
+            color: #e6e6ff;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s;
         }
-        
-        .btn:hover {
-            opacity: 0.9;
+
+        .search-input::placeholder {
+            color: #8888bb;
         }
-        
-        .btn-accent {
-            background-color: var(--accent-color);
+
+        .search-input:focus {
+            background: #4a4a6a;
+            box-shadow: 0 0 8px rgba(134, 134, 255, 0.2);
         }
-        
-        .btn-success {
-            background-color: var(--success-color);
-        }
-        
-        .btn-danger {
-            background-color: var(--danger-color);
-        }
-        
-        .form-group {
-            margin-bottom: 15px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
-        
-        input, textarea, select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            font-family: inherit;
-        }
-        
-        textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-        
-        .preview-image {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            display: none;
-        }
-        
-        .auction-bid {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .auction-bid input {
-            flex: 1;
-        }
-        
-        .bid-history {
-            margin-top: 15px;
-            max-height: 200px;
+
+        .main-content {
+            height: 80%;
+            background: #252542;
+            padding: 16px;
             overflow-y: auto;
         }
-        
-        .bid-item {
-            padding: 8px 0;
-            border-bottom: 1px solid var(--border-color);
+
+        .footer {
+            height: 10%;
+            background: #2a2a4a;
             display: flex;
-            justify-content: space-between;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 10px;
+            border-top: 1px solid #3a3a5a;
         }
-        
-        .bid-user {
-            font-weight: 500;
-        }
-        
-        .bid-amount {
-            color: var(--accent-color);
-            font-weight: bold;
-        }
-        
-        .bid-time {
-            font-size: 0.8rem;
-            color: var(--light-text);
-        }
-        
-        .user-profile {
+
+        .nav-button {
+            background: none;
+            border: none;
+            color: #b8b8e6;
+            padding: 12px 24px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
             display: flex;
             align-items: center;
-            margin-bottom: 15px;
+            gap: 8px;
         }
-        
-        .user-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            margin-right: 10px;
-            object-fit: cover;
+
+        .nav-button:hover {
+            background: #3a3a5a;
+            transform: translateY(-2px);
         }
-        
-        .user-name {
-            font-weight: 500;
+
+        .nav-button:active {
+            transform: translateY(0);
         }
-        
-        .user-rating {
-            color: var(--light-text);
-            font-size: 0.9rem;
-        }
-        
-        .no-items {
-            text-align: center;
-            padding: 30px;
-            color: var(--light-text);
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 20px;
-        }
-        
-        .spinner {
-            border: 3px solid rgba(0, 0, 0, 0.1);
-            border-radius: 50%;
-            border-top: 3px solid var(--primary-color);
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+
+        @media (max-width: 480px) {
+            .nav-button {
+                padding: 12px;
+                font-size: 12px;
+            }
         }
     </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1>Telegram Auction</h1>
-        </div>
-    </header>
-    
-    <div class="container">
-        <div class="tabs">
-            <div class="tab active" data-tab="auctions">Аукционы</div>
-            <div class="tab" data-tab="my-lots">Мои лоты</div>
-            <div class="tab" data-tab="add-lot">Добавить лот</div>
-            <div class="tab" data-tab="profile">Профиль</div>
-        </div>
-        
-        <!-- Вкладка Аукционы -->
-        <div id="auctions" class="tab-content active">
-            <div id="auctions-list">
-                <!-- Лоты будут загружены здесь -->
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <p>Загрузка аукционов...</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Вкладка Мои лоты -->
-        <div id="my-lots" class="tab-content">
-            <div id="my-lots-list">
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <p>Загрузка ваших лотов...</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Вкладка Добавление лота -->
-        <div id="add-lot" class="tab-content">
-            <form id="lot-form">
-                <div class="form-group">
-                    <label for="lot-title">Название лота</label>
-                    <input type="text" id="lot-title" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="lot-description">Описание</label>
-                    <textarea id="lot-description" required></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="lot-category">Категория</label>
-                    <select id="lot-category" required>
-                        <option value="">Выберите категорию</option>
-                        <option value="electronics">Электроника</option>
-                        <option value="fashion">Мода</option>
-                        <option value="home">Дом и сад</option>
-                        <option value="collectibles">Коллекционные</option>
-                        <option value="sports">Спорт</option>
-                        <option value="other">Другое</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="lot-start-price">Начальная цена</label>
-                    <input type="number" id="lot-start-price" min="1" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="lot-min-bid">Минимальная ставка</label>
-                    <input type="number" id="lot-min-bid" min="1" value="10">
-                </div>
-                
-                <div class="form-group">
-                    <label for="lot-end-date">Дата окончания аукциона</label>
-                    <input type="datetime-local" id="lot-end-date" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="lot-image">Изображение лота</label>
-                    <input type="file" id="lot-image" accept="image/*">
-                    <img id="image-preview" class="preview-image">
-                </div>
-                
-                <button type="submit" class="btn btn-accent">Разместить лот</button>
-            </form>
-        </div>
-        
-        <!-- Вкладка Профиль -->
-        <div id="profile" class="tab-content">
-            <div class="user-profile">
-                <img id="user-avatar" class="user-avatar" src="https://via.placeholder.com/50" alt="Аватар">
-                <div>
-                    <div id="user-name" class="user-name">Имя пользователя</div>
-                    <div class="user-rating">Рейтинг: <span id="user-rating">5.0</span> ★</div>
-                </div>
-            </div>
-            
-            <div class="card">
-                <div class="card-body">
-                    <h3 class="card-title">Мои данные</h3>
-                    <div class="form-group">
-                        <label for="profile-phone">Телефон</label>
-                        <input type="tel" id="profile-phone" placeholder="+7 (XXX) XXX-XX-XX">
-                    </div>
-                    <div class="form-group">
-                        <label for="profile-address">Адрес</label>
-                        <textarea id="profile-address" placeholder="Ваш адрес для доставки"></textarea>
-                    </div>
-                    <button id="save-profile" class="btn">Сохранить</button>
-                </div>
-            </div>
-            
-            <div class="card">
-                <div class="card-body">
-                    <h3 class="card-title">Мои ставки</h3>
-                    <div id="user-bids">
-                        <div class="bid-item">
-                            <div>
-                                <div class="bid-user">Лот #123</div>
-                                <div class="bid-time">12.05.2023 14:30</div>
-                            </div>
-                            <div class="bid-amount">1 250 ₽</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Модальное окно лота -->
-    <div id="lot-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto; padding: 20px;">
-        <div style="background: white; border-radius: 10px; max-width: 500px; margin: 20px auto; overflow: hidden;">
-            <div style="position: relative;">
-                <img id="modal-lot-image" src="" style="width: 100%; height: 250px; object-fit: cover;">
-                <button id="close-modal" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 16px; cursor: pointer;">×</button>
-            </div>
-            
-            <div style="padding: 15px;">
-                <h2 id="modal-lot-title" style="margin-bottom: 10px;"></h2>
-                <div id="modal-lot-description" style="margin-bottom: 15px; color: #666;"></div>
-                
-                <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                    <div>
-                        <div style="font-size: 0.9rem; color: #777;">Текущая цена</div>
-                        <div id="modal-lot-price" style="font-size: 1.5rem; font-weight: bold; color: #ff6b00;"></div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.9rem; color: #777;">До конца</div>
-                        <div id="modal-lot-time" style="font-size: 1.1rem; font-weight: bold;"></div>
-                    </div>
-                </div>
-                
-                <div class="auction-bid">
-                    <input type="number" id="bid-amount" placeholder="Ваша ставка" style="flex: 1;">
-                    <button id="place-bid" class="btn btn-accent">Ставка</button>
-                </div>
-                
-                <div style="margin-top: 20px;">
-                    <h3 style="margin-bottom: 10px; font-size: 1.1rem;">История ставок</h3>
-                    <div id="modal-bid-history" class="bid-history">
-                        <!-- История ставок будет здесь -->
-                    </div>
-                </div>
-                
-                <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
-                    <div style="display: flex; align-items: center; margin-bottom: 15px;">
-                        <img id="modal-seller-avatar" src="https://via.placeholder.com/40" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px;">
-                        <div>
-                            <div id="modal-seller-name" style="font-weight: 500;"></div>
-                            <div id="modal-seller-rating" style="font-size: 0.8rem; color: #777;">Рейтинг: 4.9 ★ (24 отзыва)</div>
-                        </div>
-                    </div>
-                    <button id="contact-seller" class="btn" style="margin-top: 10px;">Связаться с продавцом</button>
-                </div>
-            </div>
-        </div>
+    <div class="header">
+        <input type="text" class="search-input" placeholder="Поиск...">
     </div>
 
-    <script>
-        // Инициализация Telegram WebApp
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        
-        // Получаем данные пользователя
-        const user = tg.initDataUnsafe.user || {
-            id: 123456789,
-            first_name: "Тестовый",
-            last_name: "Пользователь",
-            username: "testuser",
-            photo_url: "https://via.placeholder.com/150"
-        };
-        
-        // Элементы интерфейса
-        const tabs = document.querySelectorAll('.tab');
-        const tabContents = document.querySelectorAll('.tab-content');
-        const lotForm = document.getElementById('lot-form');
-        const imageInput = document.getElementById('lot-image');
-        const imagePreview = document.getElementById('image-preview');
-        const auctionsList = document.getElementById('auctions-list');
-        const myLotsList = document.getElementById('my-lots-list');
-        const lotModal = document.getElementById('lot-modal');
-        const closeModal = document.getElementById('close-modal');
-        
-        // Данные приложения (в реальном приложении будут запрашиваться с сервера)
-        let auctions = [];
-        let myLots = [];
-        let bids = [];
-        
-        // Инициализация приложения
-        document.addEventListener('DOMContentLoaded', function() {
-            // Настройка вкладок
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tabContents.forEach(c => c.classList.remove('active'));
-                    
-                    tab.classList.add('active');
-                    const tabId = tab.getAttribute('data-tab');
-                    document.getElementById(tabId).classList.add('active');
-                    
-                    // При переключении на "Мои лоты" обновляем список
-                    if (tabId === 'my-lots') {
-                        loadMyLots();
-                    }
-                });
-            });
-            
-            // Загрузка изображения для лота
-            imageInput.addEventListener('change', function(e) {
-                if (e.target.files && e.target.files[0]) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        imagePreview.src = event.target.result;
-                        imagePreview.style.display = 'block';
-                    };
-                    reader.readAsDataURL(e.target.files[0]);
-                }
-            });
-            
-            // Отправка формы добавления лота
-            lotForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const newLot = {
-                    id: Date.now(),
-                    title: document.getElementById('lot-title').value,
-                    description: document.getElementById('lot-description').value,
-                    category: document.getElementById('lot-category').value,
-                    startPrice: parseInt(document.getElementById('lot-start-price').value),
-                    minBid: parseInt(document.getElementById('lot-min-bid').value),
-                    endDate: new Date(document.getElementById('lot-end-date').value),
-                    image: imagePreview.src || 'https://via.placeholder.com/300',
-                    seller: {
-                        id: user.id,
-                        name: `${user.first_name} ${user.last_name || ''}`,
-                        avatar: user.photo_url || 'https://via.placeholder.com/150',
-                        rating: 5.0
-                    },
-                    bids: [],
-                    currentPrice: parseInt(document.getElementById('lot-start-price').value),
-                    createdAt: new Date()
-                };
-                
-                // Добавляем лот в "мои лоты"
-                myLots.push(newLot);
-                auctions.push(newLot);
-                
-                // Очищаем форму
-                lotForm.reset();
-                imagePreview.style.display = 'none';
-                imagePreview.src = '';
-                
-                // Показываем уведомление
-                alert('Лот успешно добавлен!');
-                
-                // Переключаем на вкладку "Мои лоты"
-                document.querySelector('.tab[data-tab="my-lots"]').click();
-            });
-            
-            // Закрытие модального окна
-            closeModal.addEventListener('click', function() {
-                lotModal.classList.add('hidden');
-            });
-            
-            // Загрузка данных
-            loadAuctions();
-            loadProfile();
-        });
-        
-        // Загрузка списка аукционов
-        function loadAuctions() {
-            // В реальном приложении здесь будет запрос к серверу
-            setTimeout(() => {
-                // Пример данных
-                auctions = [
-                    {
-                        id: 1,
-                        title: "Apple iPhone 13 Pro 128GB",
-                        description: "Новый, в оригинальной упаковке. Гарантия 12 месяцев.",
-                        category: "electronics",
-                        startPrice: 75000,
-                        minBid: 1000,
-                        currentPrice: 82000,
-                        endDate: new Date(Date.now() + 86400000 * 3), // Через 3 дня
-                        image: "https://via.placeholder.com/300x200?text=iPhone+13+Pro",
-                        seller: {
-                            id: 987654321,
-                            name: "Иван Петров",
-                            avatar: "https://via.placeholder.com/150",
-                            rating: 4.8
-                        },
-                        bids: [
-                            { userId: 111111111, amount: 80000, time: new Date(Date.now() - 3600000) },
-                            { userId: 222222222, amount: 82000, time: new Date(Date.now() - 1800000) }
-                        ],
-                        createdAt: new Date(Date.now() - 86400000)
-                    },
-                    {
-                        id: 2,
-                        title: "Наручные часы Rolex Submariner",
-                        description: "Отличное состояние, полный комплект. 2018 год выпуска.",
-                        category: "collectibles",
-                        startPrice: 450000,
-                        minBid: 5000,
-                        currentPrice: 480000,
-                        endDate: new Date(Date.now() + 86400000), // Через 1 день
-                        image: "https://via.placeholder.com/300x200?text=Rolex+Submariner",
-                        seller: {
-                            id: 555555555,
-                            name: "Алексей Смирнов",
-                            avatar: "https://via.placeholder.com/150",
-                            rating: 4.9
-                        },
-                        bids: [
-                            { userId: 333333333, amount: 460000, time: new Date(Date.now() - 7200000) },
-                            { userId: 444444444, amount: 470000, time: new Date(Date.now() - 3600000) },
-                            { userId: 111111111, amount: 480000, time: new Date(Date.now() - 1800000) }
-                        ],
-                        createdAt: new Date(Date.now() - 86400000 * 2)
-                    }
-                ];
-                
-                renderAuctions();
-            }, 1000);
-        }
-        
-        // Загрузка "моих лотов"
-        function loadMyLots() {
-            // В реальном приложении здесь будет запрос к серверу с фильтрацией по seller.id
-            setTimeout(() => {
-                // Фильтруем лоты текущего пользователя
-                myLots = auctions.filter(lot => lot.seller.id === user.id);
-                
-                if (myLots.length === 0) {
-                    myLotsList.innerHTML = '<div class="no-items">У вас пока нет активных лотов</div>';
-                } else {
-                    renderMyLots();
-                }
-            }, 500);
-        }
-        
-        // Загрузка профиля пользователя
-        function loadProfile() {
-            document.getElementById('user-name').textContent = `${user.first_name} ${user.last_name || ''}`;
-            if (user.photo_url) {
-                document.getElementById('user-avatar').src = user.photo_url;
-            }
-        }
-        
-        // Отрисовка списка аукционов
-        function renderAuctions() {
-            if (auctions.length === 0) {
-                auctionsList.innerHTML = '<div class="no-items">Нет активных аукционов</div>';
-                return;
-            }
-            
-            let html = '';
-            auctions.forEach(lot => {
-                const timeLeft = getTimeLeft(lot.endDate);
-                
-                html += `
-                    <div class="card" data-id="${lot.id}">
-                        <img src="${lot.image}" class="card-img" alt="${lot.title}">
-                        <div class="card-body">
-                            <h3 class="card-title">${lot.title}</h3>
-                            <p class="card-text">${lot.description.substring(0, 60)}...</p>
-                            <div class="card-price">${formatPrice(lot.currentPrice)} ₽</div>
-                            <div class="card-time">До конца: ${timeLeft}</div>
-                            <button class="btn btn-view-lot">Подробнее</button>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            auctionsList.innerHTML = html;
-            
-            // Добавляем обработчики для кнопок "Подробнее"
-            document.querySelectorAll('.btn-view-lot').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const lotId = parseInt(this.closest('.card').getAttribute('data-id'));
-                    openLotModal(lotId);
-                });
-            });
-        }
-        
-        // Отрисовка "моих лотов"
-        function renderMyLots() {
-            let html = '';
-            myLots.forEach(lot => {
-                const timeLeft = getTimeLeft(lot.endDate);
-                const bidCount = lot.bids.length;
-                
-                html += `
-                    <div class="card" data-id="${lot.id}">
-                        <img src="${lot.image}" class="card-img" alt="${lot.title}">
-                        <div class="card-body">
-                            <h3 class="card-title">${lot.title}</h3>
-                            <p class="card-text">${lot.description.substring(0, 60)}...</p>
-                            <div class="card-price">${formatPrice(lot.currentPrice)} ₽</div>
-                            <div class="card-time">До конца: ${timeLeft}</div>
-                            <div class="card-text">Ставок: ${bidCount}</div>
-                            <button class="btn btn-view-lot">Подробнее</button>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            myLotsList.innerHTML = html;
-            
-            // Добавляем обработчики для кнопок "Подробнее"
-            document.querySelectorAll('.btn-view-lot').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const lotId = parseInt(this.closest('.card').getAttribute('data-id'));
-                    openLotModal(lotId);
-                });
-            });
-        }
-        
-        // Открытие модального окна лота
-        function openLotModal(lotId) {
-            const lot = auctions.find(l => l.id === lotId);
-            if (!lot) return;
-            
-            // Заполняем данные лота
-            document.getElementById('modal-lot-title').textContent = lot.title;
-            document.getElementById('modal-lot-description').textContent = lot.description;
-            document.getElementById('modal-lot-price').textContent = `${formatPrice(lot.currentPrice)} ₽`;
-            document.getElementById('modal-lot-time').textContent = getTimeLeft(lot.endDate);
-            document.getElementById('modal-lot-image').src = lot.image;
-            document.getElementById('modal-seller-name').textContent = lot.seller.name;
-            document.getElementById('modal-seller-avatar').src = lot.seller.avatar;
-            document.getElementById('modal-seller-rating').textContent = `Рейтинг: ${lot.seller.rating} ★`;
-            
-            // Заполняем историю ставок
-            const bidHistory = document.getElementById('modal-bid-history');
-            bidHistory.innerHTML = '';
-            
-            if (lot.bids.length === 0) {
-                bidHistory.innerHTML = '<div style="padding: 10px; text-align: center; color: #777;">Ставок пока нет</div>';
-            } else {
-                lot.bids.forEach(bid => {
-                    const bidItem = document.createElement('div');
-                    bidItem.className = 'bid-item';
-                    bidItem.innerHTML = `
-                        <div>
-                            <div class="bid-user">Пользователь #${bid.userId.toString().substring(0, 3)}</div>
-                            <div class="bid-time">${formatDate(bid.time)}</div>
-                        </div>
-                        <div class="bid-amount">${formatPrice(bid.amount)} ₽</div>
-                    `;
-                    bidHistory.appendChild(bidItem);
-                });
-            }
-            
-            // Настройка кнопки ставки
-            const placeBidBtn = document.getElementById('place-bid');
-            const bidAmountInput = document.getElementById('bid-amount');
-            
-            placeBidBtn.onclick = function() {
-                const bidAmount = parseInt(bidAmountInput.value);
-                if (isNaN(bidAmount) || bidAmount <= lot.currentPrice) {
-                    alert(`Ваша ставка должна быть выше текущей цены (${lot.currentPrice} ₽)`);
-                    return;
-                }
-                
-                if (bidAmount < lot.currentPrice + lot.minBid) {
-                    alert(`Минимальная ставка: ${lot.currentPrice + lot.minBid} ₽`);
-                    return;
-                }
-                
-                // Добавляем ставку
-                const newBid = {
-                    userId: user.id,
-                    amount: bidAmount,
-                    time: new Date()
-                };
-                
-                lot.bids.push(newBid);
-                lot.currentPrice = bidAmount;
-                
-                // Обновляем данные в модальном окне
-                document.getElementById('modal-lot-price').textContent = `${formatPrice(lot.currentPrice)} ₽`;
-                
-                // Добавляем новую ставку в историю
-                const bidItem = document.createElement('div');
-                bidItem.className = 'bid-item';
-                bidItem.innerHTML = `
-                    <div>
-                        <div class="bid-user">Вы</div>
-                        <div class="bid-time">Только что</div>
-                    </div>
-                    <div class="bid-amount">${formatPrice(bidAmount)} ₽</div>
-                `;
-                bidHistory.insertBefore(bidItem, bidHistory.firstChild);
-                
-                // Очищаем поле ввода
-                bidAmountInput.value = '';
-                
-                // Обновляем списки лотов
-                renderAuctions();
-                if (document.querySelector('.tab.active').getAttribute('data-tab') === 'my-lots') {
-                    renderMyLots();
-                }
-                
-                alert('Ваша ставка принята!');
-            };
-            
-            // Показываем модальное окно
-            lotModal.classList.remove('hidden');
-        }
-        
-        // Вспомогательные функции
-        function formatPrice(price) {
-            return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        }
-        
-        function formatDate(date) {
-            return date.toLocaleString('ru-RU', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        }
-        
-        function getTimeLeft(endDate) {
-            const now = new Date();
-            const diff = endDate - now;
-            
-            if (diff <= 0) return 'Аукцион завершен';
-            
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            
-            if (days > 0) return `${days}д ${hours}ч`;
-            if (hours > 0) return `${hours}ч ${minutes}м`;
-            return `${minutes} минут`;
-        }
-    </script>
+    <div class="main-content">
+        <!-- Здесь будет основной контент -->
+    </div>
+
+    <div class="footer">
+        <button class="nav-button">🔍 Поиск</button>
+        <button class="nav-button">⭐ Избранное</button>
+        <button class="nav-button">💬 Чат</button>
+        <button class="nav-button">⋮ Еще</button>
+    </div>
 </body>
 </html>
