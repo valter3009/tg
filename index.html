@@ -217,6 +217,75 @@
             font-weight: bold;
             cursor: pointer;
         }
+
+        /* More page styles */
+        .more-menu-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            cursor: pointer;
+        }
+        
+        .more-menu-icon {
+            margin-right: 15px;
+            font-size: 20px;
+        }
+        
+        /* Profile modal styles */
+        .profile-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 15px;
+        }
+        
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: #333;
+            margin-bottom: 20px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+        }
+        
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .profile-name {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .profile-username {
+            font-size: 16px;
+            color: #999;
+            margin-bottom: 25px;
+        }
+        
+        .profile-info {
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .profile-info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .profile-info-label {
+            color: #999;
+        }
     </style>
 </head>
 <body>
@@ -260,8 +329,21 @@
     
     <!-- More Page -->
     <div class="page" id="more-page">
-        <div class="content-area">
-            Страница дополнительных функций
+        <div class="more-menu-item" id="open-profile">
+            <div class="more-menu-icon">👤</div>
+            <div>Личный кабинет</div>
+        </div>
+        <div class="more-menu-item">
+            <div class="more-menu-icon">⚙️</div>
+            <div>Настройки</div>
+        </div>
+        <div class="more-menu-item">
+            <div class="more-menu-icon">❓</div>
+            <div>Помощь</div>
+        </div>
+        <div class="more-menu-item">
+            <div class="more-menu-icon">📄</div>
+            <div>Условия использования</div>
         </div>
     </div>
 
@@ -298,6 +380,36 @@
             </div>
         </div>
         <button class="apply-button" id="apply-filter">Применить</button>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal" id="profile-modal">
+        <div class="modal-header">
+            <button class="back-button" id="close-profile">←</button>
+            <div class="modal-title">
+                <span class="filter-icon">👤</span>Личный кабинет
+            </div>
+        </div>
+        <div class="modal-content">
+            <div class="profile-content">
+                <div class="profile-avatar" id="profile-avatar">
+                    <!-- Telegram photo will be loaded here -->
+                </div>
+                <div class="profile-name" id="profile-name">Имя пользователя</div>
+                <div class="profile-username" id="profile-username">@username</div>
+                
+                <div class="profile-info">
+                    <div class="profile-info-item">
+                        <div>Номер телефона</div>
+                        <div class="profile-info-label" id="profile-phone">+7 *** *** ** **</div>
+                    </div>
+                    <div class="profile-info-item">
+                        <div>Подписка</div>
+                        <div class="profile-info-label">Базовая</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Bottom Navigation -->
@@ -395,6 +507,65 @@
         document.getElementById('categories-filter').addEventListener('click', function() {
             // Add categories filter functionality here
             console.log('Категории clicked');
+        });
+        
+        // Profile modal functionality
+        const openProfile = document.getElementById('open-profile');
+        const closeProfile = document.getElementById('close-profile');
+        const profileModal = document.getElementById('profile-modal');
+        
+        // Open profile modal
+        openProfile.addEventListener('click', function() {
+            profileModal.style.display = 'flex';
+            loadTelegramUserData();
+        });
+        
+        // Close profile modal
+        closeProfile.addEventListener('click', function() {
+            profileModal.style.display = 'none';
+        });
+        
+        // Load Telegram user data
+        function loadTelegramUserData() {
+            // Check if Telegram WebApp is available
+            if (window.Telegram && window.Telegram.WebApp) {
+                const user = window.Telegram.WebApp.initDataUnsafe.user;
+                
+                if (user) {
+                    // Update profile data
+                    document.getElementById('profile-name').textContent = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+                    document.getElementById('profile-username').textContent = user.username ? '@' + user.username : '';
+                    
+                    // Update profile avatar
+                    const avatarElement = document.getElementById('profile-avatar');
+                    
+                    if (user.photo_url) {
+                        avatarElement.innerHTML = `<img src="${user.photo_url}" alt="Profile Photo">`;
+                    } else {
+                        // If no photo available, use initials
+                        const initials = user.first_name.charAt(0) + (user.last_name ? user.last_name.charAt(0) : '');
+                        avatarElement.innerHTML = initials;
+                    }
+                }
+            } else {
+                // Fallback for testing outside Telegram
+                console.log('Telegram WebApp not available. Using placeholder data.');
+                document.getElementById('profile-name').textContent = 'Иван Иванов';
+                document.getElementById('profile-username').textContent = '@ivanov';
+                document.getElementById('profile-avatar').innerHTML = 'ИИ';
+            }
+        }
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if the app is running inside Telegram WebApp
+            if (window.Telegram && window.Telegram.WebApp) {
+                // Tell Telegram WebApp that we are ready
+                window.Telegram.WebApp.ready();
+                
+                // Set the expanded state to improve user experience
+                window.Telegram.WebApp.expand();
+            }
         });
     </script>
 </body>
