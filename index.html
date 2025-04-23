@@ -47,6 +47,16 @@
         .content-area {
             flex: 1;
             display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        
+        .content-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
             align-items: center;
             justify-content: center;
             font-size: 20px;
@@ -217,40 +227,45 @@
             font-weight: bold;
             cursor: pointer;
         }
-
-        /* More page styles */
-        .more-menu-item {
+        
+        /* More Menu Styles */
+        .menu-item {
             display: flex;
             align-items: center;
-            padding: 15px;
+            padding: 16px 15px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             cursor: pointer;
         }
         
-        .more-menu-icon {
+        .menu-item-icon {
+            width: 24px;
+            height: 24px;
             margin-right: 15px;
-            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
         }
         
-        /* Profile modal styles */
-        .profile-content {
+        /* Profile Modal Styles */
+        .profile-header {
+            padding: 30px 20px;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            padding: 30px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
         
         .profile-avatar {
-            width: 100px;
-            height: 100px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
-            background-color: #333;
-            margin-bottom: 20px;
             overflow: hidden;
+            background-color: #2a2a2a;
             display: flex;
-            justify-content: center;
             align-items: center;
-            font-size: 40px;
+            justify-content: center;
+            font-size: 36px;
+            margin-right: 20px;
         }
         
         .profile-avatar img {
@@ -259,32 +274,19 @@
             object-fit: cover;
         }
         
-        .profile-name {
-            font-size: 22px;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-        
-        .profile-username {
-            font-size: 16px;
-            color: #999;
-            margin-bottom: 25px;
-        }
-        
         .profile-info {
-            width: 100%;
-            margin-top: 20px;
+            flex: 1;
         }
         
-        .profile-info-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        .profile-name {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 5px;
         }
         
-        .profile-info-label {
+        .profile-email {
             color: #999;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -301,49 +303,51 @@
                 </svg>
             </div>
         </div>
-        <div class="content-area">
+        <div class="content-placeholder">
             Содержимое страницы поиска
         </div>
     </div>
     
     <!-- Favorites Page -->
     <div class="page" id="favorites-page">
-        <div class="content-area">
+        <div class="content-placeholder">
             Страница избранного
         </div>
     </div>
     
     <!-- Monitoring Page -->
     <div class="page" id="monitoring-page">
-        <div class="content-area">
+        <div class="content-placeholder">
             Страница мониторинга
         </div>
     </div>
     
     <!-- Chat Page -->
     <div class="page" id="chat-page">
-        <div class="content-area">
+        <div class="content-placeholder">
             Страница чата
         </div>
     </div>
     
     <!-- More Page -->
     <div class="page" id="more-page">
-        <div class="more-menu-item" id="open-profile">
-            <div class="more-menu-icon">👤</div>
-            <div>Личный кабинет</div>
-        </div>
-        <div class="more-menu-item">
-            <div class="more-menu-icon">⚙️</div>
-            <div>Настройки</div>
-        </div>
-        <div class="more-menu-item">
-            <div class="more-menu-icon">❓</div>
-            <div>Помощь</div>
-        </div>
-        <div class="more-menu-item">
-            <div class="more-menu-icon">📄</div>
-            <div>Условия использования</div>
+        <div class="content-area">
+            <div class="menu-item" id="profile-menu-item">
+                <div class="menu-item-icon">👤</div>
+                <div>Личный кабинет</div>
+            </div>
+            <div class="menu-item">
+                <div class="menu-item-icon">⚙️</div>
+                <div>Настройки</div>
+            </div>
+            <div class="menu-item">
+                <div class="menu-item-icon">❓</div>
+                <div>Помощь</div>
+            </div>
+            <div class="menu-item">
+                <div class="menu-item-icon">📜</div>
+                <div>Условия использования</div>
+            </div>
         </div>
     </div>
 
@@ -381,7 +385,7 @@
         </div>
         <button class="apply-button" id="apply-filter">Применить</button>
     </div>
-
+    
     <!-- Profile Modal -->
     <div class="modal" id="profile-modal">
         <div class="modal-header">
@@ -391,22 +395,27 @@
             </div>
         </div>
         <div class="modal-content">
-            <div class="profile-content">
-                <div class="profile-avatar" id="profile-avatar">
-                    <!-- Telegram photo will be loaded here -->
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <img src="https://api.dicebear.com/6.x/avataaars/svg?seed=Felix" alt="Аватар пользователя">
                 </div>
-                <div class="profile-name" id="profile-name">Имя пользователя</div>
-                <div class="profile-username" id="profile-username">@username</div>
-                
                 <div class="profile-info">
-                    <div class="profile-info-item">
-                        <div>Номер телефона</div>
-                        <div class="profile-info-label" id="profile-phone">+7 *** *** ** **</div>
-                    </div>
-                    <div class="profile-info-item">
-                        <div>Подписка</div>
-                        <div class="profile-info-label">Базовая</div>
-                    </div>
+                    <div class="profile-name">Иван Петров</div>
+                    <div class="profile-email">ivan.petrov@example.com</div>
+                </div>
+            </div>
+            <div class="filter-section">
+                <div class="filter-item">
+                    <div>Мои покупки</div>
+                    <div class="chevron">›</div>
+                </div>
+                <div class="filter-item">
+                    <div>История просмотров</div>
+                    <div class="chevron">›</div>
+                </div>
+                <div class="filter-item">
+                    <div>Уведомления</div>
+                    <div class="chevron">›</div>
                 </div>
             </div>
         </div>
@@ -470,6 +479,11 @@
         const filterModal = document.getElementById('filter-modal');
         const applyFilter = document.getElementById('apply-filter');
         
+        // Profile modal functionality
+        const profileMenuItem = document.getElementById('profile-menu-item');
+        const closeProfile = document.getElementById('close-profile');
+        const profileModal = document.getElementById('profile-modal');
+        
         // Checkboxes
         const auctionCheckbox = document.getElementById('auction-checkbox');
         const publicOfferCheckbox = document.getElementById('public-offer-checkbox');
@@ -487,6 +501,16 @@
         // Apply filter
         applyFilter.addEventListener('click', function() {
             filterModal.style.display = 'none';
+        });
+        
+        // Open profile modal
+        profileMenuItem.addEventListener('click', function() {
+            profileModal.style.display = 'flex';
+        });
+        
+        // Close profile modal
+        closeProfile.addEventListener('click', function() {
+            profileModal.style.display = 'none';
         });
         
         // Toggle checkboxes
@@ -507,65 +531,6 @@
         document.getElementById('categories-filter').addEventListener('click', function() {
             // Add categories filter functionality here
             console.log('Категории clicked');
-        });
-        
-        // Profile modal functionality
-        const openProfile = document.getElementById('open-profile');
-        const closeProfile = document.getElementById('close-profile');
-        const profileModal = document.getElementById('profile-modal');
-        
-        // Open profile modal
-        openProfile.addEventListener('click', function() {
-            profileModal.style.display = 'flex';
-            loadTelegramUserData();
-        });
-        
-        // Close profile modal
-        closeProfile.addEventListener('click', function() {
-            profileModal.style.display = 'none';
-        });
-        
-        // Load Telegram user data
-        function loadTelegramUserData() {
-            // Check if Telegram WebApp is available
-            if (window.Telegram && window.Telegram.WebApp) {
-                const user = window.Telegram.WebApp.initDataUnsafe.user;
-                
-                if (user) {
-                    // Update profile data
-                    document.getElementById('profile-name').textContent = user.first_name + (user.last_name ? ' ' + user.last_name : '');
-                    document.getElementById('profile-username').textContent = user.username ? '@' + user.username : '';
-                    
-                    // Update profile avatar
-                    const avatarElement = document.getElementById('profile-avatar');
-                    
-                    if (user.photo_url) {
-                        avatarElement.innerHTML = `<img src="${user.photo_url}" alt="Profile Photo">`;
-                    } else {
-                        // If no photo available, use initials
-                        const initials = user.first_name.charAt(0) + (user.last_name ? user.last_name.charAt(0) : '');
-                        avatarElement.innerHTML = initials;
-                    }
-                }
-            } else {
-                // Fallback for testing outside Telegram
-                console.log('Telegram WebApp not available. Using placeholder data.');
-                document.getElementById('profile-name').textContent = 'Иван Иванов';
-                document.getElementById('profile-username').textContent = '@ivanov';
-                document.getElementById('profile-avatar').innerHTML = 'ИИ';
-            }
-        }
-        
-        // Initialize the app
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if the app is running inside Telegram WebApp
-            if (window.Telegram && window.Telegram.WebApp) {
-                // Tell Telegram WebApp that we are ready
-                window.Telegram.WebApp.ready();
-                
-                // Set the expanded state to improve user experience
-                window.Telegram.WebApp.expand();
-            }
         });
     </script>
 </body>
