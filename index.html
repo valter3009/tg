@@ -1,115 +1,32 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Telegram WebApp</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * {
+        body {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', sans-serif;
-        }
-
-        body {
+            background-color: #2a3439; /* Цвет антрацит */
             height: 100vh;
-            background: #1a1a2f;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .header {
-            height: 10%;
-            padding: 12px;
-            background: #2a2a4a;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        .search-input {
-            width: 100%;
-            height: 100%;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 25px;
-            background: #3a3a5a;
-            color: #e6e6ff;
-            font-size: 16px;
-            outline: none;
-            transition: all 0.3s;
-        }
-
-        .search-input::placeholder {
-            color: #8888bb;
-        }
-
-        .search-input:focus {
-            background: #4a4a6a;
-            box-shadow: 0 0 8px rgba(134, 134, 255, 0.2);
-        }
-
-        .main-content {
-            height: 80%;
-            background: #252542;
-            padding: 16px;
-            overflow-y: auto;
-        }
-
-        .footer {
-            height: 10%;
-            background: #2a2a4a;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 0 10px;
-            border-top: 1px solid #3a3a5a;
-        }
-
-        .nav-button {
-            background: none;
-            border: none;
-            color: #b8b8e6;
-            padding: 12px 24px;
-            border-radius: 20px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .nav-button:hover {
-            background: #3a3a5a;
-            transform: translateY(-2px);
-        }
-
-        .nav-button:active {
-            transform: translateY(0);
-        }
-
-        @media (max-width: 480px) {
-            .nav-button {
-                padding: 12px;
-                font-size: 12px;
-            }
+            font-family: Arial, sans-serif;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <input type="text" class="search-input" placeholder="Поиск...">
-    </div>
-
-    <div class="main-content">
-        <!-- Здесь будет основной контент -->
-    </div>
-
-    <div class="footer">
-        <button class="nav-button">🔍 Поиск</button>
-        <button class="nav-button">⭐ Избранное</button>
-        <button class="nav-button">💬 Чат</button>
-        <button class="nav-button">⋮ Еще</button>
-    </div>
+    <!-- Пустой экран (можно добавить любой контент) -->
+    
+    <script>
+        const tg = window.Telegram.WebApp;
+        
+        // Инициализация (если нужно)
+        tg.expand(); // Развернуть WebApp на весь экран
+        
+        // Пример: можно добавить кнопку или логику
+        // tg.MainButton.text = "Готово";
+        // tg.MainButton.show();
+    </script>
 </body>
 </html>
