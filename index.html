@@ -288,6 +288,29 @@
             color: #999;
             font-size: 14px;
         }
+        
+        /* Logout button */
+        .logout-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: transparent;
+            color: #ff5252;
+            padding: 12px 15px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            border: 1px solid rgba(255, 82, 82, 0.5);
+            margin-top: 20px;
+        }
+        
+        .logout-button:hover {
+            background-color: rgba(255, 82, 82, 0.1);
+        }
+        
+        .logout-icon {
+            margin-right: 8px;
+        }
     </style>
 </head>
 <body>
@@ -396,12 +419,12 @@
         </div>
         <div class="modal-content">
             <div class="profile-header">
-                <div class="profile-avatar">
-                    <img src="https://api.dicebear.com/6.x/avataaars/svg?seed=Felix" alt="Аватар пользователя">
+                <div class="profile-avatar" id="user-avatar">
+                    <!-- Аватар пользователя будет загружен из Telegram -->
                 </div>
                 <div class="profile-info">
-                    <div class="profile-name">Иван Петров</div>
-                    <div class="profile-email">ivan.petrov@example.com</div>
+                    <div class="profile-name" id="user-name">Загрузка...</div>
+                    <div class="profile-email" id="user-username">@username</div>
                 </div>
             </div>
             <div class="filter-section">
@@ -417,6 +440,12 @@
                     <div>Уведомления</div>
                     <div class="chevron">›</div>
                 </div>
+            </div>
+            
+            <div style="padding: 20px 15px;">
+                <button class="logout-button" id="logout-button">
+                    <span class="logout-icon">⟲</span>Выйти из аккаунта
+                </button>
             </div>
         </div>
     </div>
@@ -446,6 +475,72 @@
     </div>
 
     <script>
+        // Проверка авторизации
+        function checkAuth() {
+            fetch('/api/auth/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.authenticated) {
+                        // Если пользователь не авторизован, перенаправляем на страницу входа
+                        window.location.href = '/login';
+                    } else {
+                        // Обновляем информацию о пользователе
+                        updateUserInfo(data.user);
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка проверки статуса авторизации:', error);
+                });
+        }
+        
+        // Обновление информации о пользователе
+        function updateUserInfo(user) {
+            // Обновление данных в модальном окне профиля
+            const userAvatar = document.getElementById('user-avatar');
+            const userUsername = document.getElementById('user-username');
+            
+            if (userAvatar) {
+                if (user.photo_url) {
+                    userAvatar.innerHTML = `<img src="${user.photo_url}" alt="Аватар пользователя">`;
+                } else {
+                    // Если у пользователя нет фото, показываем первую букву имени
+                    const firstLetter = (user.first_name || 'U').charAt(0).toUpperCase();
+                    userAvatar.innerHTML = firstLetter;
+                }
+            }
+            
+            if (userName) {
+                const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
+                userName.textContent = fullName || 'Пользователь Telegram';
+            }
+            
+            if (userUsername) {
+                userUsername.textContent = user.username ? `@${user.username}` : '';
+            }
+        }
+        
+        // Выход из системы
+        function logout() {
+            fetch('/logout')
+                .then(() => {
+                    window.location.href = '/login';
+                })
+                .catch(error => {
+                    console.error('Ошибка при выходе из системы:', error);
+                });
+        }
+        
+        // Выполняем проверку авторизации при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            
+            // Кнопка выхода из системы
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', logout);
+            }
+        });
+    
         // Get all navigation items
         const navItems = document.querySelectorAll('.nav-item');
         
