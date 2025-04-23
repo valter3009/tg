@@ -2,31 +2,2230 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram WebApp</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>IDTrade WebApp</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/decimal.js/10.4.3/decimal.min.js"></script>
     <style>
+        :root {
+            --tg-theme-bg-color: #0a0a0a; /* Черный фон для контраста */
+            --tg-theme-secondary-bg-color: #1a1a1a; /* Темно-серый для второстепенных элементов */
+            --tg-theme-text-color: #ffffff; /* Белый текст */
+            --tg-theme-hint-color: #9ca3af; /* Серый для подсказок */
+            --tg-theme-button-color: #00ff88; /* Неоново-зеленый для кнопок */
+            --tg-theme-button-text-color: #000000; /* Черный текст на кнопках */
+            --neon-blue: #00bfff; /* Неоново-голубой */
+            --neon-pink: #ff00ff; /* Неоново-розовый */
+            --neon-purple: #8a2be2; /* Неоново-фиолетовый */
+            --neon-green: #00ff88; /* Неоново-зеленый */
+            --neon-red: #ff4444; /* Неоново-красный */
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+            --border-radius: 12px;
+            --transition-base: all 0.2s ease-in-out;
+            --glow-intensity: 0.8; /* Интенсивность свечения */
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         body {
+            height: 100vh;
             margin: 0;
             padding: 0;
-            background-color: #2a3439; /* Цвет антрацит */
-            height: 100vh;
-            font-family: Arial, sans-serif;
+            padding-top: 0 !important;
+            overflow-y: auto;
+            background-color: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            font-family: 'Roboto', sans-serif;
+        }
+
+        input, select, button {
+            font-size: 12px;
+            font-family: inherit;
+            transition: var(--transition-base);
+        }
+
+        .fixed-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background-color: var(--tg-theme-secondary-bg-color);
+            box-shadow: var(--shadow-md);
+        }
+
+        .trash-icon {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+
+        .container {
+            padding-top: 132px;
+            height: 100%;
+        }
+
+        .top-panel {
+            background: rgba(26, 26, 26, 0.9); /* Полупрозрачный темно-серый */
+            padding: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .header {
+            padding: 8px;
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 8px;
+            background: rgba(26, 26, 26, 0.9); /* Полупрозрачный темно-серый */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .symbol-input {
+            background: var(--tg-theme-secondary-bg-color);
+            border: 1px solid var(--neon-blue);
+            border-radius: var(--border-radius);
+            color: var(--tg-theme-text-color);
+            padding: 0 12px;
+            width: 100%;
+            height: 30px;
+            font-size: 12px;
+            box-shadow: 0 0 5px var(--neon-blue), 0 0 10px var(--neon-blue);
+        }
+
+        .symbol-input:focus {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue);
+            outline: none;
+        }
+
+        .custom-select-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            width: 180px;
+        }
+
+        .custom-select-header {
+            background: var(--tg-theme-secondary-bg-color);
+            border: 1px solid var(--neon-blue);
+            border-radius: var(--border-radius);
+            color: var(--tg-theme-text-color);
+            padding: 0 24px 0 8px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            position: relative;
+            flex: 1;
+            box-shadow: 0 0 5px var(--neon-blue), 0 0 10px var(--neon-blue);
+        }
+
+        .fees-toggle {
+            background: var(--tg-theme-secondary-bg-color);
+            border: 1px solid var(--neon-purple);
+            border-radius: var(--border-radius);
+            color: var(--tg-theme-text-color);
+            padding: 0 8px;
+            height: 30px;
+            font-size: 10px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: var(--transition-base);
+            box-shadow: 0 0 5px var(--neon-purple), 0 0 10px var(--neon-purple);
+        }
+
+        .fees-toggle.active {
+            background: var(--neon-purple);
+            color: var(--tg-theme-button-text-color);
+            box-shadow: 0 0 10px var(--neon-purple), 0 0 20px var(--neon-purple);
+        }
+
+        .language-toggle {
+            background: var(--tg-theme-secondary-bg-color);
+            border: 1px solid var(--neon-blue);
+            border-radius: var(--border-radius);
+            color: var(--tg-theme-text-color);
+            padding: 0 8px;
+            height: 30px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-right: 8px;
+            box-shadow: 0 0 5px var(--neon-blue), 0 0 10px var(--neon-blue);
+        }
+
+        .language-toggle.active {
+            background: var(--neon-blue);
+            color: var(--tg-theme-button-text-color);
+            box-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue);
+        }
+
+        .exchange-fee.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .custom-select-header::after {
+            content: '';
+            width: 12px;
+            height: 12px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-size: contain;
+            background-repeat: no-repeat;
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .custom-select-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--tg-theme-secondary-bg-color);
+            border: 1px solid var(--neon-blue);
+            border-radius: var(--border-radius);
+            margin-top: 4px;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 0 5px var(--neon-blue), 0 0 10px var(--neon-blue);
+        }
+
+        .custom-select-option {
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .custom-select-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .custom-select-option input {
+            width: 45px;
+            height: 20px;
+            background: var(--tg-theme-secondary-bg-color);
+            border: 1px solid var(--neon-blue);
+            border-radius: var(--border-radius);
+            color: var(--tg-theme-text-color);
+            text-align: center;
+            font-size: 12px;
+            padding: 0 4px;
+            margin-left: 8px;
+            box-shadow: 0 0 5px var(--neon-blue), 0 0 10px var(--neon-blue);
+        }
+
+        .custom-select-container.active .custom-select-options {
+            display: block;
+        }
+
+        .add-button {
+            background: var(--tg-theme-button-color);
+            border: none;
+            border-radius: var(--border-radius);
+            color: var(--tg-theme-button-text-color);
+            padding: 0 12px;
+            height: 30px;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 12px;
+            transition: var(--transition-base);
+            box-shadow: 0 0 10px var(--tg-theme-button-color), 0 0 20px var(--tg-theme-button-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .add-button img {
+            width: 16px;
+            height: 16px;
+        }
+
+        .add-button:active {
+            transform: scale(0.98);
+            background: #00cc77; /* Темнее неоново-зеленый */
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .pairs-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 16px;
+        }
+
+        .pair-item {
+            background: var(--tg-theme-secondary-bg-color);
+            border-radius: var(--border-radius);
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--neon-blue);
+            transition: var(--transition-base);
+            flex-direction: row-reverse;
+            cursor: grab;
+            user-select: none;
+            box-shadow: 0 0 5px var(--neon-blue), 0 0 10px var(--neon-blue);
+        }
+
+        .pair-item:active {
+            cursor: grabbing;
+            transform: scale(0.995);
+        }
+
+        .pair-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--tg-theme-text-color);
+            margin-left: 16px;
+        }
+
+        .price-container {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            min-width: 220px;
+            justify-content: flex-end;
+        }
+
+        .price-button {
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 8px 0; /* Уменьшим padding, чтобы кнопки были плотнее */
+            width: 50px; /* Уменьшим ширину, чтобы две кнопки поместились в 100px */
+            height: 22px;
+            font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+            font-size: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition-base);
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .price-button.left {
+            border-radius: var(--border-radius);
+            margin-right: 4px;
+            flex: 1;
+        }
+
+        .price-button.right {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            margin-left: 4px;
+            padding: 0;
+        }
+
+        .price-button.right img {
+            width: 12px;
+            height: 12px;
+        }
+
+        .price-button.left.bid {
+            background: var(--neon-green);
+            color: black;
+            box-shadow: 0 0 10px var(--neon-green), 0 0 20px var(--neon-green);
+        }
+
+        .price-button.left.ask {
+            background: var(--neon-red);
+            color: black;
+            box-shadow: 0 0 10px var(--neon-red), 0 0 20px var(--neon-red);
+        }
+
+        .price-button.left:active {
+            transform: scale(0.98);
+        }
+
+        .price-button.left.bid:active {
+            background: #00cc77; /* Темнее неоново-зеленый */
+        }
+
+        .price-button.left.ask:active {
+            background: #cc0000; /* Темнее неоново-красный */
+        }
+
+        .equation-remove {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #9ca3af;
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .equation-remove:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .pair-remove {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #9ca3af;
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .pair-remove:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .remove-button:active {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(0.95);
+        }
+
+        .bottom-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .equation-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            height: 30px;
+        }
+
+        .equation-input {
+            flex: 1;
+            height: 30px;
+            background: var(--tg-theme-secondary-bg-color);
+            border: 1px solid var(--neon-blue);
+            border-radius: var(--border-radius);
+            color: var(--tg-theme-text-color);
+            font-size: 12px;
+            padding: 0 8px;
+            box-shadow: 0 0 5px var(--neon-blue), 0 0 10px var(--neon-blue);
+        }
+
+        .equation-input:focus {
+            outline: none;
+            border-color: var(--neon-green);
+            box-shadow: 0 0 10px var(--neon-green), 0 0 20px var(--neon-green);
+        }
+
+        .done-button {
+            height: 30px;
+            padding: 0 12px;
+            background: var(--tg-theme-button-color);
+            border: none;
+            border-radius: var(--border-radius);
+            color: var(--tg-theme-button-text-color);
+            font-size: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+            box-shadow: 0 0 10px var(--tg-theme-button-color), 0 0 20px var(--tg-theme-button-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .done-button img {
+            width: 16px;
+            height: 16px;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-button {
+            background: none;
+            border: none;
+            color: var(--tg-theme-hint-color);
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+        }
+
+        .nav-button.active {
+            color: var(--neon-blue);
+            background: rgba(0, 191, 255, 0.1); /* Неоново-голубой с прозрачностью */
+            box-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue);
+        }
+
+        .equation-item {
+            background: rgba(26, 26, 26, 0.9); /* Полупрозрачный темно-серый */
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            gap: 8px;
+            margin-bottom: 4px;
+            position: relative;
+            border: 1px solid var(--neon-blue);
+            min-width: 0;
+            width: 100%;
+            cursor: grab;
+            user-select: none;
+            box-shadow: 0 0 5px var(--neon-blue), 0 0 10px var(--neon-blue);
+        }
+
+        .equation-item:active {
+            cursor: grabbing;
+        }
+
+        .pair-item, .equation-item {
+            transition: transform 0.2s ease-out;
+            will-change: transform;
+        }
+
+        .equation-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+            padding: 4px 12px;
+            width: 100%;
+        }
+
+        .equation-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            margin-bottom: 2px;
+            width: 100%;
+        }
+
+        .equation-name {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 2px 0;
+            margin: 0;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            word-break: break-word;
+            hyphens: auto;
+            white-space: pre-wrap;
+            line-height: 1.3;
+        }
+
+        .equation-name:focus {
+            border-color: var(--neon-blue);
+            outline: none;
+        }
+
+        .equation-text {
+            width: 100%;
+            font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+            font-size: 10px;
+            color: #9ca3af;
+            line-height: 1.3;
+            word-break: break-all;
+            overflow-wrap: break-word;
+            padding: 2px 0;
+        }
+
+        .equation-result-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 4px;
+        }
+
+        .result {
+            width: 100%;
+            font-family: 'SF Mono', SFMono-Regular, monospace;
+            font-size: 11px;
+            color: var(--tg-theme-button-color); /* Неоново-зеленый */
+            margin-top: 1px;
+            padding: 2px 0;
+        }
+
+        .equation-buttons {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .error {
+            color: #ef4444;
+        }
+
+        .dragging {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .ghost {
+            position: fixed;
+            opacity: 0.8;
+            pointer-events: none;
+            z-index: 9999;
+            transform-origin: 50% 50%;
+            transition: transform 0.2s ease-in-out;
+            background: var(--tg-theme-secondary-bg-color);
+            width: calc(100% - 32px);
+            will-change: transform;
+        }
+
+        .drop-indicator {
+            height: 2px;
+            background-color: var(--neon-blue);
+            margin: 0;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .drop-indicator.active {
+            opacity: 1;
+        }
+
+        /* Стили для модального окна */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .modal {
+            background: var(--tg-theme-secondary-bg-color);
+            border-radius: var(--border-radius);
+            padding: 16px;
+            width: 300px;
+            box-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue);
+            border: 1px solid var(--neon-blue);
+        }
+
+        .modal-header {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--tg-theme-text-color);
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .modal-content {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .confirm-button {
+            background: var(--neon-blue);
+            border: none;
+            border-radius: var(--border-radius);
+            color: var(--tg-theme-button-text-color);
+            padding: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue);
+            transition: var(--transition-base);
+        }
+
+        .confirm-button:active {
+            transform: scale(0.98);
+            background: #0099cc; /* Темнее неоново-голубой */
+        }
+
+        .confirm-button img {
+            width: 16px;
+            height: 16px;
+        }
+
+        .order-button {
+            background: var(--neon-blue);
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue);
+            transition: var(--transition-base);
+        }
+
+        .order-button img {
+            width: 16px;
+            height: 16px;
+        }
+
+        .order-button:active {
+            transform: scale(0.95);
+        }
+
+        @supports (padding: max(0px)) {
+            .container {
+                padding-bottom: max(16px, env(safe-area-inset-bottom));
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Пустой экран (можно добавить любой контент) -->
-    
+    <div class="fixed-header">
+        <div class="top-panel">
+            <div class="bottom-controls">
+                <div class="equation-row">
+                    <input type="text" id="equation-input-bottom" class="equation-input" placeholder="">
+                    <button class="done-button" id="done-button">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 1 1-5.93-9.14'%3E%3C/path%3E%3Cpolyline points='22 4 12 14.01 9 11.01'%3E%3C/polyline%3E%3C/svg%3E" alt="Подтвердить">
+                    </button>
+                </div>
+            </div>
+            <div class="nav">
+                <button class="language-toggle" id="language-toggle">EN</button>
+                <button class="nav-button active" data-screen="pairs"></button>
+                <button class="nav-button" data-screen="equations"></button>
+            </div>
+        </div>
+        <div class="header">
+            <input type="text" id="pair-symbol" class="symbol-input" placeholder="">
+            <div class="custom-select-container" id="exchange-select-container">
+                <div class="custom-select-header">
+                    <span>Mexc</span>
+                </div>
+                <button class="fees-toggle" id="fees-toggle"></button>
+                <div class="custom-select-options">
+                    <div class="custom-select-option" data-value="Binance">
+                        <span>Binance</span>
+                        <input type="number" value="0.1" step="0.01" class="exchange-fee" data-exchange="binance">
+                    </div>
+                    <div class="custom-select-option" data-value="Mexc">
+                        <span>Mexc</span>
+                        <input type="number" value="0.02" step="0.01" class="exchange-fee" data-exchange="mexc">
+                    </div>
+                    <div class="custom-select-option" data-value="Bybit">
+                        <span>Bybit</span>
+                        <input type="number" value="0.18" step="0.01" class="exchange-fee" data-exchange="bybit">
+                    </div>
+                    <div class="custom-select-option" data-value="OKX">
+                        <span>OKX</span>
+                        <input type="number" value="0.1" step="0.01" class="exchange-fee" data-exchange="okx">
+                    </div>
+                    <div class="custom-select-option" data-value="Bitget">
+                        <span>Bitget</span>
+                        <input type="number" value="0.1" step="0.01" class="exchange-fee" data-exchange="bitget">
+                    </div>
+                    <div class="custom-select-option" data-value="Gate">
+                        <span>Gate</span>
+                        <input type="number" value="0.2" step="0.01" class="exchange-fee" data-exchange="gate">
+                    </div>
+                </div>
+            </div>
+            <button id="add-pair-button" class="add-button">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 1 1-5.93-9.14'%3E%3C/path%3E%3Cpolyline points='22 4 12 14.01 9 11.01'%3E%3C/polyline%3E%3C/svg%3E" alt="Добавить">
+            </button>
+        </div>
+    </div>
+    <div class="container">
+        <div id="pairs-screen" class="screen active">
+            <div id="pairs-list" class="pairs-list"></div>
+        </div>
+        <div id="equations-screen" class="screen">
+            <div id="equations-list" class="pairs-list"></div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для ордера -->
+    <div id="order-modal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">За доступом выставления ордеров и тонкой настройкой под вас обращаться к разработчику @kramer3009</div>
+            <div class="modal-content">
+                <button id="confirm-order" class="confirm-button">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 1 1-5.93-9.14'%3E%3C/path%3E%3Cpolyline points='22 4 12 14.01 9 11.01'%3E%3C/polyline%3E%3C/svg%3E" alt="Подтвердить">
+                    Закрыть
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        const tg = window.Telegram.WebApp;
+        const trashIconSvg = `
+        <svg class="trash-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`;
+
+        const translations = {
+            'ru': {
+                'pairs': 'Пары',
+                'equations': 'Связки',
+                'addPair': 'Добавить',
+                'symbolPlaceholder': 'Символ (например, BTCUSDT)',
+                'feesToggle': 'Откл. ком-ии.',
+                'equationPlaceholder': 'Введите связку...',
+                'done': 'Готово',
+                'delete': 'Удалить',
+                'loading': 'Загрузка...',
+                'calculating': 'Вычисление...',
+                'invalidValue': 'н/д',
+                'error': 'Ошибка',
+                'pairExists': 'Эта пара уже добавлена',
+                'enterSymbol': 'Введите символ пары',
+                'defaultEquations': {
+                    'eq1': "1. Купить Bybit - Продать ОКХ BTCUSDT (нач. банк-100usdt)",
+                    'eq2': "2. Купить Gate - Продать ОКХ BTCUSDT (нач. банк-100usdt)",
+                    'eq3': "3. Прям.треугольный USDT/BTC/ETH/USDT Bybit (нач. банк-100usdt)",
+                    'eq4': "4. Обр. треугольный USDT/ETH/BTC/USDT Bybit (нач. банк-100usdt)"
+                }
+            },
+            'en': {
+                'pairs': 'Pairs',
+                'equations': 'Equations',
+                'addPair': 'Add',
+                'symbolPlaceholder': 'Symbol (e.g., BTCUSDT)',
+                'feesToggle': 'Fees Off',
+                'equationPlaceholder': 'Enter equation...',
+                'done': 'Done',
+                'delete': 'Delete',
+                'loading': 'Loading...',
+                'calculating': 'Calculating...',
+                'invalidValue': 'n/a',
+                'error': 'Error',
+                'pairExists': 'This pair already exists',
+                'enterSymbol': 'Enter pair symbol',
+                'defaultEquations': {
+                    'eq1': "1. Buy Bybit - Sell OKX BTCUSDT (initial bank-100usdt)",
+                    'eq2': "2. Buy Gate - Sell OKX BTCUSDT (initial bank-100usdt)",
+                    'eq3': "3. Direct triangular USDT/BTC/ETH/USDT Bybit (initial bank-100usdt)",
+                    'eq4': "4. Reverse triangular USDT/ETH/BTC/USDT Bybit (initial bank-100usdt)"
+                }
+            }
+        };
+
+        let currentLanguage = 'ru';
+
+        function t(key) {
+            const keys = key.split('.');
+            let value = translations[currentLanguage];
+            for (const k of keys) {
+                value = value[k];
+                if (!value) return key;
+            }
+            return value;
+        }
+
+        class SafeCalculator {
+            constructor() {
+                this.operators = {
+                    '+': (a, b) => new Decimal(a).plus(b),
+                    '-': (a, b) => new Decimal(a).minus(b),
+                    '*': (a, b) => new Decimal(a).times(b),
+                    '/': (a, b) => new Decimal(a).dividedBy(b)
+                };
+            }
+
+            tokenize(expression) {
+                const tokens = [];
+                let number = '';
+                
+                for (let i = 0; i < expression.length; i++) {
+                    const char = expression[i];
+                    if (char === ' ') continue;
+                    
+                    if (char === '(' || char === ')' || Object.keys(this.operators).includes(char)) {
+                        if (number) {
+                            tokens.push(number);
+                            number = '';
+                        }
+                        tokens.push(char);
+                    } else {
+                        number += char;
+                    }
+                }
+                
+                if (number) {
+                    tokens.push(number);
+                }
+                
+                return tokens;
+            }
+
+            toPostfix(tokens) {
+                const priority = {
+                    '+': 1,
+                    '-': 1,
+                    '*': 2,
+                    '/': 2
+                };
+                const output = [];
+                const operations = [];
+
+                for (const token of tokens) {
+                    if (!(token in this.operators) && token !== '(' && token !== ')') {
+                        output.push(token);
+                    } else if (token === '(') {
+                        operations.push(token);
+                    } else if (token === ')') {
+                        while (operations.length && operations[operations.length - 1] !== '(') {
+                            output.push(operations.pop());
+                        }
+                        operations.pop();
+                    } else {
+                        while (operations.length && 
+                               operations[operations.length - 1] !== '(' && 
+                               priority[operations[operations.length - 1]] >= priority[token]) {
+                            output.push(operations.pop());
+                        }
+                        operations.push(token);
+                    }
+                }
+
+                while (operations.length) {
+                    output.push(operations.pop());
+                }
+
+                return output;
+            }
+
+            evaluatePostfix(postfix) {
+                const stack = [];
+                
+                for (const token of postfix) {
+                    if (token in this.operators) {
+                        const b = stack.pop();
+                        const a = stack.pop();
+                        
+                        if (token === '/' && new Decimal(b).isZero()) {
+                            throw new Error('Division by zero');
+                        }
+                        
+                        stack.push(this.operators[token](a, b));
+                    } else {
+                        stack.push(token);
+                    }
+                }
+                
+                return stack[0];
+            }
+
+            calculate(expression) {
+                const tokens = this.tokenize(expression);
+                const postfix = this.toPostfix(tokens);
+                return this.evaluatePostfix(postfix);
+            }
+        }
+
+        class EquationManager {
+            constructor() {
+                this.equations = {};
+                this.evalCache = {};
+                this.calculator = new SafeCalculator();
+            }
+
+            extractVariables(equation) {
+                const variables = new Set();
+                const parts = equation.split(/([+\-*/()])/g)
+                    .map(part => part.trim())
+                    .filter(Boolean);
+
+                for (const part of parts) {
+                    if ((part.includes('_bid') || part.includes('_ask')) && !part.includes('_result')) {
+                        try {
+                            const [symbol, exchange, priceType] = part.split('_');
+                            if (priceType === 'bid' || priceType === 'ask') {
+                                variables.add(part);
+                            }
+                        } catch (e) {
+                            continue;
+                        }
+                    }
+                }
+                
+                return Array.from(variables);
+            }
+
+            checkCircularDependency(newEqName, newEq) {
+                const findDependencies = (eq) => {
+                    const deps = new Set();
+                    for (const [, eqData] of Object.entries(this.equations)) {
+                        if (eq.includes(`${eqData.name}_result`)) {
+                            deps.add(eqData.name);
+                        }
+                    }
+                    return deps;
+                };
+
+                const checkCycle = (start, current, visited = new Set()) => {
+                    if (current === start) return true;
+                    visited.add(current);
+                    
+                    for (const eqName of findDependencies(current)) {
+                        if (!visited.has(eqName) && checkCycle(start, eqName, new Set([...visited]))) {
+                            return true;
+                        }
+                    }
+                    
+                    return false;
+                };
+
+                const deps = findDependencies(newEq);
+                return Array.from(deps).some(dep => checkCycle(newEqName, dep));
+            }
+
+            evaluateEquation(equation) {
+                try {
+                    let evalStr = equation;
+
+                    for (const [eq, eqData] of Object.entries(this.equations)) {
+                        const resultVar = `${eqData.name}_result`;
+                        if (evalStr.includes(resultVar)) {
+                            const resultValue = eqData.currentResult;
+                            if (resultValue === t('invalidValue') || 
+                                resultValue === t('loading') || 
+                                resultValue.startsWith(t('error'))) {
+                                return t('invalidValue');
+                            }
+                            evalStr = evalStr.replace(new RegExp(resultVar, 'g'), resultValue);
+                        }
+                    }
+
+                    for (const variable of this.equations[equation].variables) {
+                        if (variable.includes('_bid') || variable.includes('_ask')) {
+                            const [symbol, exchange, priceType] = variable.split('_');
+                            const pairKey = `${exchange}_${symbol}`;
+                            const priceElement = document.querySelector(
+                                `.pair-item[data-pair="${pairKey}"] .${priceType}`
+                            );
+                            
+                            if (!priceElement) return t('invalidValue');
+                            const value = priceElement.textContent;
+                            if (value === t('loading')) return t('loading');
+                            
+                            evalStr = evalStr.replace(new RegExp(variable, 'g'), value);
+                        }
+                    }
+
+                    evalStr = evalStr.replace(/\s+/g, '');
+                    
+                    if (!/^[0-9.+\-*/() ]+$/.test(evalStr)) return t('invalidValue');
+                    if (['__', 'eval', 'exec', 'import'].some(s => evalStr.includes(s))) return t('invalidValue');
+                    
+                    const result = this.calculator.calculate(evalStr);
+                    
+                    if (result.isNaN()) {
+                        return `${t('error')}: некорректное выражение`;
+                    }
+                    
+                    if (!result.isFinite()) {
+                        return `${t('error')}: деление на ноль`;
+                    }
+                    
+                    return result.toFixed(8);
+                } catch (error) {
+                    console.error('Calculation error:', error);
+                    if (error.message === 'Division by zero') {
+                        return `${t('error')}: деление на ноль`;
+                    }
+                    return t('invalidValue');
+                }
+            }
+
+            addEquation(equation) {
+                let baseName = "Equation";
+                let counter = 1;
+                let equationName = `${baseName}_${counter}`;
+                
+                while (Object.values(this.equations).some(eq => eq.name === equationName)) {
+                    counter++;
+                    equationName = `${baseName}_${counter}`;
+                }
+
+                if (this.checkCircularDependency(equationName, equation)) {
+                    throw new Error("Обнаружена циклическая зависимость между уравнениями");
+                }
+
+                this.equations[equation] = {
+                    name: equationName,
+                    variables: this.extractVariables(equation),
+                    currentResult: t('loading'),
+                    dependents: new Set()
+                };
+
+                return equationName;
+            }
+
+            removeEquation(equation) {
+                if (equation in this.equations) {
+                    const equationName = this.equations[equation].name;
+                    delete this.equations[equation];
+                    
+                    for (const eq in this.equations) {
+                        if (eq.includes(`${equationName}_result`)) {
+                            this.equations[eq].currentResult = t('invalidValue');
+                        }
+                    }
+                }
+            }
+
+            updateResult(equation, result) {
+                if (equation in this.equations) {
+                    this.equations[equation].currentResult = result;
+                    for (const dependent of this.equations[equation].dependents) {
+                        this.updateResult(dependent, this.evaluateEquation(dependent));
+                    }
+                }
+            }
+        }
+
+        class DragDropManager {
+            constructor(listId) {
+                this.listElement = document.getElementById(listId);
+                this.draggedItem = null;
+                this.initialY = 0;
+                this.currentY = 0;
+                this.initialIndex = 0;
+                this.draggedRect = null;
+                this.placeholder = null;
+                this.itemHeight = 0;
+                this.isDragging = false;
+                this.touchStartY = 0;
+                this.dragTimeout = null;
+                this.dragStartEvent = null;
+                this.DRAG_DELAY = 200;
         
-        // Инициализация (если нужно)
-        tg.expand(); // Развернуть WebApp на весь экран
+                this.handleTouchStart = this.handleTouchStart.bind(this);
+                this.handleTouchMove = this.handleTouchMove.bind(this);
+                this.handleTouchEnd = this.handleTouchEnd.bind(this);
+                this.handleMouseDown = this.handleMouseDown.bind(this);
+                this.handleMouseMove = this.handleMouseMove.bind(this);
+                this.handleMouseUp = this.handleMouseUp.bind(this);
         
-        // Пример: можно добавить кнопку или логику
-        // tg.MainButton.text = "Готово";
-        // tg.MainButton.show();
+                this.setupEventListeners();
+            }
+        
+            setupEventListeners() {
+                this.listElement.addEventListener('touchstart', this.handleTouchStart, {
+                    passive: false,
+                    capture: true
+                });
+                document.addEventListener('touchmove', this.handleTouchMove, {
+                    passive: false
+                });
+                document.addEventListener('touchend', this.handleTouchEnd);
+                document.addEventListener('touchcancel', this.handleTouchEnd);
+                this.listElement.addEventListener('mousedown', this.handleMouseDown, {
+                    capture: true
+                });
+                document.addEventListener('mousemove', this.handleMouseMove);
+                document.addEventListener('mouseup', this.handleMouseUp);
+            }
+        
+            startDragging(e, isTouchEvent) {
+                if (this.isDragging) return false;
+        
+                const target = isTouchEvent ? e.target : e;
+                const item = target.closest('.pair-item, .equation-item');
+                
+                if (!item || 
+                    target.closest('.price-button') || 
+                    target.closest('.pair-remove') || 
+                    target.closest('.equation-remove') ||
+                    target.closest('input')) {
+                    return false;
+                }
+        
+                this.isDragging = true;
+                this.draggedItem = item;
+                this.draggedRect = item.getBoundingClientRect();
+                this.itemHeight = this.draggedRect.height;
+                this.initialY = isTouchEvent ? e.touches[0].clientY : e.clientY;
+                this.currentY = this.initialY;
+                this.initialIndex = Array.from(this.listElement.children).indexOf(item);
+        
+                this.placeholder = document.createElement('div');
+                this.placeholder.style.height = `${this.itemHeight}px`;
+                this.placeholder.style.margin = '5px 0';
+                this.placeholder.style.transition = 'all 0.2s ease-out';
+                this.draggedItem.before(this.placeholder);
+        
+                this.draggedItem.style.position = 'fixed';
+                this.draggedItem.style.top = `${this.draggedRect.top}px`;
+                this.draggedItem.style.left = `${this.draggedRect.left}px`;
+                this.draggedItem.style.width = `${this.draggedRect.width}px`;
+                this.draggedItem.style.zIndex = '1000';
+                this.draggedItem.style.margin = '0';
+                this.draggedItem.classList.add('dragging');
+        
+                return true;
+            }
+        
+            handleMove(clientY) {
+                if (!this.isDragging || !this.draggedItem) return;
+        
+                this.currentY = clientY;
+                const deltaY = this.currentY - this.initialY;
+        
+                requestAnimationFrame(() => {
+                    this.draggedItem.style.transform = `translateY(${deltaY}px)`;
+                });
+        
+                const items = Array.from(this.listElement.children);
+                const currentIndex = items.indexOf(this.placeholder);
+                let newIndex = currentIndex;
+                const draggedMiddle = clientY;
+        
+                items.forEach((item, index) => {
+                    if (item === this.placeholder || item === this.draggedItem) return;
+        
+                    const rect = item.getBoundingClientRect();
+                    const itemMiddle = rect.top + rect.height / 2;
+        
+                    if (draggedMiddle < itemMiddle && index < currentIndex) {
+                        newIndex = index;
+                    } else if (draggedMiddle > itemMiddle && index > currentIndex) {
+                        newIndex = index;
+                    }
+                });
+        
+                if (newIndex !== currentIndex) {
+                    const targetItem = items[newIndex];
+                    if (targetItem) {
+                        if (newIndex > currentIndex) {
+                            targetItem.after(this.placeholder);
+                        } else {
+                            targetItem.before(this.placeholder);
+                        }
+                    }
+                }
+            }
+        
+            finishDragging() {
+                if (this.dragTimeout) {
+                    clearTimeout(this.dragTimeout);
+                    this.dragTimeout = null;
+                }
+        
+                if (!this.isDragging || !this.draggedItem) return;
+        
+                if (this.placeholder) {
+                    this.placeholder.before(this.draggedItem);
+                }
+        
+                this.draggedItem.style.position = '';
+                this.draggedItem.style.top = '';
+                this.draggedItem.style.left = '';
+                this.draggedItem.style.width = '';
+                this.draggedItem.style.transform = '';
+                this.draggedItem.style.zIndex = '';
+                this.draggedItem.style.margin = '';
+                this.draggedItem.classList.remove('dragging');
+        
+                if (this.placeholder) {
+                    this.placeholder.remove();
+                    this.placeholder = null;
+                }
+        
+                this.draggedItem = null;
+                this.isDragging = false;
+                this.initialY = 0;
+                this.currentY = 0;
+                this.draggedRect = null;
+                this.dragStartEvent = null;
+        
+                saveState();
+            }
+        
+            handleTouchStart(e) {
+                if (e.touches.length !== 1) return;
+                
+                if (this.dragTimeout) {
+                    clearTimeout(this.dragTimeout);
+                }
+        
+                this.touchStartY = e.touches[0].clientY;
+                this.dragStartEvent = e;
+                
+                this.dragTimeout = setTimeout(() => {
+                    if (this.dragStartEvent) {
+                        if (this.startDragging(this.dragStartEvent, true)) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }
+                    }
+                }, this.DRAG_DELAY);
+            }
+        
+            handleTouchMove(e) {
+                if (this.dragTimeout) {
+                    clearTimeout(this.dragTimeout);
+                    this.dragTimeout = null;
+                    this.dragStartEvent = null;
+                }
+        
+                if (!this.isDragging) return;
+                e.preventDefault();
+                e.stopPropagation();
+                this.handleMove(e.touches[0].clientY);
+            }
+        
+            handleTouchEnd(e) {
+                if (this.dragTimeout) {
+                    clearTimeout(this.dragTimeout);
+                    this.dragTimeout = null;
+                    this.dragStartEvent = null;
+                }
+        
+                if (!this.isDragging) return;
+                e.preventDefault();
+                e.stopPropagation();
+                this.finishDragging();
+            }
+        
+            handleMouseDown(e) {
+                if (this.dragTimeout) {
+                    clearTimeout(this.dragTimeout);
+                }
+        
+                this.dragStartEvent = e;
+                
+                this.dragTimeout = setTimeout(() => {
+                    if (this.dragStartEvent) {
+                        if (this.startDragging(this.dragStartEvent, false)) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }
+                    }
+                }, this.DRAG_DELAY);
+            }
+        
+            handleMouseMove(e) {
+                if (this.dragTimeout) {
+                    clearTimeout(this.dragTimeout);
+                    this.dragTimeout = null;
+                    this.dragStartEvent = null;
+                }
+        
+                if (!this.isDragging) return;
+                e.preventDefault();
+                e.stopPropagation();
+                this.handleMove(e.clientY);
+            }
+        
+            handleMouseUp(e) {
+                if (this.dragTimeout) {
+                    clearTimeout(this.dragTimeout);
+                    this.dragTimeout = null;
+                    this.dragStartEvent = null;
+                }
+        
+                if (!this.isDragging) return;
+                e.preventDefault();
+                e.stopPropagation();
+                this.finishDragging();
+            }
+        }
+
+        const exchangeConfigs = {
+            'Mexc': {
+                wsUrl: 'wss://wbs.mexc.com/ws',
+                tradingUrl: 'https://www.mexc.com/ru-RU/exchange/',
+                formatSymbol: (symbol) => `${symbol.slice(0, -4)}_${symbol.slice(-4)}`,
+                subscribeFormat: (symbol) => ({
+                    method: 'SUBSCRIPTION',
+                    params: [`spot@public.bookTicker.v3.api@${symbol}`]
+                }),
+                parseMessage: (data) => {
+                    try {
+                        const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+                        if (parsedData.s && parsedData.d && parsedData.d.b && parsedData.d.a) {
+                            return {
+                                symbol: parsedData.s,
+                                bid: parsedData.d.b,
+                                ask: parsedData.d.a
+                            };
+                        }
+                    } catch (e) {
+                        console.error('Error parsing MEXC message:', e);
+                    }
+                    return null;
+                }
+            },
+
+            'Binance': {
+                wsUrl: 'wss://stream.binance.com:9443/ws',
+                tradingUrl: 'https://www.binance.com/ru/trade/',
+                formatSymbol: (symbol) => `${symbol.slice(0, -4)}_${symbol.slice(-4)}?type=spot`,
+                subscribeFormat: (symbol) => ({
+                    method: 'SUBSCRIBE',
+                    params: [`${symbol.toLowerCase()}@bookTicker`],
+                    id: 1
+                }),
+                parseMessage: (data) => {
+                    try {
+                        const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+                        if (parsedData.s && parsedData.b && parsedData.a) {
+                            return {
+                                symbol: parsedData.s,
+                                bid: parsedData.b,
+                                ask: parsedData.a
+                            };
+                        }
+                    } catch (e) {
+                        console.error('Binance message parsing error:', e);
+                    }
+                    return null;
+                }
+            },
+
+            'Bybit': {
+                wsUrl: 'wss://stream.bybit.com/v5/public/spot',
+                tradingUrl: 'https://www.bybit.com/ru-RU/trade/spot/',
+                formatSymbol: (symbol) => `${symbol.slice(0, -4)}/${symbol.slice(-4)}`,
+                subscribeFormat: (symbol) => ({
+                    op: 'subscribe',
+                    args: [`orderbook.1.${symbol}`]
+                }),
+                parseMessage: (data) => {
+                    try {
+                        const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+                        if (parsedData.type === 'ping' || parsedData.op === 'subscribe') {
+                            return null;
+                        }
+                        if (parsedData.data && parsedData.data.s && 
+                            parsedData.data.b && parsedData.data.b.length > 0 && 
+                            parsedData.data.a && parsedData.data.a.length > 0) {
+                            return {
+                                symbol: parsedData.data.s,
+                                bid: parsedData.data.b[0][0],
+                                ask: parsedData.data.a[0][0]
+                            };
+                        }
+                    } catch (e) {
+                        console.error('Bybit message parsing error:', e);
+                    }
+                    return null;
+                }
+            },
+
+            'OKX': {
+                wsUrl: 'wss://ws.okx.com:8443/ws/v5/public',
+                tradingUrl: 'https://www.okx.com/ru/trade-spot/',
+                formatSymbol: (symbol) => `${symbol.slice(0, -4).toLowerCase()}-${symbol.slice(-4).toLowerCase()}`,
+                subscribeFormat: (symbol) => ({
+                    op: 'subscribe',
+                    args: [{
+                        channel: 'tickers',
+                        instId: `${symbol.slice(0, -4)}-${symbol.slice(-4)}`
+                    }]
+                }),
+                parseMessage: (data) => {
+                    try {
+                        const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+                        if (parsedData.data && parsedData.data[0]) {
+                            const symbol = parsedData.data[0].instId.replace('-', '');
+                            return {
+                                symbol: symbol,
+                                bid: parsedData.data[0].bidPx,
+                                ask: parsedData.data[0].askPx
+                            };
+                        }
+                    } catch (e) {
+                        console.error('OKX message parsing error:', e);
+                    }
+                    return null;
+                }
+            },
+
+            'Bitget': {
+                wsUrl: 'wss://ws.bitget.com/v2/ws/public',
+                tradingUrl: 'https://www.bitget.com/ru/spot/',
+                formatSymbol: (symbol) => symbol,
+                subscribeFormat: (symbol) => ({
+                    op: "subscribe",
+                    args: [{
+                        instType: "SPOT",
+                        channel: "ticker",
+                        instId: symbol
+                    }]
+                }),
+                parseMessage: (data) => {
+                    try {
+                        const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+                        if (parsedData.action === 'snapshot' && parsedData.data && parsedData.data[0]) {
+                            const tickerData = parsedData.data[0];
+                            return {
+                                symbol: tickerData.instId,
+                                bid: parseFloat(tickerData.bidPr) || tickerData.bidPr,
+                                ask: parseFloat(tickerData.askPr) || tickerData.askPr
+                            };
+                        }
+                    } catch (e) {
+                        console.error('Bitget message parsing error:', e);
+                    }
+                    return null;
+                }
+            },
+
+            'Gate': {
+                wsUrl: 'wss://api.gateio.ws/ws/v4/',
+                tradingUrl: 'https://www.gate.io/ru/trade/',
+                formatSymbol: (symbol) => `${symbol.slice(0, -4)}_${symbol.slice(-4)}`,
+                subscribeFormat: (symbol) => ({
+                    time: Math.floor(Date.now() / 1000),
+                    channel: "spot.tickers",
+                    event: "subscribe",
+                    payload: [`${symbol.slice(0, -4)}_${symbol.slice(-4)}`],
+                    id: Math.floor(Math.random() * 1000000)
+                }),
+                parseMessage: (data) => {
+                    try {
+                        const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+                        if (parsedData.event === 'subscribe') {
+                            return null;
+                        }
+                        if (parsedData.event === 'update' && parsedData.result) {
+                            const tickerData = parsedData.result;
+                            return {
+                                symbol: tickerData.currency_pair.replace('_', ''),
+                                bid: tickerData.highest_bid,
+                                ask: tickerData.lowest_ask
+                            };
+                        }
+                    } catch (e) {
+                        console.error('Gate message parsing error:', e);
+                    }
+                    return null;
+                }
+            }
+        };
+
+        let pairs = {};
+        let equations = {};
+        let connections = {};
+        let feesEnabled = true;
+        let selectedExchange = 'Mexc';
+        const equationManager = new EquationManager();
+
+        function setupDragAndDrop(element, listId) {
+            if (!window.dragDropManagers) {
+                window.dragDropManagers = {};
+            }
+            if (!window.dragDropManagers[listId]) {
+                window.dragDropManagers[listId] = new DragDropManager(listId);
+            }
+        }
+
+        function openTradingPage(exchange, symbol) {
+            const config = exchangeConfigs[exchange];
+            if (config && config.tradingUrl) {
+                const formattedSymbol = config.formatSymbol(symbol);
+                const url = config.tradingUrl + formattedSymbol;
+                window.open(url, '_blank');
+            }
+        }
+
+        function updateInterface() {
+            document.querySelector('[data-screen="pairs"]').textContent = t('pairs');
+            document.querySelector('[data-screen="equations"]').textContent = t('equations');
+            document.getElementById('add-pair-button').textContent = t('addPair');
+            document.getElementById('done-button').textContent = t('done');
+            document.getElementById('fees-toggle').textContent = t('feesToggle');
+            
+            document.getElementById('pair-symbol').placeholder = t('symbolPlaceholder');
+            document.getElementById('equation-input-bottom').placeholder = t('equationPlaceholder');
+            
+            document.getElementById('language-toggle').textContent = 
+                currentLanguage === 'ru' ? 'EN' : 'RU';
+            
+            updateEquationTexts();
+        }
+
+        function toggleLanguage() {
+            currentLanguage = currentLanguage === 'ru' ? 'en' : 'ru';
+            updateInterface();
+            localStorage.setItem('idtrade-language', currentLanguage);
+        }
+
+        function init() {
+            const savedLanguage = localStorage.getItem('idtrade-language');
+            if (savedLanguage) {
+                currentLanguage = savedLanguage;
+            }
+
+            document.getElementById('language-toggle').addEventListener('click', toggleLanguage);
+            document.getElementById('add-pair-button').addEventListener('click', addPair);
+            document.getElementById('done-button').addEventListener('click', addEquationFromBottom);
+            document.getElementById('fees-toggle').addEventListener('click', toggleFees);
+
+            document.querySelectorAll('.nav-button').forEach(button => {
+                button.addEventListener('click', () => showScreen(button.dataset.screen));
+            });
+
+            const customSelect = document.getElementById('exchange-select-container');
+            const selectHeader = customSelect.querySelector('.custom-select-header');
+
+            selectHeader.addEventListener('click', () => {
+                customSelect.classList.toggle('active');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!customSelect.contains(e.target)) {
+                    customSelect.classList.remove('active');
+                }
+            });
+
+            const selectOptions = customSelect.querySelector('.custom-select-options');
+            selectOptions.addEventListener('click', (e) => {
+                const option = e.target.closest('.custom-select-option');
+                if (option && !e.target.matches('input')) {
+                    selectedExchange = option.dataset.value;
+                    selectHeader.querySelector('span').textContent = selectedExchange;
+                    customSelect.classList.remove('active');
+                }
+            });
+
+            document.getElementById('pair-symbol').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addPair();
+                }
+            });
+
+            document.getElementById('equation-input-bottom').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addEquationFromBottom();
+                }
+            });
+
+            updateInterface();
+            loadState();
+        }
+
+        async function connectWebSocket(exchange, symbol) {
+            const config = exchangeConfigs[exchange];
+            let ws = new WebSocket(config.wsUrl);
+
+            const connect = () => {
+                ws = new WebSocket(config.wsUrl);
+
+                ws.onopen = () => {
+                    ws.send(JSON.stringify(config.subscribeFormat(symbol)));
+                };
+
+                ws.onmessage = (event) => {
+                    const parsed = config.parseMessage(event.data);
+                    if (parsed) {
+                        updatePairPrices(exchange, parsed.symbol, parsed.bid, parsed.ask);
+                    }
+                };
+
+                ws.onclose = () => {
+                    setTimeout(connect, 1000);
+                };
+            };
+
+            connect();
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    if (ws.readyState !== WebSocket.OPEN) {
+                        connect();
+                    }
+                }
+            });
+
+            return ws;
+        }
+
+        function addPair() {
+            const symbol = document.getElementById('pair-symbol').value.toUpperCase();
+            const exchange = selectedExchange;
+
+            if (!symbol) {
+                showAlert('enterSymbol');
+                return;
+            }
+
+            const pairKey = `${exchange}_${symbol}`;
+            if (pairs[pairKey]) {
+                showAlert('pairExists');
+                return;
+            }
+
+            createPairElement(symbol, exchange);
+            
+            document.getElementById('pair-symbol').value = '';
+            document.getElementById('pair-symbol').blur();
+            
+            saveState();
+        }
+
+        function createPairElement(symbol, exchange) {
+            const pairKey = `${exchange}_${symbol}`;
+            const pairElement = document.createElement('div');
+            pairElement.className = 'pair-item';
+            pairElement.setAttribute('data-pair', pairKey);
+            pairElement.setAttribute('draggable', 'true');
+
+            const dragHandle = document.createElement('div');
+            dragHandle.className = 'drag-handle';
+            const handleLines = document.createElement('div');
+            handleLines.className = 'handle-lines';
+            handleLines.innerHTML = '<span></span>';
+            dragHandle.appendChild(handleLines);
+
+            const priceContainer = document.createElement('div');
+            priceContainer.className = 'price-container';
+
+            // Левая полукнопка (Bid)
+            const bidButtonLeft = document.createElement('button');
+            bidButtonLeft.className = 'price-button left bid';
+            bidButtonLeft.textContent = t('loading');
+            bidButtonLeft.addEventListener('click', e => {
+                e.stopPropagation();
+                addToEquation(`${symbol}_${exchange}_bid`);
+            });
+
+            // Правая полукнопка (Bid)
+            const bidButtonRight = document.createElement('button');
+            bidButtonRight.className = 'price-button right';
+            bidButtonRight.innerHTML = `
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 1 1-5.93-9.14'%3E%3C/path%3E%3Cpolyline points='22 4 12 14.01 9 11.01'%3E%3C/polyline%3E%3C/svg%3E" alt="Ордер">
+            `;
+            bidButtonRight.addEventListener('click', e => {
+                e.stopPropagation();
+                openOrderModal(symbol, exchange, 'buy');
+            });
+
+            // Левая полукнопка (Ask)
+            const askButtonLeft = document.createElement('button');
+            askButtonLeft.className = 'price-button left ask';
+            askButtonLeft.textContent = t('loading');
+            askButtonLeft.addEventListener('click', e => {
+                e.stopPropagation();
+                addToEquation(`${symbol}_${exchange}_ask`);
+            });
+
+            // Правая полукнопка (Ask)
+            const askButtonRight = document.createElement('button');
+            askButtonRight.className = 'price-button right';
+            askButtonRight.innerHTML = `
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 1 1-5.93-9.14'%3E%3C/path%3E%3Cpolyline points='22 4 12 14.01 9 11.01'%3E%3C/polyline%3E%3C/svg%3E" alt="Ордер">
+            `;
+            askButtonRight.addEventListener('click', e => {
+                e.stopPropagation();
+                openOrderModal(symbol, exchange, 'sell');
+            });
+
+            const pairName = document.createElement('div');
+            pairName.className = 'pair-name';
+            pairName.textContent = `${symbol} ${exchange}`;
+
+            priceContainer.appendChild(bidButtonLeft);
+            priceContainer.appendChild(bidButtonRight);
+            priceContainer.appendChild(askButtonLeft);
+            priceContainer.appendChild(askButtonRight);
+
+            pairElement.appendChild(dragHandle);
+            pairElement.appendChild(priceContainer);
+            pairElement.appendChild(pairName);
+
+            setupDragAndDrop(pairElement, 'pairs-list');
+
+            pairElement.addEventListener('click', e => {
+                if (!e.target.matches('.drag-handle, .handle-lines, .handle-lines span')) {
+                    openTradingPage(exchange, symbol);
+                }
+            });
+
+            // Добавляем обработчик долгого нажатия для удаления пары
+            let longPressTimer;
+            pairElement.addEventListener('mousedown', () => {
+                longPressTimer = setTimeout(() => {
+                    showRemoveButton(pairElement, pairKey);
+                }, 1000);
+            });
+
+            pairElement.addEventListener('mouseup', () => {
+                clearTimeout(longPressTimer);
+            });
+
+            pairElement.addEventListener('mouseleave', () => {
+                clearTimeout(longPressTimer);
+            });
+
+            document.getElementById('pairs-list').appendChild(pairElement);
+            pairs[pairKey] = pairElement;
+
+            connectWebSocket(exchange, symbol).then(ws => {
+                connections[pairKey] = ws;
+            });
+        }
+
+        function showRemoveButton(element, pairKey) {
+            const removeButton = document.createElement('button');
+            removeButton.className = 'pair-remove';
+            removeButton.innerHTML = trashIconSvg;
+            removeButton.addEventListener('click', e => {
+                e.stopPropagation();
+                removePair(pairKey);
+            });
+
+            element.appendChild(removeButton);
+        }
+
+        function removePair(pairKey) {
+            if (pairs[pairKey]) {
+                pairs[pairKey].remove();
+                delete pairs[pairKey];
+                if (connections[pairKey]) {
+                    connections[pairKey].close();
+                    delete connections[pairKey];
+                }
+                saveState();
+            }
+        }
+
+        function updatePairPrices(exchange, symbol, bid, ask) {
+            const pairKey = `${exchange}_${symbol}`;
+            const pairElement = pairs[pairKey];
+            
+            if (pairElement) {
+                const bidButton = pairElement.querySelector('.bid');
+                const askButton = pairElement.querySelector('.ask');
+
+                const formatPrice = (price) => {
+                    const num = parseFloat(price);
+                    if (num < 0.001) return num.toFixed(8);
+                    if (num < 1) return num.toFixed(6);
+                    if (num < 100) return num.toFixed(4);
+                    return num.toFixed(2);
+                };
+
+                bidButton.textContent = formatPrice(bid);
+                askButton.textContent = formatPrice(ask);
+
+                updateEquations();
+            }
+        }
+
+        function addToEquation(value) {
+            const equationInput = document.getElementById('equation-input-bottom');
+            const [symbol, exchange, type] = value.split('_');
+            let valueWithFee = value;
+
+            if (feesEnabled) {
+                const feeInput = document.querySelector(`.exchange-fee[data-exchange="${exchange.toLowerCase()}"]`);
+                const fee = parseFloat(feeInput.value);
+                const feeMultiplier = (1 - fee/100).toFixed(4);
+
+                valueWithFee = type === 'bid' 
+                    ? `(${value}*${feeMultiplier})` 
+                    : `(${value}/${feeMultiplier})`;
+            }
+
+            const cursorPosition = equationInput.selectionStart;
+            const currentText = equationInput.value;
+            const newText = currentText.slice(0, cursorPosition) + 
+                           valueWithFee + 
+                           currentText.slice(cursorPosition);
+
+            equationInput.value = newText;
+            equationInput.focus();
+            
+            equationInput.setSelectionRange(
+                cursorPosition + valueWithFee.length,
+                cursorPosition + valueWithFee.length
+            );
+        }
+
+        function addEquationFromBottom() {
+            const equation = document.getElementById('equation-input-bottom').value.trim();
+            if (!equation) return;
+
+            try {
+                const equationName = equationManager.addEquation(equation);
+
+                const equationElement = document.createElement('div');
+                equationElement.className = 'equation-item';
+                equationElement.setAttribute('data-equation', equation);
+                equationElement.setAttribute('draggable', 'true');
+
+                const dragHandle = document.createElement('div');
+                dragHandle.className = 'drag-handle';
+                const handleLines = document.createElement('div');
+                handleLines.className = 'handle-lines';
+                handleLines.innerHTML = '<span></span>';
+                dragHandle.appendChild(handleLines);
+
+                const content = document.createElement('div');
+                content.className = 'equation-content';
+
+                const header = document.createElement('div');
+                header.className = 'equation-header';
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.className = 'equation-name';
+                nameInput.value = equationName;
+                nameInput.addEventListener('change', () => updateEquationName(nameInput, equation));
+
+                const equationText = document.createElement('div');
+                equationText.className = 'equation-text';
+                equationText.textContent = equation;
+
+                const resultContainer = document.createElement('div');
+                resultContainer.className = 'equation-result-container';
+
+                const result = document.createElement('div');
+                result.className = 'result';
+                result.textContent = t('calculating');
+
+                const buttonsContainer = document.createElement('div');
+                buttonsContainer.className = 'equation-buttons';
+
+                const orderButton = document.createElement('button');
+                orderButton.className = 'order-button';
+                orderButton.innerHTML = `
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 1 1-5.93-9.14'%3E%3C/path%3E%3Cpolyline points='22 4 12 14.01 9 11.01'%3E%3C/polyline%3E%3C/svg%3E" alt="Ордер">
+                `;
+                orderButton.addEventListener('click', () => openOrderModal());
+
+                const removeButton = document.createElement('button');
+                removeButton.className = 'equation-remove';
+                removeButton.innerHTML = trashIconSvg;
+                removeButton.addEventListener('click', () => removeEquation(equation));
+
+                buttonsContainer.appendChild(orderButton);
+                buttonsContainer.appendChild(removeButton);
+
+                resultContainer.appendChild(result);
+                resultContainer.appendChild(buttonsContainer);
+
+                header.appendChild(nameInput);
+                content.appendChild(header);
+                content.appendChild(equationText);
+                content.appendChild(resultContainer);
+                equationElement.appendChild(dragHandle);
+                equationElement.appendChild(content);
+
+                setupDragAndDrop(equationElement, 'equations-list');
+
+                // Добавляем обработчик долгого нажатия для удаления связки
+                let longPressTimer;
+                equationElement.addEventListener('mousedown', () => {
+                    longPressTimer = setTimeout(() => {
+                        showRemoveButton(equationElement, equation);
+                    }, 1000);
+                });
+
+                equationElement.addEventListener('mouseup', () => {
+                    clearTimeout(longPressTimer);
+                });
+
+                equationElement.addEventListener('mouseleave', () => {
+                    clearTimeout(longPressTimer);
+                });
+
+                document.getElementById('equations-list').appendChild(equationElement);
+                equations[equation] = equationElement;
+
+                document.getElementById('equation-input-bottom').value = '';
+                document.getElementById('equation-input-bottom').blur();
+
+                updateEquations();
+                saveState();
+            } catch (error) {
+                showAlert(error.message);
+            }
+        }
+
+        function showRemoveButton(element, equation) {
+            const removeButton = document.createElement('button');
+            removeButton.className = 'equation-remove';
+            removeButton.innerHTML = trashIconSvg;
+            removeButton.addEventListener('click', e => {
+                e.stopPropagation();
+                removeEquation(equation);
+            });
+
+            element.appendChild(removeButton);
+        }
+
+        function removeEquation(equation) {
+            if (equations[equation]) {
+                equations[equation].remove();
+                equationManager.removeEquation(equation);
+                delete equations[equation];
+                updateEquations();
+                saveState();
+            }
+        }
+
+        function updateEquations() {
+            for (const [equation, element] of Object.entries(equations)) {
+                const result = equationManager.evaluateEquation(equation);
+                
+                const resultElement = element.querySelector('.result');
+                resultElement.textContent = result;
+                
+                resultElement.className = 'result' + 
+                    (result === t('invalidValue') || result.startsWith(t('error')) ? ' error' : '');
+                
+                equationManager.updateResult(equation, result);
+            }
+        }
+
+        function addDefaultPairs() {
+            const defaultPairs = [
+                { symbol: 'BTCUSDT', exchange: 'Binance' },
+                { symbol: 'BTCUSDT', exchange: 'Mexc' },
+                { symbol: 'BTCUSDT', exchange: 'Bybit' },
+                { symbol: 'BTCUSDT', exchange: 'OKX' },
+                { symbol: 'BTCUSDT', exchange: 'Bitget' },
+                { symbol: 'BTCUSDT', exchange: 'Gate' },
+                { symbol: 'ETHBTC', exchange: 'Bybit' },
+                { symbol: 'ETHUSDT', exchange: 'Bybit' }
+            ];
+
+            for (const pair of defaultPairs) {
+                const pairKey = `${pair.exchange}_${pair.symbol}`;
+                if (pairs[pairKey]) continue;
+                createPairElement(pair.symbol, pair.exchange);
+            }
+
+            setTimeout(addDefaultEquations, 1000);
+        }
+
+        function addDefaultEquations() {
+            const defaultEquations = [
+                {
+                    equation: "100/(BTCUSDT_Bybit_ask/0.9982)*(BTCUSDT_OKX_bid*0.9990)",
+                    nameKey: 'eq1'
+                },
+                {
+                    equation: "100/(BTCUSDT_Gate_ask/0.9980)*(BTCUSDT_OKX_bid*0.9990)",
+                    nameKey: 'eq2'
+                },
+                {
+                    equation: "100/(BTCUSDT_Bybit_ask/0.9982)/(ETHBTC_Bybit_ask/0.9982)*(ETHUSDT_Bybit_bid*0.9982)",
+                    nameKey: 'eq3'
+                },
+                {
+                    equation: "100/(ETHUSDT_Bybit_ask/0.9982)*(ETHBTC_Bybit_bid*0.9982)*(BTCUSDT_Bybit_bid*0.9982)",
+                    nameKey: 'eq4'
+                }
+            ];
+
+            for (const eq of defaultEquations) {
+                try {
+                    document.getElementById('equation-input-bottom').value = eq.equation;
+                    addEquationFromBottom();
+                    
+                    const element = equations[eq.equation];
+                    if (element) {
+                        const nameInput = element.querySelector('.equation-name');
+                        nameInput.value = t(`defaultEquations.${eq.nameKey}`);
+                        updateEquationName(nameInput, eq.equation);
+                    }
+                } catch (error) {
+                    console.error(`Error adding default equation: ${eq.nameKey}`, error);
+                }
+            }
+        }
+
+        function updateEquationTexts() {
+            Object.entries(equations).forEach(([equation, element]) => {
+                const nameInput = element.querySelector('.equation-name');
+                const currentName = nameInput.value;
+                
+                Object.entries(translations.ru.defaultEquations).forEach(([key, ruText]) => {
+                    if (currentName === ruText || currentName === translations.en.defaultEquations[key]) {
+                        nameInput.value = t(`defaultEquations.${key}`);
+                    }
+                });
+            });
+        }
+
+        function saveState() {
+            const state = {
+                pairs: Array.from(document.getElementById('pairs-list').children)
+                    .map(el => el.dataset.pair),
+                
+                equations: Array.from(document.getElementById('equations-list').children)
+                    .map(el => ({
+                        equation: el.dataset.equation,
+                        name: el.querySelector('.equation-name').value
+                    })),
+                
+                fees: {
+                    enabled: feesEnabled,
+                    values: Array.from(document.querySelectorAll('.exchange-fee'))
+                        .map(input => ({
+                            exchange: input.dataset.exchange,
+                            value: input.value
+                        }))
+                },
+                
+                language: currentLanguage
+            };
+
+            localStorage.setItem('idtrade-state', JSON.stringify(state));
+        }
+
+        function loadState() {
+            const savedState = localStorage.getItem('idtrade-state');
+            
+            if (savedState) {
+                const state = JSON.parse(savedState);
+
+                if (state.fees) {
+                    feesEnabled = state.fees.enabled;
+                    const feesToggle = document.getElementById('fees-toggle');
+                    feesToggle.classList.toggle('active', feesEnabled);
+                    
+                    state.fees.values.forEach(fee => {
+                        const input = document.querySelector(`.exchange-fee[data-exchange="${fee.exchange}"]`);
+                        if (input) input.value = fee.value;
+                    });
+                }
+
+                if (state.language) {
+                    currentLanguage = state.language;
+                    updateInterface();
+                }
+
+                if (state.pairs) {
+                    state.pairs.forEach(pairKey => {
+                        const [exchange, symbol] = pairKey.split('_');
+                        selectedExchange = exchange;
+                        document.getElementById('pair-symbol').value = symbol;
+                        addPair();
+                    });
+                }
+
+                if (state.equations) {
+                    state.equations.forEach(eq => {
+                        document.getElementById('equation-input-bottom').value = eq.equation;
+                        addEquationFromBottom();
+                        
+                        const element = equations[eq.equation];
+                        if (element) {
+                            const nameInput = element.querySelector('.equation-name');
+                            nameInput.value = eq.name;
+                            updateEquationName(nameInput, eq.equation);
+                        }
+                    });
+                }
+            } else {
+                addDefaultPairs();
+            }
+        }
+
+        function toggleFees() {
+            const feesToggle = document.getElementById('fees-toggle');
+            const feeInputs = document.querySelectorAll('.exchange-fee');
+            
+            feesEnabled = !feesEnabled;
+            feesToggle.classList.toggle('active');
+            
+            feeInputs.forEach(input => {
+                input.classList.toggle('disabled');
+            });
+
+            updateEquations();
+            saveState();
+        }
+
+        function showScreen(screenName) {
+            document.querySelectorAll('.screen').forEach(screen => 
+                screen.classList.remove('active')
+            );
+            document.querySelectorAll('.nav-button').forEach(btn => 
+                btn.classList.remove('active')
+            );
+
+            document.getElementById(`${screenName}-screen`).classList.add('active');
+            document.querySelector(`.nav-button[data-screen="${screenName}"]`)
+                .classList.add('active');
+        }
+
+        function showAlert(messageKey) {
+            alert(t(messageKey));
+        }
+
+        function openOrderModal() {
+            const modal = document.getElementById('order-modal');
+            modal.style.display = 'flex';
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+
+            const confirmButton = document.getElementById('confirm-order');
+            confirmButton.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+        }
+
+        setInterval(updateEquations, 1000);
+
+        document.addEventListener('DOMContentLoaded', init);
+
+        document.addEventListener('gesturestart', (e) => {
+            e.preventDefault();
+        });
     </script>
 </body>
 </html>
