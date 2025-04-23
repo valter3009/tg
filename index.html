@@ -16,6 +16,8 @@
             padding: 10px;
             color: #e0e0e0;
             height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
         .search-container {
             display: flex;
@@ -41,6 +43,26 @@
             font-size: 18px;
         }
         
+        .content-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: #999;
+        }
+
+        .page {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+        }
+        
+        .page.active {
+            display: flex;
+        }
+        
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -59,69 +81,116 @@
             align-items: center;
             color: #999;
             font-size: 12px;
+            cursor: pointer;
+            padding: 8px 16px;
         }
         .nav-item.active {
-            color: #8bc34a;
+            color: #ffc107; /* Yellow highlight */
         }
         .nav-icon {
             font-size: 22px;
             margin-bottom: 3px;
             position: relative;
         }
-        .badge {
-            position: absolute;
-            background-color: #ff4d4f;
-            color: white;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            top: -8px;
-            right: -8px;
-        }
     </style>
 </head>
 <body>
-    <!-- Top Search Bar -->
-    <div class="search-container">
-        <input type="text" class="search-input" placeholder="Поиск">
-        <div class="search-params">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="4" y1="8" x2="20" y2="8"></line>
-                <line x1="4" y1="12" x2="20" y2="12"></line>
-                <line x1="4" y1="16" x2="20" y2="16"></line>
-            </svg>
+    <!-- Search Page (default view) -->
+    <div class="page active" id="search-page">
+        <div class="search-container">
+            <input type="text" class="search-input" placeholder="Поиск">
+            <div class="search-params">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="4" y1="8" x2="20" y2="8"></line>
+                    <line x1="4" y1="12" x2="20" y2="12"></line>
+                    <line x1="4" y1="16" x2="20" y2="16"></line>
+                </svg>
+            </div>
+        </div>
+        <div class="content-area">
+            Содержимое страницы поиска
+        </div>
+    </div>
+    
+    <!-- Favorites Page -->
+    <div class="page" id="favorites-page">
+        <div class="content-area">
+            Страница избранного
+        </div>
+    </div>
+    
+    <!-- Monitoring Page -->
+    <div class="page" id="monitoring-page">
+        <div class="content-area">
+            Страница мониторинга
+        </div>
+    </div>
+    
+    <!-- Chat Page -->
+    <div class="page" id="chat-page">
+        <div class="content-area">
+            Страница чата
+        </div>
+    </div>
+    
+    <!-- More Page -->
+    <div class="page" id="more-page">
+        <div class="content-area">
+            Страница дополнительных функций
         </div>
     </div>
 
     <!-- Bottom Navigation -->
     <div class="bottom-nav">
-        <div class="nav-item active">
+        <div class="nav-item active" data-page="search-page">
             <div class="nav-icon">🔍</div>
             <div>Поиск</div>
         </div>
-        <div class="nav-item">
+        <div class="nav-item" data-page="favorites-page">
             <div class="nav-icon">⭐</div>
             <div>Избранное</div>
         </div>
-        <div class="nav-item">
+        <div class="nav-item" data-page="monitoring-page">
             <div class="nav-icon">📊</div>
             <div>Мониторинг</div>
         </div>
-        <div class="nav-item">
-            <div class="nav-icon">
-                💬
-                <div class="badge">7</div>
-            </div>
+        <div class="nav-item" data-page="chat-page">
+            <div class="nav-icon">💬</div>
             <div>Чат</div>
         </div>
-        <div class="nav-item">
+        <div class="nav-item" data-page="more-page">
             <div class="nav-icon">•••</div>
             <div>Еще</div>
         </div>
     </div>
+
+    <script>
+        // Get all navigation items
+        const navItems = document.querySelectorAll('.nav-item');
+        
+        // Add click event to each navigation item
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // Get the target page id
+                const pageId = this.getAttribute('data-page');
+                
+                // Hide all pages
+                document.querySelectorAll('.page').forEach(page => {
+                    page.classList.remove('active');
+                });
+                
+                // Show the selected page
+                document.getElementById(pageId).classList.add('active');
+                
+                // Deactivate all nav items
+                navItems.forEach(navItem => {
+                    navItem.classList.remove('active');
+                });
+                
+                // Activate the clicked nav item
+                this.classList.add('active');
+            });
+        });
+    </script>
 </body>
 </html>
