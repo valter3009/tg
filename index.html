@@ -90,10 +90,12 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: flex-start;
             color: #999;
             font-size: 12px;
             cursor: pointer;
             padding: 8px 16px;
+            height: 60px;
         }
         .nav-item.active {
             color: #ffc107; /* Yellow highlight */
@@ -102,6 +104,17 @@
             font-size: 22px;
             margin-bottom: 3px;
             position: relative;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Add Lot Button Styling */
+                /* Стиль для увеличенного символа + */
+        .plus-icon {
+            font-size: 28px;
+            font-weight: bold;
         }
         
         /* Modal Styles */
@@ -446,10 +459,10 @@
         </div>
     </div>
     
-    <!-- Monitoring Page -->
-    <div class="page" id="monitoring-page">
+    <!-- Add Lot Page -->
+    <div class="page" id="add-lot-page">
         <div class="content-placeholder">
-            Страница мониторинга
+            Страница добавления лота
         </div>
     </div>
     
@@ -563,9 +576,9 @@
             <div class="nav-icon">⭐</div>
             <div>Избранное</div>
         </div>
-        <div class="nav-item" data-page="monitoring-page">
-            <div class="nav-icon">📊</div>
-            <div>Мониторинг</div>
+        <div class="nav-item" data-page="add-lot-page">
+            <div class="nav-icon plus-icon">+</div>
+            <div>Продать</div>
         </div>
         <div class="nav-item" data-page="chat-page">
             <div class="nav-icon">💬</div>
