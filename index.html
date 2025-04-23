@@ -183,7 +183,6 @@
             align-items: center;
             padding: 12px 15px;
             color: #e0e0e0;
-            cursor: pointer;
         }
         
         .filter-item.disabled {
@@ -207,7 +206,6 @@
             border: 2px solid #777;
             position: relative;
             background-color: transparent;
-            cursor: pointer;
         }
         
         .checkbox.checked {
@@ -290,178 +288,140 @@
             color: #999;
             font-size: 14px;
         }
-
-        /* Auth Modal Styles */
-        .auth-modal {
-            display: none;
+        
+        /* Auth Styles */
+        .auth-container {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: #0a0a0a;
-            z-index: 100;
-            animation: slide-in 0.3s forwards;
-            flex-direction: column;
-        }
-
-        .auth-tabs {
+            background-color: rgba(0, 0, 0, 0.8);
             display: flex;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
         }
-
-        .auth-tab {
-            flex: 1;
+        
+        .auth-box {
+            background-color: #1e1e1e;
+            border-radius: 12px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+        }
+        
+        .auth-title {
+            font-size: 24px;
+            font-weight: bold;
             text-align: center;
-            padding: 15px;
-            cursor: pointer;
-            color: #999;
-        }
-
-        .auth-tab.active {
-            color: #e0e0e0;
-            border-bottom: 2px solid #c3d61a;
-        }
-
-        .auth-content {
-            flex: 1;
-            padding: 20px 15px;
-            overflow-y: auto;
-        }
-
-        .auth-form {
-            display: none;
-        }
-
-        .auth-form.active {
-            display: block;
-        }
-
-        .form-group {
             margin-bottom: 20px;
         }
-
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            color: #e0e0e0;
+        
+        .auth-form {
+            display: flex;
+            flex-direction: column;
         }
-
-        .form-input {
-            width: 100%;
+        
+        .auth-input {
             background-color: #2a2a2a;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             padding: 12px;
+            margin-bottom: 15px;
             color: #e0e0e0;
-            font-size: 16px;
         }
-
-        .form-input:focus {
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(195, 214, 26, 0.5);
-        }
-
+        
         .auth-button {
-            width: 100%;
-            padding: 15px;
+            padding: 12px;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             background-color: #c3d61a;
             color: #000;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 10px;
-        }
-
-        .auth-button:disabled {
-            background-color: #555;
-            color: #999;
-            cursor: not-allowed;
-        }
-
-        .auth-message {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 4px;
-            text-align: center;
-        }
-
-        .auth-message.error {
-            background-color: rgba(255, 0, 0, 0.2);
-            color: #ff6b6b;
-        }
-
-        .auth-message.success {
-            background-color: rgba(0, 255, 0, 0.2);
-            color: #6bff6b;
-        }
-
-        .admin-tools {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #2a2a2a;
-            border-radius: 4px;
-        }
-
-        .admin-title {
-            font-size: 18px;
-            font-weight: bold;
             margin-bottom: 15px;
-            color: #c3d61a;
         }
-
-        .admin-button {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 4px;
-            background-color: #444;
-            color: #e0e0e0;
+        
+        .auth-toggle {
+            text-align: center;
+            color: #999;
             font-size: 14px;
+        }
+        
+        .auth-toggle span {
+            color: #c3d61a;
             cursor: pointer;
-            margin-bottom: 10px;
         }
         
-        .user-list {
-            margin-top: 15px;
-            background-color: #222;
-            border-radius: 4px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        
-        .user-item {
-            padding: 10px;
-            border-bottom: 1px solid #333;
+        .auth-social {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
+            margin-top: 20px;
         }
         
-        .user-info {
-            flex: 1;
-        }
-        
-        .user-actions {
+        .social-button {
             display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: #2a2a2a;
+            border-radius: 50%;
+            margin: 0 10px;
+            cursor: pointer;
+        }
+        
+        .social-icon {
+            font-size: 20px;
         }
         
         .user-action {
-            padding: 5px;
-            margin-left: 5px;
-            background: none;
-            border: none;
-            color: #999;
+            margin-top: 15px;
             cursor: pointer;
+            text-align: center;
+            color: #c3d61a;
         }
         
-        .user-action:hover {
-            color: #e0e0e0;
+        #signout-button {
+            display: none;
+            margin-top: 15px;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            background-color: #ff5151;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
         }
     </style>
 </head>
 <body>
+    <!-- Auth Container -->
+    <div class="auth-container" id="auth-container">
+        <div class="auth-box">
+            <div class="auth-title" id="auth-title">Вход</div>
+            <div class="auth-form">
+                <input type="email" class="auth-input" id="email-input" placeholder="Email">
+                <input type="password" class="auth-input" id="password-input" placeholder="Пароль">
+                <button class="auth-button" id="auth-button">Войти</button>
+                <div class="auth-toggle">
+                    <span id="auth-toggle-text">Еще нет аккаунта? </span>
+                    <span id="auth-toggle-action">Регистрация</span>
+                </div>
+                <div class="auth-social">
+                    <div class="social-button" id="google-auth">
+                        <div class="social-icon">G</div>
+                    </div>
+                </div>
+                <div class="user-action" id="forgot-password">Забыли пароль?</div>
+            </div>
+        </div>
+    </div>
+
     <!-- Search Page (default view) -->
     <div class="page active" id="search-page">
         <div class="search-container">
@@ -565,76 +525,31 @@
                 <span class="filter-icon">👤</span>Личный кабинет
             </div>
         </div>
-        <div class="modal-content" id="profile-content">
-            <!-- Content will be filled dynamically based on login status -->
-        </div>
-    </div>
-
-    <!-- Auth Modal -->
-    <div class="auth-modal" id="auth-modal">
-        <div class="modal-header">
-            <button class="back-button" id="close-auth">←</button>
-            <div class="modal-title">
-                <span class="filter-icon">🔐</span>Авторизация
-            </div>
-        </div>
-        
-        <div class="auth-tabs">
-            <div class="auth-tab active" data-tab="login">Вход</div>
-            <div class="auth-tab" data-tab="register">Регистрация</div>
-        </div>
-        
-        <div class="auth-content">
-            <!-- Login Form -->
-            <div class="auth-form active" id="login-form">
-                <div class="form-group">
-                    <label class="form-label" for="login-email">Email</label>
-                    <input type="email" id="login-email" class="form-input" placeholder="email@example.com">
+        <div class="modal-content">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <img id="profile-image" src="https://api.dicebear.com/6.x/avataaars/svg?seed=Felix" alt="Аватар пользователя">
                 </div>
-                <div class="form-group">
-                    <label class="form-label" for="login-password">Пароль</label>
-                    <input type="password" id="login-password" class="form-input" placeholder="Введите пароль">
-                </div>
-                <button class="auth-button" id="login-button">Войти</button>
-                <div class="auth-message" id="login-message" style="display: none;"></div>
-            </div>
-            
-            <!-- Register Form -->
-            <div class="auth-form" id="register-form">
-                <div class="form-group">
-                    <label class="form-label" for="register-name">Имя и Фамилия</label>
-                    <input type="text" id="register-name" class="form-input" placeholder="Иван Иванов">
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="register-email">Email</label>
-                    <input type="email" id="register-email" class="form-input" placeholder="email@example.com">
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="register-phone">Телефон</label>
-                    <input type="tel" id="register-phone" class="form-input" placeholder="+7 (999) 123-45-67">
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="register-password">Пароль</label>
-                    <input type="password" id="register-password" class="form-input" placeholder="Создайте пароль">
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="register-confirm">Подтверждение пароля</label>
-                    <input type="password" id="register-confirm" class="form-input" placeholder="Повторите пароль">
-                </div>
-                <button class="auth-button" id="register-button">Зарегистрироваться</button>
-                <div class="auth-message" id="register-message" style="display: none;"></div>
-            </div>
-            
-            <!-- Admin Section (visible only to admins) -->
-            <div class="admin-tools" id="admin-tools" style="display: none;">
-                <div class="admin-title">Панель администратора</div>
-                <button class="admin-button" id="export-csv">Экспорт пользователей в CSV</button>
-                <button class="admin-button" id="view-users">Просмотр пользователей</button>
-                
-                <div class="user-list" id="user-list" style="display: none;">
-                    <!-- User list will be populated dynamically -->
+                <div class="profile-info">
+                    <div class="profile-name" id="profile-name">Загрузка...</div>
+                    <div class="profile-email" id="profile-email">Загрузка...</div>
                 </div>
             </div>
+            <div class="filter-section">
+                <div class="filter-item">
+                    <div>Мои покупки</div>
+                    <div class="chevron">›</div>
+                </div>
+                <div class="filter-item">
+                    <div>История просмотров</div>
+                    <div class="chevron">›</div>
+                </div>
+                <div class="filter-item">
+                    <div>Уведомления</div>
+                    <div class="chevron">›</div>
+                </div>
+            </div>
+            <button id="signout-button">Выйти</button>
         </div>
     </div>
 
@@ -662,536 +577,267 @@
         </div>
     </div>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.9.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.1/firebase-firestore-compat.js"></script>
+
     <script>
-        // User Management Module
-        const UserManager = {
-            // Initialize the user storage
-            init() {
-                if (!localStorage.getItem('users')) {
-                    localStorage.setItem('users', JSON.stringify([]));
-                }
-                
-                // Create admin user if not exists
-                const users = this.getAllUsers();
-                const adminExists = users.some(user => user.role === 'admin');
-                
-                if (!adminExists) {
-                    this.registerUser({
-                        name: 'Администратор',
-                        email: 'admin@example.com',
-                        phone: '+7 (999) 999-99-99',
-                        password: 'admin123',
-                        role: 'admin'
-                    });
-                }
-            },
-            
-            // Get all users
-            getAllUsers() {
-                return JSON.parse(localStorage.getItem('users')) || [];
-            },
-            
-            // Register a new user
-            registerUser(userData) {
-                const users = this.getAllUsers();
-                
-                // Check if email already exists
-                if (users.some(user => user.email === userData.email)) {
-                    return { success: false, message: 'Пользователь с таким email уже существует' };
-                }
-                
-                // Add registration date and default role
-                const newUser = {
-                    ...userData,
-                    id: Date.now().toString(),
-                    registered: new Date().toISOString(),
-                    role: userData.role || 'user'
-                };
-                
-                users.push(newUser);
-                localStorage.setItem('users', JSON.stringify(users));
-                
-                return { success: true, user: newUser };
-            },
-            
-            // Login user
-            loginUser(email, password) {
-                const users = this.getAllUsers();
-                const user = users.find(user => user.email === email && user.password === password);
-                
-                if (user) {
-                    // Store current user in session
-                    sessionStorage.setItem('currentUser', JSON.stringify(user));
-                    return { success: true, user };
-                } else {
-                    return { success: false, message: 'Неверный email или пароль' };
-                }
-            },
-            
-            // Logout user
-            logoutUser() {
-                sessionStorage.removeItem('currentUser');
-            },
-            
-            // Get current user
-            getCurrentUser() {
-                return JSON.parse(sessionStorage.getItem('currentUser'));
-            },
-            
-            // Check if user is logged in
-            isLoggedIn() {
-                return !!this.getCurrentUser();
-            },
-            
-            // Check if user is admin
-            isAdmin() {
-                const user = this.getCurrentUser();
-                return user && user.role === 'admin';
-            },
-            
-            // Delete user (admin only)
-            deleteUser(userId) {
-                const users = this.getAllUsers();
-                const updatedUsers = users.filter(user => user.id !== userId);
-                localStorage.setItem('users', JSON.stringify(updatedUsers));
-            },
-            
-            // Export users to CSV
-            exportToCSV() {
-                const users = this.getAllUsers();
-                
-                // Define CSV headers
-                const headers = ['ID', 'Имя', 'Email', 'Телефон', 'Роль', 'Дата регистрации'];
-                
-                // Create CSV content
-                let csvContent = headers.join(',') + '\n';
-                
-                users.forEach(user => {
-                    const row = [
-                        user.id,
-                        user.name,
-                        user.email,
-                        user.phone,
-                        user.role,
-                        user.registered
-                    ];
-                    csvContent += row.join(',') + '\n';
-                });
-                
-                // Create a blob and download link
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                
-                const link = document.createElement('a');
-                link.setAttribute('href', url);
-                link.setAttribute('download', 'users_' + new Date().toISOString().slice(0, 10) + '.csv');
-                link.style.display = 'none';
-                
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
+        // Firebase конфигурация
+        const firebaseConfig = {
+            apiKey: "ВАШЕ_ЗНАЧЕНИЕ_API_KEY",
+            authDomain: "ВАШЕ_ЗНАЧЕНИЕ.firebaseapp.com",
+            projectId: "ВАШЕ_ЗНАЧЕНИЕ",
+            storageBucket: "ВАШЕ_ЗНАЧЕНИЕ.appspot.com",
+            messagingSenderId: "ВАШЕ_ЗНАЧЕНИЕ",
+            appId: "ВАШЕ_ЗНАЧЕНИЕ"
         };
         
-        // UI Controller Module
-        const UIController = {
-            // Initialize UI
-            init() {
-                this.setupNavigationHandlers();
-                this.setupModalHandlers();
-                this.setupAuthHandlers();
-                this.updateProfileUI();
-            },
-            
-            // Setup navigation handlers
-            setupNavigationHandlers() {
-                // Get all navigation items
-                const navItems = document.querySelectorAll('.nav-item');
-                
-                // Add click event to each navigation item
-                navItems.forEach(item => {
-                    item.addEventListener('click', function() {
-                        // Get the target page id
-                        const pageId = this.getAttribute('data-page');
-                        
-                        // Hide all pages
-                        document.querySelectorAll('.page').forEach(page => {
-                            page.classList.remove('active');
-                        });
-                        
-                        // Show the selected page
-                        document.getElementById(pageId).classList.add('active');
-                        
-                        // Deactivate all nav items
-                        navItems.forEach(navItem => {
-                            navItem.classList.remove('active');
-                        });
-                        
-                        // Activate the clicked nav item
-                        this.classList.add('active');
-                    });
-                });
-            },
-            
-            // Setup modal handlers
-            setupModalHandlers() {
-                // Filter modal functionality
-                const openFilter = document.getElementById('open-filter');
-                const closeFilter = document.getElementById('close-filter');
-                const filterModal = document.getElementById('filter-modal');
-                const applyFilter = document.getElementById('apply-filter');
-                
-                // Profile modal functionality
-                const profileMenuItem = document.getElementById('profile-menu-item');
-                const closeProfile = document.getElementById('close-profile');
-                const profileModal = document.getElementById('profile-modal');
-                
-                // Auth modal functionality
-                const closeAuth = document.getElementById('close-auth');
-                const authModal = document.getElementById('auth-modal');
-                
-                // Checkboxes
-                const auctionCheckbox = document.getElementById('auction-checkbox');
-                const publicOfferCheckbox = document.getElementById('public-offer-checkbox');
-                
-                // Open filter modal
-                openFilter.addEventListener('click', function() {
-                    filterModal.style.display = 'flex';
-                });
-                
-                // Close filter modal
-                closeFilter.addEventListener('click', function() {
-                    filterModal.style.display = 'none';
-                });
-                
-                // Apply filter
-                applyFilter.addEventListener('click', function() {
-                    filterModal.style.display = 'none';
-                });
-                
-                // Open profile modal
-                profileMenuItem.addEventListener('click', function() {
-                    // Update profile UI before showing
-                    UIController.updateProfileUI();
-                    profileModal.style.display = 'flex';
-                });
-                
-                // Close profile modal
-                closeProfile.addEventListener('click', function() {
-                    profileModal.style.display = 'none';
-                });
-                
-                // Close auth modal
-                closeAuth.addEventListener('click', function() {
-                    authModal.style.display = 'none';
-                });
-                
-                // Toggle checkboxes
-                auctionCheckbox.addEventListener('click', function() {
-                    this.classList.toggle('checked');
-                });
-                
-                publicOfferCheckbox.addEventListener('click', function() {
-                    this.classList.toggle('checked');
-                });
-                
-                // Handle filter item clicks
-                document.getElementById('region-filter').addEventListener('click', function() {
-                    // Add region filter functionality here
-                    console.log('Регион clicked');
-                });
-                
-                document.getElementById('categories-filter').addEventListener('click', function() {
-                    // Add categories filter functionality here
-                    console.log('Категории clicked');
-                });
-            },
-            
-            // Setup auth handlers
-            setupAuthHandlers() {
-                // Auth tab functionality
-                const authTabs = document.querySelectorAll('.auth-tab');
-                
-                authTabs.forEach(tab => {
-                    tab.addEventListener('click', function() {
-                        // Deactivate all tabs
-                        authTabs.forEach(t => t.classList.remove('active'));
-                        
-                        // Activate clicked tab
-                        this.classList.add('active');
-                        
-                        // Hide all forms
-                        document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
-                        
-                        // Show selected form
-                        const tabName = this.getAttribute('data-tab');
-                        document.getElementById(tabName + '-form').classList.add('active');
-                        
-                        // Hide error messages
-                        document.getElementById('login-message').style.display = 'none';
-                        document.getElementById('register-message').style.display = 'none';
-                    });
-                });
-                
-                // Login button handler
-                document.getElementById('login-button').addEventListener('click', function() {
-                    const email = document.getElementById('login-email').value;
-                    const password = document.getElementById('login-password').value;
-                    
-                    // Validate fields
-                    if (!email || !password) {
-                        const message = document.getElementById('login-message');
-                        message.textContent = 'Пожалуйста, заполните все поля';
-                        message.className = 'auth-message error';
-                        message.style.display = 'block';
-                        return;
-                    }
-                    
-                    // Try to login
-                    const result = UserManager.loginUser(email, password);
-                    
-                    if (result.success) {
-                        // Close auth modal
-                        document.getElementById('auth-modal').style.display = 'none';
-                        
-                        // Update profile UI
-                        UIController.updateProfileUI();
-                        
-                        // Show profile modal
-                        document.getElementById('profile-modal').style.display = 'flex';
-                    } else {
-                        const message = document.getElementById('login-message');
-                        message.textContent = result.message;
-                        message.className = 'auth-message error';
-                        message.style.display = 'block';
-                    }
-                });
-                
-                // Register button handler
-                document.getElementById('register-button').addEventListener('click', function() {
-                    const name = document.getElementById('register-name').value;
-                    const email = document.getElementById('register-email').value;
-                    const phone = document.getElementById('register-phone').value;
-                    const password = document.getElementById('register-password').value;
-                    const confirm = document.getElementById('register-confirm').value;
-                    
-                    // Get message element
-                    const message = document.getElementById('register-message');
-                    
-                    // Validate fields
-                    if (!name || !email || !phone || !password || !confirm) {
-                        message.textContent = 'Пожалуйста, заполните все поля';
-                        message.className = 'auth-message error';
-                        message.style.display = 'block';
-                        return;
-                    }
-                    
-                    // Validate email format
-                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                    if (!emailRegex.test(email)) {
-                        message.textContent = 'Пожалуйста, введите корректный email';
-                        message.className = 'auth-message error';
-                        message.style.display = 'block';
-                        return;
-                    }
-                    
-                    // Validate phone format
-                    const phoneRegex = /^\+?[0-9\s\-\(\)]+$/;
-                    if (!phoneRegex.test(phone)) {
-                        message.textContent = 'Пожалуйста, введите корректный номер телефона';
-                        message.className = 'auth-message error';
-                        message.style.display = 'block';
-                        return;
-                    }
-                    
-                    // Check if passwords match
-                    if (password !== confirm) {
-                        message.textContent = 'Пароли не совпадают';
-                        message.className = 'auth-message error';
-                        message.style.display = 'block';
-                        return;
-                    }
-                    
-                    // Register user
-                    const result = UserManager.registerUser({
-                        name,
-                        email,
-                        phone,
-                        password
-                    });
-                    
-                    if (result.success) {
-                        message.textContent = 'Регистрация успешна! Теперь вы можете войти';
-                        message.className = 'auth-message success';
-                        message.style.display = 'block';
-                        
-                        // Clear form
-                        document.getElementById('register-name').value = '';
-                        document.getElementById('register-email').value = '';
-                        document.getElementById('register-phone').value = '';
-                        document.getElementById('register-password').value = '';
-                        document.getElementById('register-confirm').value = '';
-                        
-                        // Switch to login tab after short delay
-                        setTimeout(() => {
-                            // Click on login tab
-                            document.querySelector('.auth-tab[data-tab="login"]').click();
-                        }, 2000);
-                    } else {
-                        message.textContent = result.message;
-                        message.className = 'auth-message error';
-                        message.style.display = 'block';
-                    }
-                });
-                
-                // Admin tools handlers
-                document.getElementById('export-csv').addEventListener('click', function() {
-                    UserManager.exportToCSV();
-                });
-                
-                document.getElementById('view-users').addEventListener('click', function() {
-                    const userList = document.getElementById('user-list');
-                    
-                    // Toggle visibility
-                    if (userList.style.display === 'none') {
-                        // Update user list
-                        UIController.updateUserList();
-                        userList.style.display = 'block';
-                    } else {
-                        userList.style.display = 'none';
-                    }
-                });
-            },
-            
-            // Update profile UI based on login status
-            updateProfileUI() {
-                const profileContent = document.getElementById('profile-content');
-                
-                if (UserManager.isLoggedIn()) {
-                    const user = UserManager.getCurrentUser();
-                    
-                    // Create profile HTML for logged in user
-                    profileContent.innerHTML = `
-                        <div class="profile-header">
-                            <div class="profile-avatar">
-                                <img src="https://api.dicebear.com/6.x/avataaars/svg?seed=${user.name}" alt="Аватар пользователя">
-                            </div>
-                            <div class="profile-info">
-                                <div class="profile-name">${user.name}</div>
-                                <div class="profile-email">${user.email}</div>
-                            </div>
-                        </div>
-                        <div class="filter-section">
-                            <div class="filter-item">
-                                <div>Мои покупки</div>
-                                <div class="chevron">›</div>
-                            </div>
-                            <div class="filter-item">
-                                <div>История просмотров</div>
-                                <div class="chevron">›</div>
-                            </div>
-                            <div class="filter-item">
-                                <div>Уведомления</div>
-                                <div class="chevron">›</div>
-                            </div>
-                        </div>
-                        <button class="apply-button" id="logout-button">Выйти</button>
-                    `;
-                    
-                    // Add admin section if user is admin
-                    if (UserManager.isAdmin()) {
-                        const adminSection = document.createElement('div');
-                        adminSection.className = 'filter-section';
-                        adminSection.innerHTML = `
-                            <div class="filter-section-title">Панель администратора</div>
-                            <div class="filter-item" id="open-admin-panel">
-                                <div>Управление пользователями</div>
-                                <div class="chevron">›</div>
-                            </div>
-                        `;
-                        profileContent.insertBefore(adminSection, document.getElementById('logout-button'));
-                        
-                        // Add click handler for admin panel
-                        setTimeout(() => {
-                            document.getElementById('open-admin-panel').addEventListener('click', function() {
-                                document.getElementById('profile-modal').style.display = 'none';
-                                document.getElementById('auth-modal').style.display = 'flex';
-                                document.getElementById('admin-tools').style.display = 'block';
-                            });
-                        }, 0);
-                    }
-                    
-                    // Add logout handler
-                    setTimeout(() => {
-                        document.getElementById('logout-button').addEventListener('click', function() {
-                            UserManager.logoutUser();
-                            UIController.updateProfileUI();
-                        });
-                    }, 0);
-                } else {
-                    // Create login prompt HTML
-                    profileContent.innerHTML = `
-                        <div class="content-placeholder">
-                            Для доступа к личному кабинету необходимо войти или зарегистрироваться
-                        </div>
-                        <button class="apply-button" id="open-auth-button">Войти / Зарегистрироваться</button>
-                    `;
-                    
-                    // Add auth button handler
-                    setTimeout(() => {
-                        document.getElementById('open-auth-button').addEventListener('click', function() {
-                            document.getElementById('profile-modal').style.display = 'none';
-                            document.getElementById('auth-modal').style.display = 'flex';
-                        });
-                    }, 0);
-                }
-            },
-            
-            // Update user list for admin panel
-            updateUserList() {
-                const userList = document.getElementById('user-list');
-                const users = UserManager.getAllUsers();
-                
-                // Clear list
-                userList.innerHTML = '';
-                
-                // Add each user to list
-                users.forEach(user => {
-                    const userItem = document.createElement('div');
-                    userItem.className = 'user-item';
-                    userItem.innerHTML = `
-                        <div class="user-info">
-                            <div><strong>${user.name}</strong> (${user.role})</div>
-                            <div>${user.email} | ${user.phone}</div>
-                        </div>
-                        <div class="user-actions">
-                            <button class="user-action delete-user" data-id="${user.id}">🗑️</button>
-                        </div>
-                    `;
-                    userList.appendChild(userItem);
-                });
-                
-                // Add delete handlers
-                document.querySelectorAll('.delete-user').forEach(button => {
-                    button.addEventListener('click', function() {
-                        const userId = this.getAttribute('data-id');
-                        
-                        if (confirm('Вы уверены, что хотите удалить этого пользователя?')) {
-                            UserManager.deleteUser(userId);
-                            UIController.updateUserList();
-                        }
-                    });
-                });
-            }
-        };
+        // Инициализация Firebase
+        firebase.initializeApp(firebaseConfig);
         
-        // Initialize app
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize user manager
-            UserManager.init();
+        // Получение сервисов Firebase
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        
+        // Элементы DOM для авторизации
+        const authContainer = document.getElementById('auth-container');
+        const authTitle = document.getElementById('auth-title');
+        const authButton = document.getElementById('auth-button');
+        const authToggleAction = document.getElementById('auth-toggle-action');
+        const emailInput = document.getElementById('email-input');
+        const passwordInput = document.getElementById('password-input');
+        const googleAuthButton = document.getElementById('google-auth');
+        const forgotPasswordButton = document.getElementById('forgot-password');
+        const signoutButton = document.getElementById('signout-button');
+        
+        // Элементы DOM для профиля
+        const profileName = document.getElementById('profile-name');
+        const profileEmail = document.getElementById('profile-email');
+        const profileImage = document.getElementById('profile-image');
+        
+        // Переменная состояния для определения режима авторизации (вход/регистрация)
+        let isLoginMode = true;
+        
+        // Наблюдатель за состоянием авторизации
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // Пользователь авторизован
+                authContainer.style.display = 'none';
+                signoutButton.style.display = 'block';
+                
+                // Обновление данных в профиле
+                profileName.textContent = user.displayName || 'Пользователь';
+                profileEmail.textContent = user.email;
+                
+                // Установка изображения профиля
+                if (user.photoURL) {
+                    profileImage.src = user.photoURL;
+                } else {
+                    // Используем сервис генерации аватаров с именем пользователя как seed
+                    profileImage.src = `https://api.dicebear.com/6.x/avataaars/svg?seed=${user.email}`;
+                }
+                
+                // Записываем пользователя в Firestore при первом входе
+                const userRef = db.collection('users').doc(user.uid);
+                userRef.get().then(doc => {
+                    if (!doc.exists) {
+                        // Если документ пользователя не существует, создаем его
+                        userRef.set({
+                            displayName: user.displayName || 'Пользователь',
+                            email: user.email,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    } else {
+                        // Обновляем время последнего входа
+                        userRef.update({
+                            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                });
+            } else {
+                // Пользователь не авторизован
+                authContainer.style.display = 'flex';
+                signoutButton.style.display = 'none';
+                
+                // Сбрасываем данные профиля
+                profileName.textContent = 'Нет авторизации';
+                profileEmail.textContent = 'Войдите, чтобы увидеть данные';
+                profileImage.src = 'https://api.dicebear.com/6.x/avataaars/svg?seed=Guest';
+            }
+        });
+        
+        // Обработчик для переключения между входом и регистрацией
+        authToggleAction.addEventListener('click', () => {
+            isLoginMode = !isLoginMode;
             
-            // Initialize UI controller
-            UIController.init();
+            if (isLoginMode) {
+                authTitle.textContent = 'Вход';
+                authButton.textContent = 'Войти';
+                authToggleAction.textContent = 'Регистрация';
+            } else {
+                authTitle.textContent = 'Регистрация';
+                authButton.textContent = 'Зарегистрироваться';
+                authToggleAction.textContent = 'Вход';
+            }
+        });
+        
+        // Обработчик для кнопки авторизации
+        authButton.addEventListener('click', () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            
+            if (!email || !password) {
+                alert('Пожалуйста, заполните все поля');
+                return;
+            }
+            
+            if (isLoginMode) {
+                // Вход
+                auth.signInWithEmailAndPassword(email, password)
+                    .catch(error => {
+                        alert(`Ошибка входа: ${error.message}`);
+                    });
+            } else {
+                // Регистрация
+                auth.createUserWithEmailAndPassword(email, password)
+                    .then(() => {
+                        // Отправка письма с подтверждением почты
+                        auth.currentUser.sendEmailVerification();
+                        alert('Регистрация успешна! Проверьте почту для подтверждения.');
+                    })
+                    .catch(error => {
+                        alert(`Ошибка регистрации: ${error.message}`);
+                    });
+            }
+        });
+        
+        // Вход через Google
+        googleAuthButton.addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .catch(error => {
+                    alert(`Ошибка входа через Google: ${error.message}`);
+                });
+        });
+        
+        // Восстановление пароля
+        forgotPasswordButton.addEventListener('click', () => {
+            const email = emailInput.value;
+            
+            if (!email) {
+                alert('Введите Email для восстановления пароля');
+                return;
+            }
+            
+            auth.sendPasswordResetEmail(email)
+                .then(() => {
+                    alert('Инструкции по восстановлению пароля отправлены на вашу почту');
+                })
+                .catch(error => {
+                    alert(`Ошибка восстановления пароля: ${error.message}`);
+                });
+        });
+        
+        // Выход из аккаунта
+        signoutButton.addEventListener('click', () => {
+            auth.signOut()
+                .then(() => {
+                    alert('Вы успешно вышли из аккаунта');
+                })
+                .catch(error => {
+                    alert(`Ошибка выхода: ${error.message}`);
+                });
+        });
+        
+        // Базовый функционал приложения (из исходного кода)
+        
+        // Get all navigation items
+        const navItems = document.querySelectorAll('.nav-item');
+        
+        // Add click event to each navigation item
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // Get the target page id
+                const pageId = this.getAttribute('data-page');
+                
+                // Hide all pages
+                document.querySelectorAll('.page').forEach(page => {
+                    page.classList.remove('active');
+                });
+                
+                // Show the selected page
+                document.getElementById(pageId).classList.add('active');
+                
+                // Deactivate all nav items
+                navItems.forEach(navItem => {
+                    navItem.classList.remove('active');
+                });
+                
+                // Activate the clicked nav item
+                this.classList.add('active');
+            });
+        });
+        
+        // Filter modal functionality
+        const openFilter = document.getElementById('open-filter');
+        const closeFilter = document.getElementById('close-filter');
+        const filterModal = document.getElementById('filter-modal');
+        const applyFilter = document.getElementById('apply-filter');
+        
+        // Profile modal functionality
+        const profileMenuItem = document.getElementById('profile-menu-item');
+        const closeProfile = document.getElementById('close-profile');
+        const profileModal = document.getElementById('profile-modal');
+        
+        // Checkboxes
+        const auctionCheckbox = document.getElementById('auction-checkbox');
+        const publicOfferCheckbox = document.getElementById('public-offer-checkbox');
+        
+        // Open filter modal
+        openFilter.addEventListener('click', function() {
+            filterModal.style.display = 'flex';
+        });
+        
+        // Close filter modal
+        closeFilter.addEventListener('click', function() {
+            filterModal.style.display = 'none';
+        });
+        
+        // Apply filter
+        applyFilter.addEventListener('click', function() {
+            filterModal.style.display = 'none';
+        });
+        
+        // Open profile modal
+        profileMenuItem.addEventListener('click', function() {
+            profileModal.style.display = 'flex';
+        });
+        
+        // Close profile modal
+        closeProfile.addEventListener('click', function() {
+            profileModal.style.display = 'none';
+        });
+        
+        // Toggle checkboxes
+        auctionCheckbox.addEventListener('click', function() {
+            this.classList.toggle('checked');
+        });
+        
+        publicOfferCheckbox.addEventListener('click', function() {
+            this.classList.toggle('checked');
+        });
+        
+        // Handle filter item clicks
+        document.getElementById('region-filter').addEventListener('click', function() {
+            // Add region filter functionality here
+            console.log('Регион clicked');
+        });
+        
+        document.getElementById('categories-filter').addEventListener('click', function() {
+            // Add categories filter functionality here
+            console.log('Категории clicked');
         });
     </script>
 </body>
