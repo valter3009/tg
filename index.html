@@ -410,6 +410,124 @@
             cursor: pointer;
             width: 100%;
         }
+        
+        /* Стили для страницы добавления лота */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            background-color: #1e1e1e;
+        }
+        
+        .header-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #e0e0e0;
+        }
+        
+        .add-lot-content {
+            padding-bottom: 70px; /* Учитываем bottom-nav */
+        }
+        
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            width: 100%;
+        }
+        
+        .field-label {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 8px;
+        }
+        
+        .field-value {
+            font-size: 16px;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .text-field {
+            color: #777;
+        }
+        
+        .description-field {
+            padding-bottom: 15px;
+        }
+        
+        .photos-container {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+        
+        .add-photo-button {
+            width: 80px;
+            height: 80px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .plus-sign {
+            font-size: 30px;
+            color: #999;
+        }
+        
+        .photo-count {
+            margin-left: 10px;
+            color: #999;
+            font-size: 14px;
+        }
+        
+        .price-input {
+            display: flex;
+            align-items: center;
+            background-color: #2a2a2a;
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 5px;
+        }
+        
+        .price-input input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            color: #e0e0e0;
+            font-size: 16px;
+        }
+        
+        .price-input input:focus {
+            outline: none;
+        }
+        
+        .currency {
+            color: #999;
+            margin-left: 5px;
+        }
+        
+        .submit-button {
+            background-color: #c3d61a;
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -436,7 +554,7 @@
     </div>
 
     <!-- Search Page (default view) -->
-    <div class="page active" id="search-page">
+    <div class="page" id="search-page">
         <div class="search-container">
             <input type="text" class="search-input" placeholder="Поиск">
             <div class="search-params" id="open-filter">
@@ -461,8 +579,67 @@
     
     <!-- Add Lot Page -->
     <div class="page" id="add-lot-page">
-        <div class="content-placeholder">
-            Страница добавления лота
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-title">Добавление лота</div>
+        </div>
+        
+        <!-- Content Area -->
+        <div class="content-area add-lot-content">
+            <!-- Form Fields -->
+            <div class="form-field">
+                <div class="field-label">Регион</div>
+                <div class="field-value">
+                    <span>Выберите регион</span>
+                    <span class="chevron">›</span>
+                </div>
+            </div>
+            
+            <div class="form-field">
+                <div class="field-label">Категория</div>
+                <div class="field-value">
+                    <span>Выберите категорию</span>
+                    <span class="chevron">›</span>
+                </div>
+            </div>
+            
+            <div class="form-field">
+                <div class="field-label">Тип торгов</div>
+                <div class="field-value">
+                    <span>Выберите тип</span>
+                    <span class="chevron">›</span>
+                </div>
+            </div>
+            
+            <div class="form-field">
+                <div class="field-label">Название</div>
+                <div class="field-value text-field">Введите название лота</div>
+            </div>
+            
+            <div class="form-field description-field">
+                <div class="field-label">Описание</div>
+                <div class="field-value text-field">Введите описание лота</div>
+            </div>
+            
+            <div class="form-field">
+                <div class="field-label">Фотографии</div>
+                <div class="photos-container">
+                    <div class="add-photo-button">
+                        <div class="plus-sign">+</div>
+                    </div>
+                    <div class="photo-count">0/10</div>
+                </div>
+            </div>
+            
+            <div class="form-field">
+                <div class="field-label">Начальная цена</div>
+                <div class="price-input">
+                    <input type="number" placeholder="0">
+                    <span class="currency">₽</span>
+                </div>
+            </div>
+            
+            <button class="submit-button">Опубликовать</button>
         </div>
     </div>
     
@@ -568,7 +745,7 @@
 
     <!-- Bottom Navigation -->
     <div class="bottom-nav">
-        <div class="nav-item active" data-page="search-page">
+        <div class="nav-item" data-page="search-page">
             <div class="nav-icon">🔍</div>
             <div>Поиск</div>
         </div>
@@ -576,7 +753,7 @@
             <div class="nav-icon">⭐</div>
             <div>Избранное</div>
         </div>
-        <div class="nav-item" data-page="add-lot-page">
+        <div class="nav-item active" data-page="add-lot-page">
             <div class="nav-icon plus-icon">+</div>
             <div>Продать</div>
         </div>
@@ -851,6 +1028,53 @@
         document.getElementById('categories-filter').addEventListener('click', function() {
             // Add categories filter functionality here
             console.log('Категории clicked');
+        });
+        
+        // Функциональность страницы добавления лота
+        document.addEventListener('DOMContentLoaded', function() {
+            // Элементы формы добавления лота
+            const formFields = document.querySelectorAll('#add-lot-page .field-value');
+            const submitButton = document.querySelector('#add-lot-page .submit-button');
+            
+            // Обработчики кликов по полям формы
+            formFields.forEach(field => {
+                field.addEventListener('click', function() {
+                    if (this.classList.contains('text-field')) {
+                        // Для текстовых полей показываем prompt
+                        const fieldLabel = this.parentElement.querySelector('.field-label').textContent;
+                        const currentValue = this.textContent;
+                        const newValue = prompt(`Введите ${fieldLabel.toLowerCase()}:`, currentValue === `Введите ${fieldLabel.toLowerCase()}` ? '' : currentValue);
+                        
+                        if (newValue !== null) {
+                            this.textContent = newValue || `Введите ${fieldLabel.toLowerCase()}`;
+                        }
+                    } else {
+                        // Для полей выбора можно добавить функциональность позже
+                        console.log(`Clicked on ${this.parentElement.querySelector('.field-label').textContent}`);
+                    }
+                });
+            });
+            
+            // Обработчик нажатия кнопки "Опубликовать"
+            submitButton.addEventListener('click', function() {
+                // Проверка авторизации
+                if (!auth.currentUser) {
+                    alert('Для публикации лота необходимо авторизоваться');
+                    return;
+                }
+                
+                // Здесь будет логика отправки данных в Firebase
+                alert('Функция публикации лота в разработке');
+            });
+            
+            // Обработчик клика по кнопке добавления фотографий
+            const addPhotoButton = document.querySelector('.add-photo-button');
+            const photoCount = document.querySelector('.photo-count');
+            
+            addPhotoButton.addEventListener('click', function() {
+                alert('Функция добавления фотографий в разработке');
+                // Здесь будет логика добавления фотографий
+            });
         });
     </script>
 </body>
