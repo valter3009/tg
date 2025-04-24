@@ -1484,18 +1484,7 @@
                 const descriptionIndex = createSearchIndex(description);
                 const searchIndex = [...new Set([...titleIndex, ...descriptionIndex])];
                 
-                // Загружаем фотографии
-                const photoUrls = [];
-                if (selectedPhotos.length > 0) {
-                    for (const file of selectedPhotos) {
-                        const photoRef = storage.ref(`lots/${lotRef.id}/${file.name}`);
-                        await photoRef.put(file);
-                        const url = await photoRef.getDownloadURL();
-                        photoUrls.push(url);
-                    }
-                }
-                
-                // Сохраняем данные лота
+                // Сохраняем данные лота без фотографий сначала
                 await lotRef.set({
                     userId: currentUser.uid,
                     region: region,
@@ -1504,13 +1493,42 @@
                     title: title,
                     description: description,
                     price: price,
-                    photos: photoUrls,
+                    photos: [],
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     status: 'active',
                     searchIndex: searchIndex,
                     titleLower: title.toLowerCase(),
                     exactPhrase: title.toLowerCase().replace(/\s+/g, ' ').trim()
                 });
+                
+                // Загружаем фотографии, если они есть
+                // Если возникнет ошибка CORS, лот все равно будет создан, просто без фотографий
+                if (selectedPhotos.length > 0) {
+                    try {
+                        const photoUrls = [];
+                        for (const file of selectedPhotos) {
+                            try {
+                                const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+                                const photoRef = storage.ref(`lots/${lotRef.id}/${fileName}`);
+                                await photoRef.put(file);
+                                const url = await photoRef.getDownloadURL();
+                                photoUrls.push(url);
+                            } catch (photoError) {
+                                console.error("Ошибка загрузки фото:", photoError);
+                            }
+                        }
+                        
+                        // Обновляем лот с фотографиями
+                        if (photoUrls.length > 0) {
+                            await lotRef.update({
+                                photos: photoUrls
+                            });
+                        }
+                    } catch (photoError) {
+                        console.error("Ошибка при обработке фотографий:", photoError);
+                        showNotification("Лот создан, но возникли проблемы с загрузкой фотографий");
+                    }
+                }
                 
                 showNotification('Лот успешно опубликован!');
                 
@@ -1559,26 +1577,16 @@
             const searchTerm = searchInput.value.trim().toLowerCase();
             const isExactMatch = searchExactOption.checked;
             
+            // Базовый запрос
             let query = db.collection('lots').where('status', '==', 'active');
             
-            // Применяем фильтры, если они есть
+            // Для Firestore нельзя использовать более одного фильтра "in" в одном запросе
+            // Поэтому мы применим только один фильтр (регионы), а остальное отфильтруем на клиенте
             if (activeFilters.regions.length > 0) {
-                // Для фильтра по региону используем in, так как мы можем выбрать несколько регионов
                 query = query.where('region', 'in', activeFilters.regions);
             }
             
-            if (activeFilters.categories.length > 0) {
-                // Для фильтра по категории используем in
-                query = query.where('category', 'in', activeFilters.categories);
-            }
-            
-            if (activeFilters.tradeTypes.length > 0) {
-                // Для фильтра по типу торгов используем in
-                query = query.where('tradeType', 'in', activeFilters.tradeTypes);
-            }
-            
-            // Для фильтра по цене нельзя использовать несколько операторов сравнения в одном запросе
-            // Поэтому мы получим все лоты и отфильтруем их на клиенте
+            // Для фильтра по цене и остальных фильтров мы будем фильтровать результаты на клиенте
             
             query.orderBy('createdAt', 'desc').get().then(snapshot => {
                 let lots = [];
@@ -1593,6 +1601,16 @@
                     }
                     
                     if (activeFilters.maxPrice !== null && lotData.price > activeFilters.maxPrice) {
+                        return;
+                    }
+                    
+                    // Фильтрация по категории, если не применен фильтр в запросе
+                    if (activeFilters.categories.length > 0 && !activeFilters.categories.includes(lotData.category)) {
+                        return;
+                    }
+                    
+                    // Фильтрация по типу торгов, если не применен фильтр в запросе
+                    if (activeFilters.tradeTypes.length > 0 && !activeFilters.tradeTypes.includes(lotData.tradeType)) {
                         return;
                     }
                     
