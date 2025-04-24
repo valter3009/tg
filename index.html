@@ -485,6 +485,9 @@
             border-radius: 6px;
             color: #e0e0e0;
             font-size: 16px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
         }
         
         .text-field::placeholder {
@@ -501,6 +504,9 @@
             font-size: 16px;
             min-height: 100px;
             resize: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
         }
         
         .textarea-field::placeholder {
@@ -595,6 +601,9 @@
             background: transparent;
             color: #e0e0e0;
             font-size: 16px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
         }
         
         .price-input input:focus {
@@ -681,7 +690,7 @@
     <!-- Search Page (default view) -->
     <div class="page active" id="search-page">
         <div class="search-container">
-            <input type="text" class="search-input" placeholder="Поиск">
+            <input type="text" class="search-input" placeholder="Поиск" autocomplete="off">
             <div class="search-params" id="open-filter">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="4" y1="8" x2="20" y2="8"></line>
@@ -738,12 +747,12 @@
             
             <div class="form-field">
                 <div class="field-label">Название</div>
-                <input type="text" class="text-field" id="title-field" placeholder="Введите название лота">
+                <input type="text" class="text-field" id="title-field" placeholder="Введите название лота" autocomplete="off">
             </div>
             
             <div class="form-field description-field">
                 <div class="field-label">Описание</div>
-                <textarea class="textarea-field" id="description-field" placeholder="Введите описание лота"></textarea>
+                <textarea class="textarea-field" id="description-field" placeholder="Введите описание лота" autocomplete="off"></textarea>
             </div>
             
             <div class="form-field">
@@ -760,7 +769,7 @@
             <div class="form-field">
                 <div class="field-label">Начальная цена</div>
                 <div class="price-input">
-                    <input type="number" id="price-field" placeholder="0">
+                    <input type="number" id="price-field" placeholder="0" autocomplete="off">
                     <span class="currency">₽</span>
                 </div>
             </div>
@@ -1251,31 +1260,35 @@
         
         // Overlay для закрытия клавиатуры
         document.addEventListener('click', function(e) {
-            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
-                // Снимаем фокус со всех полей ввода при клике на любой другой элемент
+            // Проверяем, что клик был не по полю ввода и не по элементу, который должен вызывать фокус
+            if (e.target.tagName !== 'INPUT' && 
+                e.target.tagName !== 'TEXTAREA' && 
+                !e.target.classList.contains('text-field') && 
+                !e.target.classList.contains('textarea-field') &&
+                !e.target.classList.contains('search-input')) {
+                
+                // Снимаем фокус со всех полей ввода только если кликнули не по полю ввода
                 document.querySelectorAll('input, textarea').forEach(input => {
                     input.blur();
                 });
             }
         });
         
-        // Обработчики для полей ввода, чтобы скрыть/показать overlay
-        document.querySelectorAll('input, textarea').forEach(input => {
-            input.addEventListener('focus', function() {
-                overlay.style.display = 'block';
-            });
-            
-            input.addEventListener('blur', function() {
-                overlay.style.display = 'none';
-            });
-        });
-        
-        // Обработчик клика по overlay для закрытия клавиатуры
-        overlay.addEventListener('click', function() {
+        // Убираем обработчики, которые могли мешать открытию клавиатуры
+        overlay.addEventListener('click', function(e) {
+            // Предотвращаем всплытие события, чтобы не блокировать другие обработчики
+            e.stopPropagation();
             document.querySelectorAll('input, textarea').forEach(input => {
                 input.blur();
             });
             this.style.display = 'none';
+        });
+        
+        // Удаляем обработчики, которые могли блокировать взаимодействие с полями ввода
+        document.querySelectorAll('input, textarea').forEach(input => {
+            // Удаляем старые обработчики
+            const newInput = input.cloneNode(true);
+            input.parentNode.replaceChild(newInput, input);
         });
         
         // Выпадающие списки в странице добавления лота
