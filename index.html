@@ -534,6 +534,7 @@
             justify-content: center;
             cursor: pointer;
             position: relative;
+            overflow: hidden;
         }
         
         .plus-sign {
@@ -584,6 +585,9 @@
             height: 100%;
             opacity: 0;
             cursor: pointer;
+            top: 0;
+            left: 0;
+            z-index: 2;
         }
         
         .price-input {
@@ -758,10 +762,10 @@
             <div class="form-field">
                 <div class="field-label">Фотографии</div>
                 <div class="photos-container" id="photos-container">
-                    <div class="add-photo-button">
+                    <label class="add-photo-button" for="photo-input">
                         <div class="plus-sign">+</div>
                         <input type="file" class="photo-input" id="photo-input" accept="image/*" multiple>
-                    </div>
+                    </label>
                     <div class="photo-count" id="photo-count">0/100</div>
                 </div>
             </div>
@@ -1380,8 +1384,34 @@
         });
         
         // Обработка добавления фотографий
-        photoInput.addEventListener('change', function(e) {
+        const photoInput = document.getElementById('photo-input');
+        const photosContainer = document.getElementById('photos-container');
+        const photoCount = document.getElementById('photo-count');
+        let selectedPhotos = [];
+        
+        // Убедимся, что обработчик для фотографий правильно добавлен
+        document.addEventListener('DOMContentLoaded', function() {
+            if (photoInput) {
+                // Удаляем старый обработчик если он есть
+                const newPhotoInput = photoInput.cloneNode(true);
+                if (photoInput.parentNode) {
+                    photoInput.parentNode.replaceChild(newPhotoInput, photoInput);
+                }
+                
+                // Добавляем новый обработчик
+                newPhotoInput.addEventListener('change', handlePhotoSelection);
+                console.log('Обработчик выбора фотографий добавлен');
+            } else {
+                console.error('Элемент photo-input не найден');
+            }
+        });
+        
+        // Функция для обработки выбора фотографий
+        function handlePhotoSelection(e) {
+            console.log('Событие выбора фотографий сработало');
             const files = Array.from(e.target.files);
+            console.log(`Выбрано ${files.length} файлов`);
+            
             const remainingSlots = 100 - selectedPhotos.length;
             
             if (files.length > remainingSlots) {
@@ -1393,14 +1423,17 @@
             files.forEach(file => {
                 // Проверяем что это изображение
                 if (!file.type.startsWith('image/')) {
+                    console.log(`Файл ${file.name} не является изображением`);
                     return;
                 }
                 
+                console.log(`Обрабатываем файл: ${file.name}`);
                 selectedPhotos.push(file);
                 
                 // Создаем превью
                 const reader = new FileReader();
                 reader.onload = function(e) {
+                    console.log('FileReader загрузил файл');
                     const photoDiv = document.createElement('div');
                     photoDiv.className = 'photo-preview';
                     
@@ -1418,26 +1451,34 @@
                         }
                         photoDiv.remove();
                         updatePhotoCount();
+                        console.log(`Удалена фотография, осталось: ${selectedPhotos.length}`);
                     });
                     
                     photoDiv.appendChild(img);
                     photoDiv.appendChild(removeBtn);
                     
-                    // Вставляем превью перед кнопкой добавления
-                    photosContainer.insertBefore(photoDiv, photosContainer.firstChild);
+                    // Вставляем превью после счетчика фотографий
+                    const addButton = document.querySelector('.add-photo-button');
+                    photosContainer.insertBefore(photoDiv, addButton.nextSibling);
+                };
+                reader.onerror = function() {
+                    console.error('Ошибка чтения файла');
                 };
                 reader.readAsDataURL(file);
             });
             
             updatePhotoCount();
+            console.log(`Всего фотографий: ${selectedPhotos.length}`);
             
             // Сбрасываем input, чтобы можно было добавить те же файлы снова
-            this.value = '';
-        });
+            e.target.value = '';
+        }
         
         // Обновление счетчика фотографий
         function updatePhotoCount() {
-            photoCount.textContent = `${selectedPhotos.length}/100`;
+            if (photoCount) {
+                photoCount.textContent = `${selectedPhotos.length}/100`;
+            }
         }
         
         // Отслеживаем изменения в полях ввода
