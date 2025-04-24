@@ -1384,18 +1384,20 @@
         });
         
         // Обработка добавления фотографий
-        const photoInput = document.getElementById('photo-input');
-        const photosContainer = document.getElementById('photos-container');
-        const photoCount = document.getElementById('photo-count');
-        let selectedPhotos = [];
+        // Переменная уже объявлена выше, не нужно объявлять снова
+        // const photoInput = document.getElementById('photo-input');
+        // const photosContainer = document.getElementById('photos-container');
+        // const photoCount = document.getElementById('photo-count');
+        // let selectedPhotos = [];
         
         // Убедимся, что обработчик для фотографий правильно добавлен
         document.addEventListener('DOMContentLoaded', function() {
-            if (photoInput) {
+            const photoInputElement = document.getElementById('photo-input');
+            if (photoInputElement) {
                 // Удаляем старый обработчик если он есть
-                const newPhotoInput = photoInput.cloneNode(true);
-                if (photoInput.parentNode) {
-                    photoInput.parentNode.replaceChild(newPhotoInput, photoInput);
+                const newPhotoInput = photoInputElement.cloneNode(true);
+                if (photoInputElement.parentNode) {
+                    photoInputElement.parentNode.replaceChild(newPhotoInput, photoInputElement);
                 }
                 
                 // Добавляем новый обработчик
@@ -1458,6 +1460,7 @@
                     photoDiv.appendChild(removeBtn);
                     
                     // Вставляем превью после счетчика фотографий
+                    const photosContainer = document.getElementById('photos-container');
                     const addButton = document.querySelector('.add-photo-button');
                     photosContainer.insertBefore(photoDiv, addButton.nextSibling);
                 };
@@ -1476,6 +1479,7 @@
         
         // Обновление счетчика фотографий
         function updatePhotoCount() {
+            const photoCount = document.getElementById('photo-count');
             if (photoCount) {
                 photoCount.textContent = `${selectedPhotos.length}/100`;
             }
