@@ -98,7 +98,7 @@
             height: 60px;
         }
         .nav-item.active {
-            color: #ffc107;
+            color: #ffc107; /* Yellow highlight */
         }
         .nav-icon {
             font-size: 22px;
@@ -110,11 +110,14 @@
             justify-content: center;
         }
         
+        /* Add Lot Button Styling */
+        /* Стиль для увеличенного символа + */
         .plus-icon {
             font-size: 28px;
             font-weight: bold;
         }
         
+        /* Modal Styles */
         .modal {
             display: none;
             position: fixed;
@@ -172,7 +175,7 @@
         .modal-content {
             flex: 1;
             overflow-y: auto;
-            padding-bottom: 80px;
+            padding-bottom: 80px; /* Space for apply button */
         }
         
         .filter-section {
@@ -253,6 +256,7 @@
             z-index: 10;
         }
         
+        /* More Menu Styles */
         .menu-item {
             display: flex;
             align-items: center;
@@ -271,6 +275,7 @@
             font-size: 18px;
         }
         
+        /* Profile Modal Styles */
         .profile-header {
             padding: 30px 20px;
             display: flex;
@@ -312,6 +317,7 @@
             font-size: 14px;
         }
         
+        /* Auth Styles */
         .auth-container {
             position: fixed;
             top: 0;
@@ -420,6 +426,7 @@
             width: 100%;
         }
         
+        /* Стили для страницы добавления лота */
         .page-header {
             display: flex;
             align-items: center;
@@ -436,13 +443,13 @@
         }
         
         .add-lot-content {
-            padding-bottom: 70px;
+            padding-bottom: 70px; /* Учитываем bottom-nav */
         }
         
         .form-field {
             display: flex;
             flex-direction: column;
-            padding: 12px 15px;
+            padding: 12px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             width: 100%;
         }
@@ -463,11 +470,11 @@
         }
         
         .field-value.placeholder {
-            color: #777;
+            color: #777; /* Серый цвет для placeholder */
         }
         
         .field-value.filled {
-            color: #e0e0e0;
+            color: #e0e0e0; /* Белый цвет для заполненного поля */
         }
         
         .text-field {
@@ -621,10 +628,11 @@
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            margin: 20px 15px;
-            width: calc(100% - 30px);
+            margin-top: 20px;
+            width: 100%;
         }
         
+        /* Dropdown styles */
         .dropdown {
             position: fixed;
             top: 0;
@@ -641,9 +649,10 @@
         .dropdown-content {
             flex: 1;
             overflow-y: auto;
-            padding-bottom: 80px;
+            padding-bottom: 80px; /* Space for apply button */
         }
         
+        /* Overlay for closing keyboard */
         .overlay {
             position: fixed;
             top: 0;
@@ -654,176 +663,10 @@
             z-index: 90;
             display: none;
         }
-        
-        .search-options {
-            padding: 10px 15px;
-            background-color: #2a2a2a;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .search-title {
-            font-size: 16px;
-            margin-bottom: 10px;
-            color: #e0e0e0;
-        }
-        
-        .search-option {
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        
-        .search-option input {
-            margin-right: 10px;
-        }
-        
-        .search-option label {
-            color: #e0e0e0;
-            font-size: 14px;
-        }
-        
-        .lots-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            width: 100%;
-            padding-bottom: 70px;
-        }
-        
-        .lot-card {
-            background-color: #2a2a2a;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        
-        .lot-image {
-            width: 100%;
-            height: 200px;
-            background-color: #1e1e1e;
-            position: relative;
-        }
-        
-        .lot-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .lot-info {
-            padding: 15px;
-        }
-        
-        .lot-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #e0e0e0;
-        }
-        
-        .lot-price {
-            font-size: 16px;
-            color: #c3d61a;
-            margin-bottom: 10px;
-        }
-        
-        .lot-details {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        
-        .lot-detail {
-            background-color: #1e1e1e;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            color: #999;
-        }
-        
-        .lot-actions {
-            display: flex;
-            justify-content: space-between;
-        }
-        
-        .lot-button {
-            background-color: #1e1e1e;
-            border: none;
-            border-radius: 4px;
-            padding: 8px 15px;
-            color: #e0e0e0;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        
-        .lot-button.primary {
-            background-color: #c3d61a;
-            color: #000;
-        }
-        
-        .search-result-info {
-            padding: 10px 0;
-            color: #999;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-        
-        .no-results {
-            text-align: center;
-            padding: 20px;
-            color: #999;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #e0e0e0;
-        }
-        
-        .spinner {
-            width: 30px;
-            height: 30px;
-            border: 3px solid #c3d61a;
-            border-top: 3px solid transparent;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .notification {
-            position: fixed;
-            bottom: 80px;
-            left: 15px;
-            right: 15px;
-            background-color: #2a2a2a;
-            border-radius: 8px;
-            padding: 15px;
-            color: #e0e0e0;
-            z-index: 1000;
-            display: none;
-            animation: slide-up 0.3s forwards;
-            text-align: center;
-        }
-        
-        @keyframes slide-up {
-            from {
-                transform: translateY(100%);
-            }
-            to {
-                transform: translateY(0);
-            }
-        }
     </style>
 </head>
 <body>
+    <!-- Auth Container -->
     <div class="auth-container" id="auth-container">
         <div class="auth-box">
             <div class="auth-title" id="auth-title">Вход</div>
@@ -845,11 +688,13 @@
         </div>
     </div>
 
+    <!-- Overlay для закрытия клавиатуры -->
     <div id="overlay" class="overlay"></div>
 
+    <!-- Search Page (default view) -->
     <div class="page active" id="search-page">
         <div class="search-container">
-            <input type="text" class="search-input" id="search-input" placeholder="Поиск" autocomplete="off">
+            <input type="text" class="search-input" placeholder="Поиск" autocomplete="off">
             <div class="search-params" id="open-filter">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="4" y1="8" x2="20" y2="8"></line>
@@ -858,47 +703,28 @@
                 </svg>
             </div>
         </div>
-        
-        <div class="search-options">
-            <div class="search-title">Настройки поиска</div>
-            <div class="search-option">
-                <input type="radio" id="search-any" name="search-type" value="any" checked>
-                <label for="search-any">Любое слово</label>
-            </div>
-            <div class="search-option">
-                <input type="radio" id="search-exact" name="search-type" value="exact">
-                <label for="search-exact">Точная фраза</label>
-            </div>
-        </div>
-        
-        <div class="content-area">
-            <div id="search-result-info" class="search-result-info"></div>
-            <div id="lots-container" class="lots-container">
-                <div class="loading" id="loading">
-                    <div class="spinner"></div>
-                    Загрузка лотов...
-                </div>
-            </div>
+        <div class="content-placeholder">
+            Содержимое страницы поиска
         </div>
     </div>
     
+    <!-- Favorites Page -->
     <div class="page" id="favorites-page">
-        <div class="content-area">
-            <div id="favorites-container" class="lots-container">
-                <div class="loading" id="favorites-loading">
-                    <div class="spinner"></div>
-                    Загрузка избранного...
-                </div>
-            </div>
+        <div class="content-placeholder">
+            Страница избранного
         </div>
     </div>
     
+    <!-- Add Lot Page -->
     <div class="page" id="add-lot-page">
+        <!-- Header -->
         <div class="page-header">
             <div class="header-title">Добавление лота</div>
         </div>
         
+        <!-- Content Area -->
         <div class="content-area add-lot-content">
+            <!-- Form Fields -->
             <div class="form-field">
                 <div class="field-label">Регион</div>
                 <div class="field-value region-select placeholder" id="region-value">
@@ -952,16 +778,18 @@
                 </div>
             </div>
             
-            <button class="submit-button" id="submit-button">Опубликовать</button>
+            <button class="submit-button">Опубликовать</button>
         </div>
     </div>
     
+    <!-- Chat Page -->
     <div class="page" id="chat-page">
         <div class="content-placeholder">
             Страница чата
         </div>
     </div>
     
+    <!-- More Page -->
     <div class="page" id="more-page">
         <div class="content-area">
             <div class="menu-item" id="profile-menu-item">
@@ -983,6 +811,7 @@
         </div>
     </div>
 
+    <!-- Filter Modal -->
     <div class="modal" id="filter-modal">
         <div class="modal-header">
             <button class="back-button" id="close-filter">←</button>
@@ -1001,10 +830,6 @@
                     <div>Категории</div>
                     <div class="chevron">›</div>
                 </div>
-                <div class="filter-item" id="price-filter">
-                    <div>Цена</div>
-                    <div class="chevron">›</div>
-                </div>
             </div>
             <div class="filter-section">
                 <div class="filter-section-title">Типы торгов</div>
@@ -1021,6 +846,7 @@
         <button class="apply-button" id="apply-filter">Применить</button>
     </div>
     
+    <!-- Profile Modal -->
     <div class="modal" id="profile-modal">
         <div class="modal-header">
             <button class="back-button" id="close-profile">←</button>
@@ -1044,10 +870,6 @@
                     <div class="chevron">›</div>
                 </div>
                 <div class="filter-item">
-                    <div>Мои лоты</div>
-                    <div class="chevron">›</div>
-                </div>
-                <div class="filter-item">
                     <div>История просмотров</div>
                     <div class="chevron">›</div>
                 </div>
@@ -1060,6 +882,7 @@
         </div>
     </div>
     
+    <!-- Region Dropdown -->
     <div class="dropdown" id="region-dropdown">
         <div class="modal-header">
             <button class="back-button" id="close-region-dropdown">←</button>
@@ -1070,10 +893,6 @@
                 <div>Москва</div>
                 <div class="checkbox" id="region-moscow"></div>
             </div>
-            <div class="checkbox-item" data-value="Санкт-Петербург">
-                <div>Санкт-Петербург</div>
-                <div class="checkbox" id="region-spb"></div>
-            </div>
             <div class="checkbox-item" data-value="Московская область">
                 <div>Московская область</div>
                 <div class="checkbox" id="region-moscow-oblast"></div>
@@ -1082,14 +901,11 @@
                 <div>Краснодарский край</div>
                 <div class="checkbox" id="region-krasnodar"></div>
             </div>
-            <div class="checkbox-item" data-value="Другие регионы">
-                <div>Другие регионы</div>
-                <div class="checkbox" id="region-other"></div>
-            </div>
         </div>
         <button class="apply-button" id="apply-region">Применить</button>
     </div>
     
+    <!-- Category Dropdown -->
     <div class="dropdown" id="category-dropdown">
         <div class="modal-header">
             <button class="back-button" id="close-category-dropdown">←</button>
@@ -1116,6 +932,7 @@
         <button class="apply-button" id="apply-category">Применить</button>
     </div>
     
+    <!-- Trade Type Dropdown -->
     <div class="dropdown" id="trade-type-dropdown">
         <div class="modal-header">
             <button class="back-button" id="close-trade-type-dropdown">←</button>
@@ -1133,33 +950,8 @@
         </div>
         <button class="apply-button" id="apply-trade-type">Применить</button>
     </div>
-    
-    <div class="dropdown" id="price-dropdown">
-        <div class="modal-header">
-            <button class="back-button" id="close-price-dropdown">←</button>
-            <div class="modal-title">Диапазон цены</div>
-        </div>
-        <div class="dropdown-content">
-            <div class="form-field">
-                <div class="field-label">От</div>
-                <div class="price-input">
-                    <input type="number" id="min-price-field" placeholder="0" autocomplete="off">
-                    <span class="currency">₽</span>
-                </div>
-            </div>
-            <div class="form-field">
-                <div class="field-label">До</div>
-                <div class="price-input">
-                    <input type="number" id="max-price-field" placeholder="Без ограничений" autocomplete="off">
-                    <span class="currency">₽</span>
-                </div>
-            </div>
-        </div>
-        <button class="apply-button" id="apply-price">Применить</button>
-    </div>
-    
-    <div class="notification" id="notification"></div>
 
+    <!-- Bottom Navigation -->
     <div class="bottom-nav">
         <div class="nav-item active" data-page="search-page">
             <div class="nav-icon">🔍</div>
@@ -1183,28 +975,32 @@
         </div>
     </div>
 
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
     <script>
+        // Firebase конфигурация
         const firebaseConfig = {
             apiKey: "AIzaSyD5UpLLFPmdS2TTwEIfl2WgN6GVrjAvJe0",
             authDomain: "bot3009-20948.firebaseapp.com",
             projectId: "bot3009-20948",
-            storageBucket: "bot3009-20948.appspot.com",
+            storageBucket: "bot3009-20948.firebasestorage.app",
             messagingSenderId: "149710093793",
             appId: "1:149710093793:web:51dc251da9f6db759f26a0"
         };
         
+        // Инициализация Firebase
         firebase.initializeApp(firebaseConfig);
         
+        // Получение сервисов Firebase
         const auth = firebase.auth();
         const db = firebase.firestore();
         const storage = firebase.storage();
         
-        // DOM элементы для авторизации
+        // Элементы DOM для авторизации
         const authContainer = document.getElementById('auth-container');
         const authTitle = document.getElementById('auth-title');
         const authButton = document.getElementById('auth-button');
@@ -1215,24 +1011,12 @@
         const forgotPasswordButton = document.getElementById('forgot-password');
         const signoutButton = document.getElementById('signout-button');
         
-        // DOM элементы для профиля
+        // Элементы DOM для профиля
         const profileName = document.getElementById('profile-name');
         const profileEmail = document.getElementById('profile-email');
         const profileImage = document.getElementById('profile-image');
         
-        // DOM элементы для поиска
-        const searchInput = document.getElementById('search-input');
-        const searchAnyOption = document.getElementById('search-any');
-        const searchExactOption = document.getElementById('search-exact');
-        const searchResultInfo = document.getElementById('search-result-info');
-        const lotsContainer = document.getElementById('lots-container');
-        const loading = document.getElementById('loading');
-        
-        // DOM элементы для избранного
-        const favoritesContainer = document.getElementById('favorites-container');
-        const favoritesLoading = document.getElementById('favorites-loading');
-        
-        // DOM элементы для формы добавления лота
+        // Элементы формы добавления лота
         const regionValue = document.getElementById('region-value');
         const categoryValue = document.getElementById('category-value');
         const tradeTypeValue = document.getElementById('trade-type-value');
@@ -1242,61 +1026,23 @@
         const photosContainer = document.getElementById('photos-container');
         const photoCount = document.getElementById('photo-count');
         const priceField = document.getElementById('price-field');
-        const submitButton = document.getElementById('submit-button');
         
-        // DOM элементы для выпадающих списков
+        // Элементы для выпадающих списков
         const regionDropdown = document.getElementById('region-dropdown');
         const categoryDropdown = document.getElementById('category-dropdown');
         const tradeTypeDropdown = document.getElementById('trade-type-dropdown');
-        const priceDropdown = document.getElementById('price-dropdown');
         
-        // DOM элементы для фильтров
-        const filterModal = document.getElementById('filter-modal');
-        const openFilter = document.getElementById('open-filter');
-        const closeFilter = document.getElementById('close-filter');
-        const applyFilter = document.getElementById('apply-filter');
-        const regionFilter = document.getElementById('region-filter');
-        const categoriesFilter = document.getElementById('categories-filter');
-        const priceFilter = document.getElementById('price-filter');
-        const auctionCheckbox = document.getElementById('auction-checkbox');
-        const publicOfferCheckbox = document.getElementById('public-offer-checkbox');
-        const minPriceField = document.getElementById('min-price-field');
-        const maxPriceField = document.getElementById('max-price-field');
+        // Overlay для закрытия клавиатуры
+        const overlay = document.getElementById('overlay');
         
-        // DOM элементы для уведомлений
-        const notification = document.getElementById('notification');
-        
-        // Переменные для хранения состояния
+        // Переменная состояния для определения режима авторизации (вход/регистрация)
         let isLoginMode = true;
+        
+        // Массив для хранения фотографий
         let selectedPhotos = [];
-        let currentUser = null;
-        
-        // Объект для хранения активных фильтров
-        let activeFilters = {
-            regions: [],
-            categories: [],
-            tradeTypes: ['Аукцион', 'Публичное предложение'],
-            minPrice: null,
-            maxPrice: null
-        };
-        
-        // Массив для хранения избранных лотов
-        let favoriteLots = [];
-        
-        // Функция для отображения уведомлений
-        function showNotification(message, duration = 3000) {
-            notification.textContent = message;
-            notification.style.display = 'block';
-            
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, duration);
-        }
         
         // Наблюдатель за состоянием авторизации
         auth.onAuthStateChanged(user => {
-            currentUser = user;
-            
             if (user) {
                 // Пользователь авторизован
                 authContainer.style.display = 'none';
@@ -1310,6 +1056,7 @@
                 if (user.photoURL) {
                     profileImage.src = user.photoURL;
                 } else {
+                    // Используем сервис генерации аватаров с именем пользователя как seed
                     profileImage.src = `https://api.dicebear.com/6.x/avataaars/svg?seed=${user.email}`;
                 }
                 
@@ -1317,6 +1064,7 @@
                 const userRef = db.collection('users').doc(user.uid);
                 userRef.get().then(doc => {
                     if (!doc.exists) {
+                        // Если документ пользователя не существует, создаем его
                         userRef.set({
                             displayName: user.displayName || 'Пользователь',
                             email: user.email,
@@ -1324,17 +1072,12 @@
                             lastLogin: firebase.firestore.FieldValue.serverTimestamp()
                         });
                     } else {
+                        // Обновляем время последнего входа
                         userRef.update({
                             lastLogin: firebase.firestore.FieldValue.serverTimestamp()
                         });
                     }
                 });
-                
-                // Загружаем избранные лоты пользователя
-                loadFavorites();
-                
-                // Загружаем лоты
-                loadLots();
             } else {
                 // Пользователь не авторизован
                 authContainer.style.display = 'flex';
@@ -1344,11 +1087,6 @@
                 profileName.textContent = 'Нет авторизации';
                 profileEmail.textContent = 'Войдите, чтобы увидеть данные';
                 profileImage.src = 'https://api.dicebear.com/6.x/avataaars/svg?seed=Guest';
-                
-                // Очищаем избранное и список лотов
-                favoriteLots = [];
-                favoritesContainer.innerHTML = '<div class="no-results">Войдите, чтобы увидеть избранное</div>';
-                lotsContainer.innerHTML = '<div class="no-results">Войдите, чтобы увидеть лоты</div>';
             }
         });
         
@@ -1373,7 +1111,7 @@
             const password = passwordInput.value;
             
             if (!email || !password) {
-                showNotification('Пожалуйста, заполните все поля');
+                alert('Пожалуйста, заполните все поля');
                 return;
             }
             
@@ -1381,17 +1119,18 @@
                 // Вход
                 auth.signInWithEmailAndPassword(email, password)
                     .catch(error => {
-                        showNotification(`Ошибка входа: ${error.message}`);
+                        alert(`Ошибка входа: ${error.message}`);
                     });
             } else {
                 // Регистрация
                 auth.createUserWithEmailAndPassword(email, password)
                     .then(() => {
+                        // Отправка письма с подтверждением почты
                         auth.currentUser.sendEmailVerification();
-                        showNotification('Регистрация успешна! Проверьте почту для подтверждения.');
+                        alert('Регистрация успешна! Проверьте почту для подтверждения.');
                     })
                     .catch(error => {
-                        showNotification(`Ошибка регистрации: ${error.message}`);
+                        alert(`Ошибка регистрации: ${error.message}`);
                     });
             }
         });
@@ -1401,7 +1140,7 @@
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithPopup(provider)
                 .catch(error => {
-                    showNotification(`Ошибка входа через Google: ${error.message}`);
+                    alert(`Ошибка входа через Google: ${error.message}`);
                 });
         });
         
@@ -1410,16 +1149,16 @@
             const email = emailInput.value;
             
             if (!email) {
-                showNotification('Введите Email для восстановления пароля');
+                alert('Введите Email для восстановления пароля');
                 return;
             }
             
             auth.sendPasswordResetEmail(email)
                 .then(() => {
-                    showNotification('Инструкции по восстановлению пароля отправлены на вашу почту');
+                    alert('Инструкции по восстановлению пароля отправлены на вашу почту');
                 })
                 .catch(error => {
-                    showNotification(`Ошибка восстановления пароля: ${error.message}`);
+                    alert(`Ошибка восстановления пароля: ${error.message}`);
                 });
         });
         
@@ -1427,672 +1166,166 @@
         signoutButton.addEventListener('click', () => {
             auth.signOut()
                 .then(() => {
-                    showNotification('Вы успешно вышли из аккаунта');
+                    alert('Вы успешно вышли из аккаунта');
                 })
                 .catch(error => {
-                    showNotification(`Ошибка выхода: ${error.message}`);
+                    alert(`Ошибка выхода: ${error.message}`);
                 });
         });
         
-        // Функция индексации текста для поиска
-        function createSearchIndex(text) {
-            if (!text) return [];
-            
-            // Приводим к нижнему регистру и разбиваем на слова
-            return text.toLowerCase()
-                .replace(/[^\wа-яё]/g, ' ')  // Заменяем все символы кроме букв и цифр на пробелы
-                .split(/\s+/)  // Разбиваем по пробельным символам
-                .filter(word => word.length > 1);  // Игнорируем слова из 1 символа
-        }
+        // Базовый функционал приложения (из исходного кода)
         
-        // Функция для создания лота в базе данных
-        async function createLot() {
-            if (!currentUser) {
-                showNotification('Для публикации лота необходимо авторизоваться');
-                return;
-            }
-            
-            // Получаем данные формы
-            const region = regionValue.querySelector('span:first-child').textContent;
-            const category = categoryValue.querySelector('span:first-child').textContent;
-            const tradeType = tradeTypeValue.querySelector('span:first-child').textContent;
-            const title = titleField.value.trim();
-            const description = descriptionField.value.trim();
-            const price = Number(priceField.value);
-            
-            // Проверяем обязательные поля
-            if (region === 'Выберите регион' || 
-                category === 'Выберите категорию' || 
-                tradeType === 'Выберите тип' || 
-                !title || 
-                !description || 
-                isNaN(price) || 
-                price <= 0) {
-                showNotification('Пожалуйста, заполните все обязательные поля');
-                return;
-            }
-            
-            try {
-                // Показываем уведомление о загрузке
-                showNotification('Создание лота...', 10000);
-                
-                // Создаем документ лота в Firestore
-                const lotRef = db.collection('lots').doc();
-                
-                // Создаем индекс для поиска по названию и описанию
-                const titleIndex = createSearchIndex(title);
-                const descriptionIndex = createSearchIndex(description);
-                const searchIndex = [...new Set([...titleIndex, ...descriptionIndex])];
-                
-                // Сохраняем данные лота без фотографий сначала
-                await lotRef.set({
-                    userId: currentUser.uid,
-                    region: region,
-                    category: category,
-                    tradeType: tradeType,
-                    title: title,
-                    description: description,
-                    price: price,
-                    photos: [],
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    status: 'active',
-                    searchIndex: searchIndex,
-                    titleLower: title.toLowerCase(),
-                    exactPhrase: title.toLowerCase().replace(/\s+/g, ' ').trim()
-                });
-                
-                // Загружаем фотографии, если они есть
-                // Если возникнет ошибка CORS, лот все равно будет создан, просто без фотографий
-                if (selectedPhotos.length > 0) {
-                    try {
-                        const photoUrls = [];
-                        for (const file of selectedPhotos) {
-                            try {
-                                const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-                                const photoRef = storage.ref(`lots/${lotRef.id}/${fileName}`);
-                                await photoRef.put(file);
-                                const url = await photoRef.getDownloadURL();
-                                photoUrls.push(url);
-                            } catch (photoError) {
-                                console.error("Ошибка загрузки фото:", photoError);
-                            }
-                        }
-                        
-                        // Обновляем лот с фотографиями
-                        if (photoUrls.length > 0) {
-                            await lotRef.update({
-                                photos: photoUrls
-                            });
-                        }
-                    } catch (photoError) {
-                        console.error("Ошибка при обработке фотографий:", photoError);
-                        showNotification("Лот создан, но возникли проблемы с загрузкой фотографий");
-                    }
-                }
-                
-                showNotification('Лот успешно опубликован!');
-                
-                // Сбрасываем форму
-                resetAddLotForm();
-                
-                // Переходим на страницу поиска и обновляем список лотов
-                document.querySelector('.nav-item[data-page="search-page"]').click();
-                loadLots();
-                
-            } catch (error) {
-                showNotification(`Ошибка публикации лота: ${error.message}`);
-            }
-        }
-        
-        // Функция для сброса формы добавления лота
-        function resetAddLotForm() {
-            regionValue.querySelector('span:first-child').textContent = 'Выберите регион';
-            categoryValue.querySelector('span:first-child').textContent = 'Выберите категорию';
-            tradeTypeValue.querySelector('span:first-child').textContent = 'Выберите тип';
-            titleField.value = '';
-            descriptionField.value = '';
-            priceField.value = '';
-            
-            // Очищаем фотографии
-            selectedPhotos = [];
-            document.querySelectorAll('.photo-preview').forEach(preview => preview.remove());
-            updatePhotoCount();
-            
-            // Сбрасываем стили
-            regionValue.classList.add('placeholder');
-            regionValue.classList.remove('filled');
-            categoryValue.classList.add('placeholder');
-            categoryValue.classList.remove('filled');
-            tradeTypeValue.classList.add('placeholder');
-            tradeTypeValue.classList.remove('filled');
-        }
-        
-        // Функция для загрузки лотов с учетом фильтров и поиска
-        function loadLots() {
-            if (!currentUser) return;
-            
-            loading.style.display = 'block';
-            lotsContainer.innerHTML = '';
-            
-            const searchTerm = searchInput.value.trim().toLowerCase();
-            const isExactMatch = searchExactOption.checked;
-            
-            // Базовый запрос
-            let query = db.collection('lots').where('status', '==', 'active');
-            
-            // Для Firestore нельзя использовать более одного фильтра "in" в одном запросе
-            // Поэтому мы применим только один фильтр (регионы), а остальное отфильтруем на клиенте
-            if (activeFilters.regions.length > 0) {
-                query = query.where('region', 'in', activeFilters.regions);
-            }
-            
-            // Для фильтра по цене и остальных фильтров мы будем фильтровать результаты на клиенте
-            
-            query.orderBy('createdAt', 'desc').get().then(snapshot => {
-                let lots = [];
-                
-                snapshot.forEach(doc => {
-                    const lotData = doc.data();
-                    lotData.id = doc.id;
-                    
-                    // Фильтрация по цене
-                    if (activeFilters.minPrice !== null && lotData.price < activeFilters.minPrice) {
-                        return;
-                    }
-                    
-                    if (activeFilters.maxPrice !== null && lotData.price > activeFilters.maxPrice) {
-                        return;
-                    }
-                    
-                    // Фильтрация по категории, если не применен фильтр в запросе
-                    if (activeFilters.categories.length > 0 && !activeFilters.categories.includes(lotData.category)) {
-                        return;
-                    }
-                    
-                    // Фильтрация по типу торгов, если не применен фильтр в запросе
-                    if (activeFilters.tradeTypes.length > 0 && !activeFilters.tradeTypes.includes(lotData.tradeType)) {
-                        return;
-                    }
-                    
-                    // Применяем поиск, если задан поисковый запрос
-                    if (searchTerm) {
-                        if (isExactMatch) {
-                            // Точное совпадение фразы
-                            if (!lotData.exactPhrase.includes(searchTerm)) {
-                                return;
-                            }
-                        } else {
-                            // Поиск по любому слову
-                            const searchWords = searchTerm.split(/\s+/).filter(word => word.length > 1);
-                            
-                            if (searchWords.length === 0) {
-                                // Если нет слов для поиска, добавляем все лоты
-                                lots.push(lotData);
-                                return;
-                            }
-                            
-                            // Проверяем совпадение хотя бы одного слова
-                            const matchFound = searchWords.some(word => 
-                                lotData.titleLower.includes(word) || 
-                                lotData.description.toLowerCase().includes(word)
-                            );
-                            
-                            if (!matchFound) {
-                                return;
-                            }
-                        }
-                    }
-                    
-                    lots.push(lotData);
-                });
-                
-                // Обновляем результаты поиска
-                updateSearchResults(lots);
-                
-            }).catch(error => {
-                showNotification(`Ошибка загрузки лотов: ${error.message}`);
-                loading.style.display = 'none';
-            });
-        }
-        
-        // Функция обновления результатов поиска
-        function updateSearchResults(lots) {
-            loading.style.display = 'none';
-            lotsContainer.innerHTML = '';
-            
-            if (lots.length === 0) {
-                searchResultInfo.textContent = 'Ничего не найдено';
-                lotsContainer.innerHTML = '<div class="no-results">По вашему запросу ничего не найдено</div>';
-                return;
-            }
-            
-            searchResultInfo.textContent = `Найдено: ${lots.length}`;
-            
-            lots.forEach(lot => {
-                const lotCard = createLotCard(lot);
-                lotsContainer.appendChild(lotCard);
-            });
-        }
-        
-        // Функция для создания карточки лота
-        function createLotCard(lot) {
-            const lotCard = document.createElement('div');
-            lotCard.className = 'lot-card';
-            
-            const isFavorite = favoriteLots.includes(lot.id);
-            
-            const lotImage = document.createElement('div');
-            lotImage.className = 'lot-image';
-            
-            if (lot.photos && lot.photos.length > 0) {
-                const img = document.createElement('img');
-                img.src = lot.photos[0];
-                img.alt = lot.title;
-                lotImage.appendChild(img);
-            } else {
-                lotImage.textContent = 'Нет фото';
-            }
-            
-            const favoriteButton = document.createElement('div');
-            favoriteButton.className = 'remove-photo';
-            favoriteButton.innerHTML = isFavorite ? '❤️' : '⭐';
-            favoriteButton.style.backgroundColor = isFavorite ? 'rgba(255, 80, 80, 0.7)' : 'rgba(0, 0, 0, 0.5)';
-            favoriteButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                toggleFavorite(lot.id);
-            });
-            
-            lotImage.appendChild(favoriteButton);
-            
-            const lotInfo = document.createElement('div');
-            lotInfo.className = 'lot-info';
-            
-            const lotTitle = document.createElement('div');
-            lotTitle.className = 'lot-title';
-            lotTitle.textContent = lot.title;
-            
-            const lotPrice = document.createElement('div');
-            lotPrice.className = 'lot-price';
-            lotPrice.textContent = `${lot.price.toLocaleString()} ₽`;
-            
-            const lotDetails = document.createElement('div');
-            lotDetails.className = 'lot-details';
-            
-            const regionDetail = document.createElement('div');
-            regionDetail.className = 'lot-detail';
-            regionDetail.textContent = lot.region;
-            
-            const categoryDetail = document.createElement('div');
-            categoryDetail.className = 'lot-detail';
-            categoryDetail.textContent = lot.category;
-            
-            const tradeTypeDetail = document.createElement('div');
-            tradeTypeDetail.className = 'lot-detail';
-            tradeTypeDetail.textContent = lot.tradeType;
-            
-            lotDetails.appendChild(regionDetail);
-            lotDetails.appendChild(categoryDetail);
-            lotDetails.appendChild(tradeTypeDetail);
-            
-            const lotActions = document.createElement('div');
-            lotActions.className = 'lot-actions';
-            
-            const viewButton = document.createElement('button');
-            viewButton.className = 'lot-button primary';
-            viewButton.textContent = 'Подробнее';
-            viewButton.addEventListener('click', () => {
-                // Здесь будет переход на страницу лота
-                showNotification(`Просмотр лота: ${lot.title}`);
-            });
-            
-            lotActions.appendChild(viewButton);
-            
-            lotInfo.appendChild(lotTitle);
-            lotInfo.appendChild(lotPrice);
-            lotInfo.appendChild(lotDetails);
-            lotInfo.appendChild(lotActions);
-            
-            lotCard.appendChild(lotImage);
-            lotCard.appendChild(lotInfo);
-            
-            return lotCard;
-        }
-        
-        // Функция для добавления/удаления лота из избранного
-        function toggleFavorite(lotId) {
-            if (!currentUser) {
-                showNotification('Войдите, чтобы добавить лот в избранное');
-                return;
-            }
-            
-            const userFavoritesRef = db.collection('users').doc(currentUser.uid).collection('favorites').doc(lotId);
-            
-            userFavoritesRef.get().then(doc => {
-                if (doc.exists) {
-                    // Удаляем из избранного
-                    userFavoritesRef.delete().then(() => {
-                        showNotification('Удалено из избранного');
-                        
-                        // Обновляем список избранных лотов
-                        const index = favoriteLots.indexOf(lotId);
-                        if (index !== -1) {
-                            favoriteLots.splice(index, 1);
-                        }
-                        
-                        // Обновляем интерфейс
-                        loadLots();
-                        loadFavorites();
-                    });
-                } else {
-                    // Добавляем в избранное
-                    userFavoritesRef.set({
-                        lotId: lotId,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    }).then(() => {
-                        showNotification('Добавлено в избранное');
-                        
-                        // Обновляем список избранных лотов
-                        favoriteLots.push(lotId);
-                        
-                        // Обновляем интерфейс
-                        loadLots();
-                        loadFavorites();
-                    });
-                }
-            }).catch(error => {
-                showNotification(`Ошибка: ${error.message}`);
-            });
-        }
-        
-        // Функция для загрузки избранных лотов
-        function loadFavorites() {
-            if (!currentUser) return;
-            
-            favoritesLoading.style.display = 'block';
-            favoritesContainer.innerHTML = '';
-            
-            // Сначала получаем все ID избранных лотов
-            db.collection('users').doc(currentUser.uid).collection('favorites').get().then(snapshot => {
-                favoriteLots = [];
-                
-                if (snapshot.empty) {
-                    favoritesLoading.style.display = 'none';
-                    favoritesContainer.innerHTML = '<div class="no-results">У вас пока нет избранных лотов</div>';
-                    return;
-                }
-                
-                snapshot.forEach(doc => {
-                    favoriteLots.push(doc.id);
-                });
-                
-                // Теперь получаем данные для каждого лота
-                const lotPromises = favoriteLots.map(lotId => 
-                    db.collection('lots').doc(lotId).get()
-                );
-                
-                Promise.all(lotPromises).then(results => {
-                    const lots = results
-                        .filter(doc => doc.exists)
-                        .map(doc => {
-                            const data = doc.data();
-                            data.id = doc.id;
-                            return data;
-                        });
-                    
-                    favoritesLoading.style.display = 'none';
-                    
-                    if (lots.length === 0) {
-                        favoritesContainer.innerHTML = '<div class="no-results">У вас пока нет избранных лотов</div>';
-                        return;
-                    }
-                    
-                    lots.forEach(lot => {
-                        const lotCard = createLotCard(lot);
-                        favoritesContainer.appendChild(lotCard);
-                    });
-                });
-            }).catch(error => {
-                favoritesLoading.style.display = 'none';
-                showNotification(`Ошибка загрузки избранного: ${error.message}`);
-            });
-        }
-        
-        // Обработчики для поиска
-        searchInput.addEventListener('input', () => {
-            // Задержка для уменьшения количества запросов
-            clearTimeout(searchInput.timeout);
-            searchInput.timeout = setTimeout(() => {
-                loadLots();
-            }, 500);
-        });
-        
-        searchAnyOption.addEventListener('change', loadLots);
-        searchExactOption.addEventListener('change', loadLots);
-        
-        // Обработчик для формы добавления лота
-        submitButton.addEventListener('click', createLot);
-        
-        // Функция для обработки выбора фотографий
-        function handlePhotoSelection(e) {
-            const files = Array.from(e.target.files);
-            
-            const remainingSlots = 100 - selectedPhotos.length;
-            
-            if (files.length > remainingSlots) {
-                showNotification(`Вы можете загрузить максимум ${remainingSlots} фотографий`);
-                return;
-            }
-            
-            // Добавляем новые фотографии в массив
-            files.forEach(file => {
-                // Проверяем что это изображение
-                if (!file.type.startsWith('image/')) {
-                    return;
-                }
-                
-                selectedPhotos.push(file);
-                
-                // Создаем превью
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const photoDiv = document.createElement('div');
-                    photoDiv.className = 'photo-preview';
-                    
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    
-                    const removeBtn = document.createElement('div');
-                    removeBtn.className = 'remove-photo';
-                    removeBtn.innerHTML = '×';
-                    removeBtn.addEventListener('click', function() {
-                        // Удаляем фото из массива и из DOM
-                        const index = selectedPhotos.indexOf(file);
-                        if (index > -1) {
-                            selectedPhotos.splice(index, 1);
-                        }
-                        photoDiv.remove();
-                        updatePhotoCount();
-                    });
-                    
-                    photoDiv.appendChild(img);
-                    photoDiv.appendChild(removeBtn);
-                    
-                    // Вставляем превью после счетчика фотографий
-                    const addButton = document.querySelector('.add-photo-button');
-                    photosContainer.insertBefore(photoDiv, addButton.nextSibling);
-                };
-                reader.readAsDataURL(file);
-            });
-            
-            updatePhotoCount();
-            
-            // Сбрасываем input, чтобы можно было добавить те же файлы снова
-            e.target.value = '';
-        }
-        
-        // Обновление счетчика фотографий
-        function updatePhotoCount() {
-            photoCount.textContent = `${selectedPhotos.length}/100`;
-        }
-        
-        // Обработчики для выпадающих списков
-        photoInput.addEventListener('change', handlePhotoSelection);
-        
-        // Обработчики для полей ввода
-        titleField.addEventListener('input', function() {
-            if (this.value.trim() !== '') {
-                this.classList.add('filled');
-            } else {
-                this.classList.remove('filled');
-            }
-        });
-        
-        descriptionField.addEventListener('input', function() {
-            if (this.value.trim() !== '') {
-                this.classList.add('filled');
-            } else {
-                this.classList.remove('filled');
-            }
-        });
-        
-        // Обработчики для навигации
+        // Get all navigation items
         const navItems = document.querySelectorAll('.nav-item');
+        
+        // Add click event to each navigation item
         navItems.forEach(item => {
             item.addEventListener('click', function() {
+                // Get the target page id
                 const pageId = this.getAttribute('data-page');
                 
+                // Hide all pages
                 document.querySelectorAll('.page').forEach(page => {
                     page.classList.remove('active');
                 });
                 
+                // Show the selected page
                 document.getElementById(pageId).classList.add('active');
                 
+                // Deactivate all nav items
                 navItems.forEach(navItem => {
                     navItem.classList.remove('active');
                 });
                 
+                // Activate the clicked nav item
                 this.classList.add('active');
             });
         });
         
-        // Обработчики для фильтров
+        // Filter modal functionality
+        const openFilter = document.getElementById('open-filter');
+        const closeFilter = document.getElementById('close-filter');
+        const filterModal = document.getElementById('filter-modal');
+        const applyFilter = document.getElementById('apply-filter');
+        
+        // Profile modal functionality
+        const profileMenuItem = document.getElementById('profile-menu-item');
+        const closeProfile = document.getElementById('close-profile');
+        const profileModal = document.getElementById('profile-modal');
+        
+        // Checkboxes
+        const auctionCheckbox = document.getElementById('auction-checkbox');
+        const publicOfferCheckbox = document.getElementById('public-offer-checkbox');
+        
+        // Open filter modal
         openFilter.addEventListener('click', function() {
             filterModal.style.display = 'flex';
         });
         
+        // Close filter modal
         closeFilter.addEventListener('click', function() {
             filterModal.style.display = 'none';
         });
         
+        // Apply filter
         applyFilter.addEventListener('click', function() {
-            // Применяем выбранные фильтры
-            activeFilters.tradeTypes = [];
-            
-            if (auctionCheckbox.classList.contains('checked')) {
-                activeFilters.tradeTypes.push('Аукцион');
-            }
-            
-            if (publicOfferCheckbox.classList.contains('checked')) {
-                activeFilters.tradeTypes.push('Публичное предложение');
-            }
-            
-            // Применяем фильтр цены
-            const minPrice = minPriceField.value.trim();
-            const maxPrice = maxPriceField.value.trim();
-            
-            activeFilters.minPrice = minPrice ? Number(minPrice) : null;
-            activeFilters.maxPrice = maxPrice ? Number(maxPrice) : null;
-            
             filterModal.style.display = 'none';
-            
-            // Обновляем список лотов с новыми фильтрами
-            loadLots();
         });
         
-        // Обработчики для выпадающих списков в фильтрах
-        regionFilter.addEventListener('click', function() {
+        // Open profile modal
+        profileMenuItem.addEventListener('click', function() {
+            profileModal.style.display = 'flex';
+        });
+        
+        // Close profile modal
+        closeProfile.addEventListener('click', function() {
+            profileModal.style.display = 'none';
+        });
+        
+        // Toggle checkboxes
+        auctionCheckbox.addEventListener('click', function() {
+            this.classList.toggle('checked');
+        });
+        
+        publicOfferCheckbox.addEventListener('click', function() {
+            this.classList.toggle('checked');
+        });
+        
+        // Handle filter item clicks
+        document.getElementById('region-filter').addEventListener('click', function() {
+            // Открываем выпадающий список регионов
             regionDropdown.style.display = 'flex';
         });
         
-        categoriesFilter.addEventListener('click', function() {
+        document.getElementById('categories-filter').addEventListener('click', function() {
+            // Открываем выпадающий список категорий
             categoryDropdown.style.display = 'flex';
         });
         
-        priceFilter.addEventListener('click', function() {
-            priceDropdown.style.display = 'flex';
+        // Overlay для закрытия клавиатуры
+        document.addEventListener('click', function(e) {
+            // Проверяем, что клик был не по полю ввода и не по элементу, который должен вызывать фокус
+            if (e.target.tagName !== 'INPUT' && 
+                e.target.tagName !== 'TEXTAREA' && 
+                !e.target.classList.contains('text-field') && 
+                !e.target.classList.contains('textarea-field') &&
+                !e.target.classList.contains('search-input')) {
+                
+                // Снимаем фокус со всех полей ввода только если кликнули не по полю ввода
+                document.querySelectorAll('input, textarea').forEach(input => {
+                    input.blur();
+                });
+            }
         });
         
-        // Обработчики для кнопок закрытия выпадающих списков
+        // Убираем обработчики, которые могли мешать открытию клавиатуры
+        overlay.addEventListener('click', function(e) {
+            // Предотвращаем всплытие события, чтобы не блокировать другие обработчики
+            e.stopPropagation();
+            document.querySelectorAll('input, textarea').forEach(input => {
+                input.blur();
+            });
+            this.style.display = 'none';
+        });
+        
+        // Удаляем обработчики, которые могли блокировать взаимодействие с полями ввода
+        document.querySelectorAll('input, textarea').forEach(input => {
+            // Удаляем старые обработчики
+            const newInput = input.cloneNode(true);
+            input.parentNode.replaceChild(newInput, input);
+        });
+        
+        // Выпадающие списки в странице добавления лота
+        
+        // Регион
+        regionValue.addEventListener('click', function() {
+            regionDropdown.style.display = 'flex';
+        });
+        
         document.getElementById('close-region-dropdown').addEventListener('click', function() {
             regionDropdown.style.display = 'none';
+        });
+        
+        // Категория
+        categoryValue.addEventListener('click', function() {
+            categoryDropdown.style.display = 'flex';
         });
         
         document.getElementById('close-category-dropdown').addEventListener('click', function() {
             categoryDropdown.style.display = 'none';
         });
         
+        // Тип торгов
+        tradeTypeValue.addEventListener('click', function() {
+            tradeTypeDropdown.style.display = 'flex';
+        });
+        
         document.getElementById('close-trade-type-dropdown').addEventListener('click', function() {
             tradeTypeDropdown.style.display = 'none';
         });
         
-        document.getElementById('close-price-dropdown').addEventListener('click', function() {
-            priceDropdown.style.display = 'none';
-        });
-        
-        // Обработчики для выбора регионов
-        document.getElementById('apply-region').addEventListener('click', function() {
-            activeFilters.regions = [];
-            
-            regionDropdown.querySelectorAll('.checkbox.checked').forEach(checkbox => {
-                const regionItem = checkbox.parentElement;
-                const regionName = regionItem.getAttribute('data-value');
-                activeFilters.regions.push(regionName);
-            });
-            
-            regionDropdown.style.display = 'none';
-            loadLots();
-        });
-        
-        // Обработчики для выбора категорий
-        document.getElementById('apply-category').addEventListener('click', function() {
-            activeFilters.categories = [];
-            
-            categoryDropdown.querySelectorAll('.checkbox.checked').forEach(checkbox => {
-                const categoryItem = checkbox.parentElement;
-                const categoryName = categoryItem.getAttribute('data-value');
-                activeFilters.categories.push(categoryName);
-            });
-            
-            categoryDropdown.style.display = 'none';
-            loadLots();
-        });
-        
-        // Обработчики для выбора типа торгов в форме добавления лота
-        document.getElementById('apply-trade-type').addEventListener('click', function() {
-            const selectedType = tradeTypeDropdown.querySelector('.checkbox.checked');
-            if (selectedType) {
-                const value = selectedType.parentElement.getAttribute('data-value');
-                tradeTypeValue.querySelector('span:first-child').textContent = value;
-                tradeTypeValue.classList.remove('placeholder');
-                tradeTypeValue.classList.add('filled');
-            }
-            tradeTypeDropdown.style.display = 'none';
-        });
-        
-        // Обработчики для выбора диапазона цены
-        document.getElementById('apply-price').addEventListener('click', function() {
-            const minPrice = minPriceField.value.trim();
-            const maxPrice = maxPriceField.value.trim();
-            
-            activeFilters.minPrice = minPrice ? Number(minPrice) : null;
-            activeFilters.maxPrice = maxPrice ? Number(maxPrice) : null;
-            
-            priceDropdown.style.display = 'none';
-            loadLots();
-        });
-        
         // Обработчики для чекбоксов в выпадающих списках
-        document.querySelectorAll('.checkbox-item').forEach(item => {
+        document.querySelectorAll('.dropdown .checkbox-item').forEach(item => {
             item.addEventListener('click', function() {
                 const checkbox = this.querySelector('.checkbox');
                 
@@ -2108,20 +1341,7 @@
             });
         });
         
-        // Обработчики для чекбоксов в фильтре
-        auctionCheckbox.addEventListener('click', function() {
-            this.classList.toggle('checked');
-        });
-        
-        publicOfferCheckbox.addEventListener('click', function() {
-            this.classList.toggle('checked');
-        });
-        
-        // Обработчики для выбора региона в форме добавления лота
-        regionValue.addEventListener('click', function() {
-            regionDropdown.style.display = 'flex';
-        });
-        
+        // Применение выбора в выпадающих списках
         document.getElementById('apply-region').addEventListener('click', function() {
             const selectedRegion = regionDropdown.querySelector('.checkbox.checked');
             if (selectedRegion) {
@@ -2131,11 +1351,6 @@
                 regionValue.classList.add('filled');
             }
             regionDropdown.style.display = 'none';
-        });
-        
-        // Обработчики для выбора категории в форме добавления лота
-        categoryValue.addEventListener('click', function() {
-            categoryDropdown.style.display = 'flex';
         });
         
         document.getElementById('apply-category').addEventListener('click', function() {
@@ -2157,30 +1372,219 @@
             categoryDropdown.style.display = 'none';
         });
         
-        // Обработчик для выбора типа торгов в форме добавления лота
-        tradeTypeValue.addEventListener('click', function() {
-            tradeTypeDropdown.style.display = 'flex';
+        document.getElementById('apply-trade-type').addEventListener('click', function() {
+            const selectedType = tradeTypeDropdown.querySelector('.checkbox.checked');
+            if (selectedType) {
+                const value = selectedType.parentElement.getAttribute('data-value');
+                tradeTypeValue.querySelector('span:first-child').textContent = value;
+                tradeTypeValue.classList.remove('placeholder');
+                tradeTypeValue.classList.add('filled');
+            }
+            tradeTypeDropdown.style.display = 'none';
         });
         
-        // Профиль
-        const profileMenuItem = document.getElementById('profile-menu-item');
-        const closeProfile = document.getElementById('close-profile');
-        const profileModal = document.getElementById('profile-modal');
+        // Обработка добавления фотографий
+        // Переменная уже объявлена выше, не нужно объявлять снова
+        // const photoInput = document.getElementById('photo-input');
+        // const photosContainer = document.getElementById('photos-container');
+        // const photoCount = document.getElementById('photo-count');
+        // let selectedPhotos = [];
         
-        profileMenuItem.addEventListener('click', function() {
-            profileModal.style.display = 'flex';
+        // Убедимся, что обработчик для фотографий правильно добавлен
+        document.addEventListener('DOMContentLoaded', function() {
+            const photoInputElement = document.getElementById('photo-input');
+            if (photoInputElement) {
+                // Удаляем старый обработчик если он есть
+                const newPhotoInput = photoInputElement.cloneNode(true);
+                if (photoInputElement.parentNode) {
+                    photoInputElement.parentNode.replaceChild(newPhotoInput, photoInputElement);
+                }
+                
+                // Добавляем новый обработчик
+                newPhotoInput.addEventListener('change', handlePhotoSelection);
+                console.log('Обработчик выбора фотографий добавлен');
+            } else {
+                console.error('Элемент photo-input не найден');
+            }
         });
         
-        closeProfile.addEventListener('click', function() {
-            profileModal.style.display = 'none';
-        });
-        
-        // Инициализация
-        // Если пользователь авторизован, загружаем лоты
-        if (currentUser) {
-            loadLots();
-            loadFavorites();
+        // Функция для обработки выбора фотографий
+        function handlePhotoSelection(e) {
+            console.log('Событие выбора фотографий сработало');
+            const files = Array.from(e.target.files);
+            console.log(`Выбрано ${files.length} файлов`);
+            
+            const remainingSlots = 100 - selectedPhotos.length;
+            
+            if (files.length > remainingSlots) {
+                alert(`Вы можете загрузить максимум ${remainingSlots} фотографий`);
+                return;
+            }
+            
+            // Добавляем новые фотографии в массив
+            files.forEach(file => {
+                // Проверяем что это изображение
+                if (!file.type.startsWith('image/')) {
+                    console.log(`Файл ${file.name} не является изображением`);
+                    return;
+                }
+                
+                console.log(`Обрабатываем файл: ${file.name}`);
+                selectedPhotos.push(file);
+                
+                // Создаем превью
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    console.log('FileReader загрузил файл');
+                    const photoDiv = document.createElement('div');
+                    photoDiv.className = 'photo-preview';
+                    
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    
+                    const removeBtn = document.createElement('div');
+                    removeBtn.className = 'remove-photo';
+                    removeBtn.innerHTML = '×';
+                    removeBtn.addEventListener('click', function() {
+                        // Удаляем фото из массива и из DOM
+                        const index = selectedPhotos.indexOf(file);
+                        if (index > -1) {
+                            selectedPhotos.splice(index, 1);
+                        }
+                        photoDiv.remove();
+                        updatePhotoCount();
+                        console.log(`Удалена фотография, осталось: ${selectedPhotos.length}`);
+                    });
+                    
+                    photoDiv.appendChild(img);
+                    photoDiv.appendChild(removeBtn);
+                    
+                    // Вставляем превью после счетчика фотографий
+                    const photosContainer = document.getElementById('photos-container');
+                    const addButton = document.querySelector('.add-photo-button');
+                    photosContainer.insertBefore(photoDiv, addButton.nextSibling);
+                };
+                reader.onerror = function() {
+                    console.error('Ошибка чтения файла');
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            updatePhotoCount();
+            console.log(`Всего фотографий: ${selectedPhotos.length}`);
+            
+            // Сбрасываем input, чтобы можно было добавить те же файлы снова
+            e.target.value = '';
         }
+        
+        // Обновление счетчика фотографий
+        function updatePhotoCount() {
+            const photoCount = document.getElementById('photo-count');
+            if (photoCount) {
+                photoCount.textContent = `${selectedPhotos.length}/100`;
+            }
+        }
+        
+        // Отслеживаем изменения в полях ввода
+        titleField.addEventListener('input', function() {
+            if (this.value.trim() !== '') {
+                this.classList.add('filled');
+            } else {
+                this.classList.remove('filled');
+            }
+        });
+        
+        descriptionField.addEventListener('input', function() {
+            if (this.value.trim() !== '') {
+                this.classList.add('filled');
+            } else {
+                this.classList.remove('filled');
+            }
+        });
+        
+        // Публикация лота
+        document.querySelector('.submit-button').addEventListener('click', async function() {
+            // Проверка авторизации
+            if (!auth.currentUser) {
+                alert('Для публикации лота необходимо авторизоваться');
+                return;
+            }
+            
+            // Проверка обязательных полей
+            const region = regionValue.querySelector('span:first-child').textContent;
+            const category = categoryValue.querySelector('span:first-child').textContent;
+            const tradeType = tradeTypeValue.querySelector('span:first-child').textContent;
+            const title = titleField.value.trim();
+            const description = descriptionField.value.trim();
+            const price = priceField.value;
+            
+            if (region === 'Выберите регион' || 
+                category === 'Выберите категорию' || 
+                tradeType === 'Выберите тип' || 
+                title === '' || 
+                description === '' || 
+                price === '') {
+                alert('Пожалуйста, заполните все обязательные поля');
+                return;
+            }
+            
+            try {
+                // Создаем документ лота в Firestore
+                const lotRef = db.collection('lots').doc();
+                
+                // Загружаем фотографии
+                const photoUrls = [];
+                if (selectedPhotos.length > 0) {
+                    for (const file of selectedPhotos) {
+                        const photoRef = storage.ref(`lots/${lotRef.id}/${file.name}`);
+                        await photoRef.put(file);
+                        const url = await photoRef.getDownloadURL();
+                        photoUrls.push(url);
+                    }
+                }
+                
+                // Сохраняем данные лота
+                await lotRef.set({
+                    userId: auth.currentUser.uid,
+                    region: region,
+                    category: category,
+                    tradeType: tradeType,
+                    title: title,
+                    description: description,
+                    price: Number(price),
+                    photos: photoUrls,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    status: 'active'
+                });
+                
+                alert('Лот успешно опубликован!');
+                
+                // Сбрасываем форму
+                regionValue.querySelector('span:first-child').textContent = 'Выберите регион';
+                categoryValue.querySelector('span:first-child').textContent = 'Выберите категорию';
+                tradeTypeValue.querySelector('span:first-child').textContent = 'Выберите тип';
+                titleField.value = '';
+                descriptionField.value = '';
+                priceField.value = '';
+                
+                // Очищаем фотографии
+                selectedPhotos = [];
+                document.querySelectorAll('.photo-preview').forEach(preview => preview.remove());
+                updatePhotoCount();
+                
+                // Сбрасываем стили
+                regionValue.classList.add('placeholder');
+                regionValue.classList.remove('filled');
+                categoryValue.classList.add('placeholder');
+                categoryValue.classList.remove('filled');
+                tradeTypeValue.classList.add('placeholder');
+                tradeTypeValue.classList.remove('filled');
+                
+                // Переходим на страницу поиска
+                document.querySelector('.nav-item[data-page="search-page"]').click();
+                
+            } catch (error) {
+                alert(`Ошибка публикации лота: ${error.message}`);
+            }
+        });
     </script>
-</body>
-</html>
