@@ -4,27 +4,59 @@
     <title>GidMeteo</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
-        window.onload = function() {
-            // Инициализация Telegram WebApp
+        // Функция для проверки загрузки Telegram WebApp
+        function checkTelegramWebApp() {
+            if (window.Telegram && window.Telegram.WebApp) {
+                initApp();
+            } else {
+                console.log("WebApp API не загружен, повторная попытка...");
+                setTimeout(checkTelegramWebApp, 100);
+            }
+        }
+        
+        // Инициализация приложения
+        function initApp() {
+            console.log("Инициализация WebApp...");
             const tg = window.Telegram.WebApp;
             
-            // Обязательно нужно расширить WebApp на весь экран
+            // Расширяем WebApp на весь экран
             tg.expand();
             
-            // Отправка данных обратно в бота 
-            tg.sendData(JSON.stringify({
-                action: "open_app",
-                source: tg.initDataUnsafe.start_param || "direct_click",
-                timestamp: new Date().toISOString()
-            }));
+            // Показываем интерфейс только когда готовы
+            document.getElementById("loading").style.display = "block";
             
-            // Показываем сообщение пользователю
-            document.getElementById('loading').innerText = 'Загрузка метеосервиса...';
-            
-            // Перенаправление на сайт meteoblue через короткую задержку
-            setTimeout(function() {
-                window.location.href = "https://www.meteoblue.com/ru/";
-            }, 1000);
+            try {
+                // Логируем данные для отладки
+                console.log("WebApp готов, отправляем данные");
+                
+                // Собираем данные для отправки обратно боту
+                const data = {
+                    action: "open_app",
+                    source: tg.initDataUnsafe.start_param || "direct_click",
+                    timestamp: new Date().toISOString()
+                };
+                
+                console.log("Данные для отправки:", data);
+                
+                // Отправляем данные боту
+                tg.sendData(JSON.stringify(data));
+                
+                console.log("Данные отправлены, перенаправляем...");
+                
+                // Перенаправляем на meteoblue после небольшой задержки
+                setTimeout(function() {
+                    window.location.href = "https://www.meteoblue.com/ru/";
+                }, 1500);
+            } catch (error) {
+                console.error("Ошибка:", error);
+                document.getElementById("loading").innerText = "Произошла ошибка: " + error.message;
+            }
+        }
+        
+        // Запускаем проверку при загрузке страницы
+        window.onload = function() {
+            console.log("Страница загружена, проверяем Telegram WebApp API");
+            checkTelegramWebApp();
         };
     </script>
     <style>
@@ -40,10 +72,12 @@
         #loading {
             font-size: 18px;
             color: #0088cc;
+            text-align: center;
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div id="loading">Подключение...</div>
+    <div id="loading">Загрузка метеосервиса...</div>
 </body>
 </html>
