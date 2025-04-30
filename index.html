@@ -1,83 +1,40 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GidMeteo</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>GidMeteo Redirect</title>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=YOUR-GA-ID"></script>
     <script>
-        // Функция для проверки загрузки Telegram WebApp
-        function checkTelegramWebApp() {
-            if (window.Telegram && window.Telegram.WebApp) {
-                initApp();
-            } else {
-                console.log("WebApp API не загружен, повторная попытка...");
-                setTimeout(checkTelegramWebApp, 100);
-            }
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'YOUR-GA-ID'); // Замените на ваш ID 
+        
+        // Отслеживаем событие открытия
+        gtag('event', 'webapp_open', {
+            'source': getParameterByName('source') || 'unknown',
+            'user_id': getParameterByName('user_id') || 'unknown'
+        });
+        
+        // Функция для получения параметров из URL
+        function getParameterByName(name, url = window.location.href) {
+            name = name.replace(/[\[\]]/g, '\\$&');
+            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
         }
         
-        // Инициализация приложения
-        function initApp() {
-            console.log("Инициализация WebApp...");
-            const tg = window.Telegram.WebApp;
-            
-            // Расширяем WebApp на весь экран
-            tg.expand();
-            
-            // Показываем интерфейс только когда готовы
-            document.getElementById("loading").style.display = "block";
-            
-            try {
-                // Логируем данные для отладки
-                console.log("WebApp готов, отправляем данные");
-                
-                // Собираем данные для отправки обратно боту
-                const data = {
-                    action: "open_app",
-                    source: tg.initDataUnsafe.start_param || "direct_click",
-                    timestamp: new Date().toISOString()
-                };
-                
-                console.log("Данные для отправки:", data);
-                
-                // Отправляем данные боту
-                tg.sendData(JSON.stringify(data));
-                
-                console.log("Данные отправлены, перенаправляем...");
-                
-                // Перенаправляем на meteoblue после небольшой задержки
-                setTimeout(function() {
-                    window.location.href = "https://www.meteoblue.com/ru/";
-                }, 1500);
-            } catch (error) {
-                console.error("Ошибка:", error);
-                document.getElementById("loading").innerText = "Произошла ошибка: " + error.message;
-            }
-        }
-        
-        // Запускаем проверку при загрузке страницы
-        window.onload = function() {
-            console.log("Страница загружена, проверяем Telegram WebApp API");
-            checkTelegramWebApp();
-        };
+        // Перенаправляем на meteoblue через 500мс
+        setTimeout(function() {
+            window.location.href = "https://www.meteoblue.com/ru/";
+        }, 500);
     </script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f5f5f5;
-        }
-        #loading {
-            font-size: 18px;
-            color: #0088cc;
-            text-align: center;
-            display: none;
-        }
-    </style>
 </head>
 <body>
-    <div id="loading">Загрузка метеосервиса...</div>
+    <div style="text-align: center; margin-top: 50px; font-family: Arial, sans-serif;">
+        Загрузка метеосервиса...
+    </div>
 </body>
 </html>
