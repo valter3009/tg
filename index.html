@@ -2,22 +2,25 @@
 <html>
 <head>
     <title>GidMeteo Redirect</title>
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=YOUR-GA-ID"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'YOUR-GA-ID'); // Замените на ваш ID 
-        
-        // Отслеживаем событие открытия
-        gtag('event', 'webapp_open', {
-            'source': getParameterByName('source') || 'unknown',
-            'user_id': getParameterByName('user_id') || 'unknown'
+    <meta charset="utf-8">
+    <!-- Яндекс.Метрика -->
+    <!-- Yandex.Metrika counter -->
+    <script type="text/javascript">
+        (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+        m[i].l=1*new Date();
+        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+        (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+    
+        ym(101522448, "init", {
+            clickmap:true,
+            trackLinks:true,
+            accurateTrackBounce:true
         });
         
-        // Функция для получения параметров из URL
-        function getParameterByName(name, url = window.location.href) {
+        // Получение параметров из URL
+        function getParameterByName(name) {
+            var url = window.location.href;
             name = name.replace(/[\[\]]/g, '\\$&');
             var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
                 results = regex.exec(url);
@@ -26,15 +29,47 @@
             return decodeURIComponent(results[2].replace(/\+/g, ' '));
         }
         
-        // Перенаправляем на meteoblue через 500мс
-        setTimeout(function() {
-            window.location.href = "https://www.meteoblue.com/ru/";
-        }, 500);
+        // Получаем параметры из URL
+        var source = getParameterByName('source') || 'unknown';
+        var userId = getParameterByName('user_id') || 'unknown';
+        
+        // Отправляем событие в Метрику
+        window.onload = function() {
+            // Отправка цели в Яндекс.Метрику
+            ym(101522448, 'reachGoal', 'webapp_open', {
+                source: source,
+                user_id: userId
+            });
+            
+            // Показываем сообщение
+            document.getElementById('loading').innerText = 'Загрузка метеосервиса...';
+            
+            // Перенаправляем на meteoblue через 1 секунду
+            setTimeout(function() {
+                window.location.href = "https://www.meteoblue.com/ru/";
+            }, 1000);
+        };
     </script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/101522448" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    <!-- /Yandex.Metrika counter -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        #loading {
+            font-size: 18px;
+            color: #0088cc;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-    <div style="text-align: center; margin-top: 50px; font-family: Arial, sans-serif;">
-        Загрузка метеосервиса...
-    </div>
+    <div id="loading">Подключение к метеосервису...</div>
 </body>
 </html>
