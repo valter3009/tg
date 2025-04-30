@@ -4,27 +4,46 @@
     <title>GidMeteo</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        window.onload = function() {
             // Инициализация Telegram WebApp
             const tg = window.Telegram.WebApp;
+            
+            // Обязательно нужно расширить WebApp на весь экран
             tg.expand();
             
-            // Отправка данных обратно в бота при загрузке страницы
+            // Отправка данных обратно в бота 
             tg.sendData(JSON.stringify({
                 action: "open_app",
+                source: tg.initDataUnsafe.start_param || "direct_click",
                 timestamp: new Date().toISOString()
             }));
             
-            // Перенаправление на сайт meteoblue
+            // Показываем сообщение пользователю
+            document.getElementById('loading').innerText = 'Загрузка метеосервиса...';
+            
+            // Перенаправление на сайт meteoblue через короткую задержку
             setTimeout(function() {
                 window.location.href = "https://www.meteoblue.com/ru/";
-            }, 500);
-        });
+            }, 1000);
+        };
     </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        #loading {
+            font-size: 18px;
+            color: #0088cc;
+        }
+    </style>
 </head>
 <body>
-    <div style="text-align: center; margin-top: 20px;">
-        Загрузка метеосервиса...
-    </div>
+    <div id="loading">Подключение...</div>
 </body>
 </html>
