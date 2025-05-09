@@ -62,10 +62,7 @@
         iframe {border:none; width:100%; height:620px; transform-origin:0 0; margin:0;}
         .map-widget-container {width:100%; display:flex; justify-content:center; align-items:flex-start; background-color:#1e1e1e; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.3); overflow:hidden; position:relative; padding:0; margin-bottom:15px;}
         .map-iframe-wrapper {width:100%; position:relative; overflow:hidden;}
-        .attribution {font-size:12px; text-align:center; margin-top:5px; margin-bottom:15px;}
-        .attribution a {color:#4da6ff; text-decoration:none;}
         .loading {text-align:center; padding:20px; font-style:italic; color:#999;}
-        .widget-title {color:#87CEEB; margin-bottom:5px; text-align:center; font-weight:bold;}
     </style>
 </head>
 <body>
@@ -228,34 +225,22 @@
             const useUrl = city.url ? city.url : city.encoded;
             const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/widget/three/${useUrl}_${city.id}?geoloc=fixed&nocurrent=0&noforecast=0&days=4&tempunit=CELSIUS&windunit=METER_PER_SECOND&layout=image&nolocation=1`;
             document.getElementById("weatherWidget").src = widgetSrc;
-            
-            const attributionLink = document.getElementById("attributionLink");
-            attributionLink.href = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BD%D0%B5%D0%B4%D0%B5%D0%BB%D1%8F/${useUrl}_${city.id}?utm_source=three_widget&utm_medium=linkus&utm_content=three&utm_campaign=Weather%2BWidget`;
         }
         
         function updateMapWidget(city) {
             const useUrl = city.url ? city.url : city.encoded;
             const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/${useUrl}_${city.id}?windAnimation=1&gust=1&satellite=1&cloudsAndPrecipitation=1&temperature=1&sunshine=1&extremeForecastIndex=1&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=9&autowidth=manu`;
             document.getElementById("mapWidget").src = widgetSrc;
-            
-            const mapAttributionLink = document.getElementById("mapAttributionLink");
-            mapAttributionLink.href = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/${useUrl}_${city.id}?utm_source=map_widget&utm_medium=linkus&utm_content=map&utm_campaign=Weather%2BWidget`;
         }
         
         function updateWidgetByCoords(lat, lon) {
             const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/widget/three/latlon?lat=${lat}&lon=${lon}&geoloc=fixed&nocurrent=0&noforecast=0&days=4&tempunit=CELSIUS&windunit=METER_PER_SECOND&layout=image&nolocation=1`;
             document.getElementById("weatherWidget").src = widgetSrc;
-            
-            const attributionLink = document.getElementById("attributionLink");
-            attributionLink.href = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BD%D0%B5%D0%B4%D0%B5%D0%BB%D1%8F/latlon?lat=${lat}&lon=${lon}&utm_source=three_widget&utm_medium=linkus&utm_content=three&utm_campaign=Weather%2BWidget`;
         }
         
         function updateMapWidgetByCoords(lat, lon) {
             const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/latlon?lat=${lat}&lon=${lon}&windAnimation=1&gust=1&satellite=1&cloudsAndPrecipitation=1&temperature=1&sunshine=1&extremeForecastIndex=1&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=9&autowidth=manu`;
             document.getElementById("mapWidget").src = widgetSrc;
-            
-            const mapAttributionLink = document.getElementById("mapAttributionLink");
-            mapAttributionLink.href = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/latlon?lat=${lat}&lon=${lon}&utm_source=map_widget&utm_medium=linkus&utm_content=map&utm_campaign=Weather%2BWidget`;
         }
         
         function resizeIframes() {
