@@ -453,6 +453,12 @@
             const searchResults = document.getElementById("searchResults");
             const searchHistory = document.getElementById("searchHistory");
             
+            // Инициализация вкладок
+            document.getElementById('forecastTab').addEventListener('click', switchToForecastTab);
+            document.getElementById('satelliteTab').addEventListener('click', switchToSatelliteTab);
+            document.getElementById('precipitationTab').addEventListener('click', switchToPrecipitationTab);
+            document.getElementById('windTab').addEventListener('click', switchToWindTab);
+            
             // Получаем последний выбранный город или используем город по умолчанию (Москва)
             const savedCity = localStorage.getItem(LAST_CITY_KEY);
             selectedCity = savedCity ? JSON.parse(savedCity) : DEFAULT_CITY;
@@ -557,7 +563,15 @@
             }
         });
         
-        window.addEventListener('load', resizeIframes);
+        window.addEventListener('load', function() {
+            // Повторно назначаем обработчики событий для вкладок после полной загрузки
+            document.getElementById('forecastTab').addEventListener('click', switchToForecastTab);
+            document.getElementById('satelliteTab').addEventListener('click', switchToSatelliteTab);
+            document.getElementById('precipitationTab').addEventListener('click', switchToPrecipitationTab);
+            document.getElementById('windTab').addEventListener('click', switchToWindTab);
+            
+            resizeIframes();
+        });
         window.addEventListener('resize', resizeIframes);
     </script>
 </body>
