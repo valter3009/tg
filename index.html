@@ -117,30 +117,40 @@
         .widget-container {
             width: 100%; 
             display: flex; 
-            justify-content: flex-start; /* Изменено с center на flex-start для корректного выравнивания */
+            justify-content: center; 
             align-items: flex-start; 
             background-color: #1e1e1e; 
             border-radius: 0 0 8px 8px; /* Закругляем только нижние углы */
             box-shadow: 0 2px 5px rgba(0,0,0,0.3); 
             overflow-x: auto; /* Добавляем горизонтальную прокрутку */
-            overflow-y: hidden; /* Предотвращаем вертикальную прокрутку */
+            overflow-y: hidden; /* Запрещаем вертикальную прокрутку */
             position: relative; 
             padding: 0; 
             margin-bottom: 15px;
             -webkit-overflow-scrolling: touch; /* Плавная прокрутка на iOS */
-            scroll-snap-type: x mandatory; /* Добавляем snap-скроллинг */
-        }
-        .iframe-wrapper {
-            width: max-content; /* Устанавливаем ширину равной содержимому */
-            position: relative; 
-            overflow: visible; /* Позволяем содержимому выходить за пределы контейнера */
-            scroll-snap-align: start; /* Для snap-скроллинга */
+            scroll-behavior: smooth; /* Плавная прокрутка */
+            scrollbar-width: thin; /* Тонкий скроллбар для Firefox */
         }
         
-        #weatherWidget {
-            min-width: 805px; /* Фиксированная минимальная ширина для 7-дневного прогноза */
-            max-width: 805px; /* Ограничиваем максимальную ширину */
+        /* Стили для скроллбара в Chrome/Safari */
+        .widget-container::-webkit-scrollbar {
+            height: 6px;
         }
+        
+        .widget-container::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+            border-radius: 3px;
+        }
+        
+        .widget-container::-webkit-scrollbar-thumb {
+            background: rgba(135, 206, 235, 0.5);
+            border-radius: 3px;
+        }
+        
+        .widget-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(135, 206, 235, 0.8);
+        }
+        .iframe-wrapper {width:100%; position:relative; overflow:hidden;}
         iframe {border:none; width:100%; height:620px; transform-origin:0 0; margin:0;}
         .satellite-widget-container,
         .precipitation-widget-container,
@@ -178,7 +188,7 @@
         
         <div class="widget-container">
             <div class="iframe-wrapper">
-                <iframe id="weatherWidget" src="" frameborder="0" scrolling="NO" allowtransparency="true" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox" style="width: 805px; height: 613px"></iframe>
+                <iframe id="weatherWidget" src="" frameborder="0" scrolling="NO" allowtransparency="true" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe>
             </div>
         </div>
         
@@ -390,9 +400,30 @@
         
         function resizeIframes() {
             console.log("Вызвана функция resizeIframes");
-            // Масштабирование виджетов
+            
+            // Для основного прогноза на 7 дней устанавливаем особые параметры масштабирования
+            const weatherIframe = document.getElementById("weatherWidget");
+            const weatherContainer = document.querySelector(".widget-container");
+            if (weatherIframe && weatherContainer) {
+                const width = weatherContainer.offsetWidth;
+                // Сохраняем полную высоту как у других виджетов (~ 600px)
+                const heightScaleFactor = width / 460; // Используем тот же коэффициент что и для других виджетов
+                const widthScaleFactor = width / 805; // Масштаб по ширине (виджет 7 дней шире)
+                
+                // Применяем масштабирование, которое сохранит полную высоту
+                weatherIframe.style.transform = `scale(${widthScaleFactor})`;
+                weatherIframe.style.width = `${805}px`; // Фиксированная ширина в px
+                weatherIframe.style.transformOrigin = "0 0"; // Точка трансформации - левый верхний угол
+                
+                // Устанавливаем высоту контейнера такую же, как и у других виджетов
+                weatherContainer.style.height = `${600 * heightScaleFactor}px`;
+                
+                // Но сам iframe делаем высоким, чтобы содержимое было видно полностью
+                weatherIframe.style.height = `${600 / widthScaleFactor * heightScaleFactor}px`;
+            }
+            
+            // Для остальных виджетов применяем стандартное масштабирование
             const containers = [
-                // Для прогноза не масштабируем (даем возможность прокрутки)
                 { iframe: document.getElementById("satelliteWidget"), container: document.querySelector(".satellite-widget-container") },
                 { iframe: document.getElementById("precipitationWidget"), container: document.querySelector(".precipitation-widget-container") },
                 { iframe: document.getElementById("windWidget"), container: document.querySelector(".wind-widget-container") }
@@ -413,31 +444,11 @@
                 }
             });
             
-            // Отдельно обрабатываем виджет прогноза
-            const weatherWidget = document.getElementById("weatherWidget");
-            const widgetContainer = document.querySelector(".widget-container");
-            
-            if (weatherWidget && widgetContainer) {
-                // Установка фиксированной высоты контейнера
-                widgetContainer.style.height = "613px";
-                
-                // Ограничиваем ширину контейнера, если он больше ширины содержимого
-                const containerWidth = widgetContainer.offsetWidth;
-                if (containerWidth > 805) {
-                    // Контейнер шире виджета, центрируем виджет
-                    weatherWidget.parentElement.style.margin = "0 auto";
-                } else {
-                    // Контейнер уже виджета, убираем отступы
-                    weatherWidget.parentElement.style.margin = "0";
-                }
-                
-                // Проверка, не пуст ли iframe
-                if (!weatherWidget.src || weatherWidget.src === "about:blank" || weatherWidget.src === "") {
-                    console.log("Обнаружен пустой weatherWidget");
-                    if (selectedCity) {
-                        console.log("Обновляем пустой weatherWidget");
-                        updateWeatherWidget(selectedCity);
-                    }
+            // Проверка, не пуст ли iframe погоды
+            if (!weatherIframe.src || weatherIframe.src === "about:blank" || weatherIframe.src === "") {
+                console.log("Обнаружен пустой iframe погоды, обновляем");
+                if (selectedCity) {
+                    updateWeatherWidget(selectedCity);
                 }
             }
         }
@@ -514,36 +525,47 @@
             resizeIframes();
         }
         
-        // Блокируем стандартные жесты прокрутки документа
+        // Добавляем обработчики для сенсорных устройств для лучшей прокрутки
+        let touchStartX = 0;
+        let scrollLeft = 0;
+        
+        function setupScrollHandlers() {
+            const container = document.querySelector('.widget-container');
+            
+            // Обработчики для сенсорных устройств
+            container.addEventListener('touchstart', function(e) {
+                touchStartX = e.targetTouches[0].pageX - container.offsetLeft;
+                scrollLeft = container.scrollLeft;
+            }, { passive: true });
+            
+            container.addEventListener('touchmove', function(e) {
+                if (!touchStartX) return;
+                
+                const touchCurrentX = e.targetTouches[0].pageX - container.offsetLeft;
+                const scrollX = touchCurrentX - touchStartX;
+                container.scrollLeft = scrollLeft - scrollX;
+            }, { passive: true });
+            
+            container.addEventListener('touchend', function(e) {
+                touchStartX = 0;
+            }, { passive: true });
+            
+            // Добавляем обработчик колесика мыши для более естественной прокрутки
+            container.addEventListener('wheel', function(e) {
+                if (e.deltaY !== 0) {
+                    e.preventDefault();
+                    container.scrollLeft += e.deltaY;
+                }
+            }, { passive: false });
+        }
+        
+        // Дополнительно блокируем стандартные жесты прокрутки документа
         document.addEventListener('touchmove', function(e) {
             // Блокируем только свайп вниз от самого верха страницы
             if (window.scrollY <= 0 && e.touches[0].clientY > 10 && e.touches[0].clientY < 100) {
                 e.preventDefault();
             }
         }, { passive: false });
-        
-        // Дополнительно блокируем горизонтальный скролл за пределами виджета
-        document.addEventListener('DOMContentLoaded', function() {
-            const widgetContainer = document.querySelector('.widget-container');
-            
-            if (widgetContainer) {
-                widgetContainer.addEventListener('scroll', function() {
-                    // Получаем максимально возможную позицию скролла
-                    const maxScrollLeft = this.scrollWidth - this.clientWidth;
-                    
-                    // Проверяем, не слишком ли далеко ушел скролл
-                    if (this.scrollLeft > maxScrollLeft) {
-                        // Если скролл ушел слишком далеко, возвращаем его в пределы контента
-                        this.scrollLeft = maxScrollLeft;
-                    }
-                    
-                    // Не даем скроллить влево за пределы контента
-                    if (this.scrollLeft < 0) {
-                        this.scrollLeft = 0;
-                    }
-                });
-            }
-        });
         
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById("citySearch");
@@ -677,6 +699,9 @@
                 updatePrecipitationWidget(selectedCity);
                 updateWindWidget(selectedCity);
             }
+            
+            // Настраиваем обработчики прокрутки
+            setupScrollHandlers();
             
             resizeIframes();
             
