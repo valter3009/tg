@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>GidMeteo Redirect</title>
-    <meta charset="utf-8">
-    <!-- Яндекс.Метрика -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Погодный виджет</title>
     <!-- Yandex.Metrika counter -->
     <script type="text/javascript">
         (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
@@ -21,7 +21,11 @@
         // Получение параметров из URL
         function getParameterByName(name) {
             var url = window.location.href;
-            name = name.replace(/[\[\]]/g, '\\$&');
+            name = name.replace(/[\[\]]/g, '\\<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Погодный виджет</title>
+    <style>');
             var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
                 results = regex.exec(url);
             if (!results) return null;
@@ -29,47 +33,315 @@
             return decodeURIComponent(results[2].replace(/\+/g, ' '));
         }
         
-        // Получаем параметры из URL
-        var source = getParameterByName('source') || 'unknown';
-        var userId = getParameterByName('user_id') || 'unknown';
-        
-        // Отправляем событие в Метрику
+        // Загрузка и отправка данных в Метрику
         window.onload = function() {
+            // Получаем параметры из URL
+            var source = getParameterByName('source') || 'unknown';
+            var userId = getParameterByName('user_id') || 'unknown';
+            
             // Отправка цели в Яндекс.Метрику
             ym(101522448, 'reachGoal', 'webapp_open', {
                 source: source,
                 user_id: userId
             });
-            
-            // Показываем сообщение
-            document.getElementById('loading').innerText = 'Загрузка метеосервиса...';
-            
-            // Перенаправляем на meteoblue через 1 секунду
-            setTimeout(function() {
-                window.location.href = "https://www.meteoblue.com/ru/";
-            }, 1000);
         };
     </script>
     <noscript><div><img src="https://mc.yandex.ru/watch/101522448" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
     <!-- /Yandex.Metrika counter -->
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f5f5f5;
-        }
-        #loading {
-            font-size: 18px;
-            color: #0088cc;
-            text-align: center;
-        }
+        body {font-family:Arial,sans-serif; margin:0; padding:10px; background-color:#121212; overflow-x:hidden; color:#eee;}
+        .container {width:100%; max-width:500px; margin:0 auto; display:flex; flex-direction:column; align-items:center;}
+        .search-container {width:100%; margin-bottom:15px; position:relative;}
+        .search-input {width:100%; padding:12px; border:1px solid #333; border-radius:8px; font-size:16px; background-color:#1e1e1e; color:#eee; box-sizing:border-box;}
+        .search-input::placeholder {color:#999;}
+        .search-results {position:absolute; width:100%; max-height:200px; overflow-y:auto; background-color:#1e1e1e; border:1px solid #333; border-radius:0 0 8px 8px; z-index:1000; display:none; box-shadow:0 4px 8px rgba(0,0,0,0.3);}
+        .search-result-item {padding:10px; cursor:pointer; border-bottom:1px solid #333;}
+        .search-result-item:hover {background-color:#2c2c2c;}
+        .city-name {font-weight:bold; color:#fff;}
+        .country-name {color:#aaa; font-size:14px;}
+        .search-history {width:100%; display:none; background-color:#1e1e1e; border:1px solid #333; border-radius:0 0 8px 8px; position:absolute; top:100%; z-index:900; box-shadow:0 4px 8px rgba(0,0,0,0.3);}
+        .history-item {padding:8px 10px; cursor:pointer; border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center; font-size:14px; color:#ddd;}
+        .history-item:hover {background-color:#2c2c2c;}
+        .city-info {flex-grow:1;}
+        .delete-btn {color:#ff5252; cursor:pointer; padding:2px 6px; font-size:14px; border-radius:4px;}
+        .delete-btn:hover {background-color:rgba(255,82,82,0.2);}
+        .widget-container {width:100%; display:flex; justify-content:center; align-items:flex-start; background-color:#1e1e1e; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.3); overflow:hidden; position:relative; padding-top:5px;}
+        .iframe-wrapper {width:100%; position:relative; overflow:visible;}
+        iframe {border:none; width:100%; height:620px; transform-origin:0 0; margin-top:-5px;}
+        .attribution {margin-top:10px; font-size:12px; text-align:center;}
+        .attribution a {color:#4da6ff; text-decoration:none;}
+        .loading {text-align:center; padding:20px; font-style:italic; color:#999;}
     </style>
 </head>
 <body>
-    <div id="loading">Подключение к метеосервису...</div>
+    <div class="container">
+        <div class="search-container">
+            <input type="text" id="citySearch" class="search-input" placeholder="Введите название города..." autocomplete="off">
+            <div class="search-results" id="searchResults"></div>
+            <div class="search-history" id="searchHistory"></div>
+        </div>
+        <div class="widget-container">
+            <div class="iframe-wrapper">
+                <iframe id="weatherWidget" src="https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/widget/three/%d0%a1%d0%be%d1%87%d0%b8_%d0%a0%d0%be%d1%81%d1%81%d0%b8%d1%8f_491422?geoloc=fixed&nocurrent=0&noforecast=0&days=4&tempunit=CELSIUS&windunit=METER_PER_SECOND&layout=image" frameborder="0" scrolling="NO" allowtransparency="true" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe>
+            </div>
+        </div>
+        <div class="attribution">
+            <a href="https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BD%D0%B5%D0%B4%D0%B5%D0%BB%D1%8F/%d0%a1%d0%be%d1%87%d0%b8_%d0%a0%d0%be%d1%81%d1%81%d0%b8%d1%8f_491422?utm_source=three_widget&utm_medium=linkus&utm_content=three&utm_campaign=Weather%2BWidget" target="_blank" rel="noopener" id="attributionLink">meteoblue</a>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = "Rn5webjm3JVIDEaK";
+        const HISTORY_KEY = "weatherWidgetSearchHistory";
+        const MAX_HISTORY_ITEMS = 10;
+        let selectedCity = {id:"491422", name:"Сочи", country:"Россия", encoded:"%d0%a1%d0%be%d1%87%d0%b8_%d0%a0%d0%be%d1%81%d1%81%d0%b8%d1%8f"};
+        
+        // Основные функции для работы с историей
+        const loadHistory = () => JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+        const saveHistory = (history) => localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+        
+        function addToHistory(city) {
+            let history = loadHistory();
+            const idx = history.findIndex(i => i.id === city.id || (i.name === city.name && i.country === city.country));
+            if (idx !== -1) history.splice(idx, 1);
+            history.unshift(city);
+            if (history.length > MAX_HISTORY_ITEMS) history = history.slice(0, MAX_HISTORY_ITEMS);
+            saveHistory(history);
+            displayHistory();
+        }
+        
+        function removeFromHistory(index) {
+            const history = loadHistory();
+            history.splice(index, 1);
+            saveHistory(history);
+            displayHistory();
+        }
+        
+        function displayHistory() {
+            const history = loadHistory();
+            const container = document.getElementById("searchHistory");
+            container.innerHTML = '';
+            
+            if (history.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            history.forEach((city, index) => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.innerHTML = `<div class="city-info">${city.name}</div><div class="delete-btn">×</div>`;
+                
+                item.querySelector('.city-info').addEventListener('click', () => {
+                    selectCity(city);
+                    document.getElementById("searchHistory").style.display = 'none';
+                    document.getElementById("citySearch").value = ''; // Очищаем поле ввода
+                });
+                
+                item.querySelector('.delete-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    removeFromHistory(index);
+                });
+                
+                container.appendChild(item);
+            });
+        }
+        
+        // Функции для работы с погодой
+        async function searchCities(query) {
+            if (!query || query.length < 2) return [];
+            
+            try {
+                const url = `https://www.meteoblue.com/ru/server/search/query3?query=${encodeURIComponent(query)}&apikey=${API_KEY}`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Network error');
+                const data = await response.json();
+                return data.results || [];
+            } catch (error) {
+                return [];
+            }
+        }
+        
+        function encodeCity(name, country) {
+            return encodeURIComponent(`${name}_${country}`).replace(/%/g, '%25');
+        }
+        
+        function displayResults(results) {
+            const container = document.getElementById("searchResults");
+            container.innerHTML = !results || results.length === 0 ? 
+                '<div class="search-result-item">Города не найдены</div>' : '';
+            
+            if (!results || results.length === 0) {
+                container.style.display = 'block';
+                return;
+            }
+            
+            results.forEach(result => {
+                const item = document.createElement('div');
+                item.className = 'search-result-item';
+                const adminInfo = result.admin1 ? `, ${result.admin1}` : '';
+                
+                item.innerHTML = `
+                    <span class="city-name">${result.name}</span>
+                    <span class="country-name">${result.country}${adminInfo}</span>
+                `;
+                
+                item.addEventListener('click', () => {
+                    const city = {
+                        id: result.id || result.geonameId || "",
+                        name: result.name,
+                        country: result.country,
+                        lat: result.lat,
+                        lon: result.lon,
+                        encoded: encodeCity(result.name, result.country),
+                        url: result.url || ''
+                    };
+                    
+                    selectCity(city);
+                    document.getElementById("searchResults").style.display = 'none';
+                    addToHistory(city);
+                });
+                
+                container.appendChild(item);
+            });
+            
+            container.style.display = 'block';
+        }
+        
+        function selectCity(city) {
+            selectedCity = city;
+            
+            if (city.id) {
+                updateWeatherWidget(city);
+            } else if (city.lat && city.lon) {
+                updateWidgetByCoords(city.lat, city.lon);
+            }
+        }
+        
+        function updateWeatherWidget(city) {
+            const useUrl = city.url ? city.url : city.encoded;
+            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/widget/three/${useUrl}_${city.id}?geoloc=fixed&nocurrent=0&noforecast=0&days=4&tempunit=CELSIUS&windunit=METER_PER_SECOND&layout=image`;
+            document.getElementById("weatherWidget").src = widgetSrc;
+            
+            const attributionLink = document.getElementById("attributionLink");
+            attributionLink.href = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BD%D0%B5%D0%B4%D0%B5%D0%BB%D1%8F/${useUrl}_${city.id}?utm_source=three_widget&utm_medium=linkus&utm_content=three&utm_campaign=Weather%2BWidget`;
+        }
+        
+        function updateWidgetByCoords(lat, lon) {
+            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/widget/three/latlon?lat=${lat}&lon=${lon}&geoloc=fixed&nocurrent=0&noforecast=0&days=4&tempunit=CELSIUS&windunit=METER_PER_SECOND&layout=image`;
+            document.getElementById("weatherWidget").src = widgetSrc;
+            
+            const attributionLink = document.getElementById("attributionLink");
+            attributionLink.href = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BD%D0%B5%D0%B4%D0%B5%D0%BB%D1%8F/latlon?lat=${lat}&lon=${lon}&utm_source=three_widget&utm_medium=linkus&utm_content=three&utm_campaign=Weather%2BWidget`;
+        }
+        
+        // Изменение размера iframe
+        function resizeIframe() {
+            const iframe = document.getElementById("weatherWidget");
+            const container = document.querySelector(".widget-container");
+            const width = container.offsetWidth;
+            
+            const scaleFactor = width / 460;
+            iframe.style.transform = `scale(${scaleFactor})`;
+            iframe.style.width = `${100 / scaleFactor}%`;
+            container.style.height = `${620 * scaleFactor + 15}px`;
+        }
+        
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById("citySearch");
+            const searchButton = document.getElementById("searchButton");
+            const searchResults = document.getElementById("searchResults");
+            const searchHistory = document.getElementById("searchHistory");
+            
+            let debounceTimer;
+            displayHistory();
+            
+            // Обработчики событий
+            searchInput.addEventListener('focus', function() {
+                if (searchInput.value.trim() === '') {
+                    searchResults.style.display = 'none';
+                    if (loadHistory().length > 0) {
+                        searchHistory.style.display = 'block';
+                    }
+                } else if (searchInput.value.trim().length >= 2) {
+                    searchHistory.style.display = 'none';
+                    searchResults.style.display = 'block';
+                }
+            });
+            
+            searchInput.addEventListener('input', function() {
+                clearTimeout(debounceTimer);
+                
+                if (searchInput.value.trim() === '') {
+                    searchResults.style.display = 'none';
+                    if (loadHistory().length > 0) {
+                        searchHistory.style.display = 'block';
+                    }
+                    return;
+                }
+                
+                searchHistory.style.display = 'none';
+                
+                debounceTimer = setTimeout(async () => {
+                    const query = searchInput.value.trim();
+                    if (query.length >= 2) {
+                        try {
+                            const results = await searchCities(query);
+                            displayResults(results);
+                        } catch (error) {
+                            searchResults.innerHTML = '<div class="search-result-item">Ошибка при поиске</div>';
+                            searchResults.style.display = 'block';
+                        }
+                    } else {
+                        searchResults.style.display = 'none';
+                    }
+                }, 300);
+            });
+            
+            searchInput.addEventListener('blur', function(e) {
+                // Задержка чтобы успеть обработать клик по результату поиска или истории
+                setTimeout(() => {
+                    if (!document.activeElement.closest('#searchResults') && 
+                        !document.activeElement.closest('#searchHistory')) {
+                        searchResults.style.display = 'none';
+                        searchHistory.style.display = 'none';
+                    }
+                }, 150);
+            });
+            
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && 
+                    !searchResults.contains(e.target) && 
+                    !searchHistory.contains(e.target)) {
+                    searchResults.style.display = 'none';
+                    searchHistory.style.display = 'none';
+                }
+            });
+            
+            searchButton.addEventListener('click', async function() {
+                const query = searchInput.value.trim();
+                if (query.length >= 2) {
+                    searchResults.innerHTML = '<div class="loading">Загрузка...</div>';
+                    searchResults.style.display = 'block';
+                    searchHistory.classList.remove('active');
+                    
+                    try {
+                        const results = await searchCities(query);
+                        displayResults(results);
+                    } catch (error) {
+                        searchResults.innerHTML = '<div class="search-result-item">Ошибка при поиске</div>';
+                        searchResults.style.display = 'block';
+                    }
+                }
+            });
+            
+            updateWeatherWidget(selectedCity);
+            addToHistory(selectedCity);
+        });
+        
+        window.addEventListener('load', resizeIframe);
+        window.addEventListener('resize', resizeIframe);
+    </script>
 </body>
 </html>
