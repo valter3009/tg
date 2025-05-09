@@ -176,7 +176,6 @@
         const API_KEY = "Rn5webjm3JVIDEaK";
         const HISTORY_KEY = "weatherWidgetSearchHistory";
         const LAST_CITY_KEY = "weatherWidgetLastCity";
-        const ACTIVE_TAB_KEY = "weatherWidgetActiveTab"; // Ключ для хранения активной вкладки
         const MAX_HISTORY_ITEMS = 10;
         const DEFAULT_CITY = {id:"524901", name:"Москва", country:"Россия", encoded:"%d0%9c%d0%be%d1%81%d0%ba%d0%b2%d0%b0_%d0%a0%d0%be%d1%81%d1%81%d0%b8%d1%8f"};
         let selectedCity;
@@ -355,8 +354,6 @@
             document.getElementById('mapTab').classList.remove('active');
             document.querySelector('.widget-container').style.display = 'flex';
             document.querySelector('.map-widget-container').style.display = 'none';
-            // Сохраняем выбранную вкладку
-            localStorage.setItem(ACTIVE_TAB_KEY, 'forecast');
         }
         
         function switchToMapTab() {
@@ -364,8 +361,6 @@
             document.getElementById('mapTab').classList.add('active');
             document.querySelector('.widget-container').style.display = 'none';
             document.querySelector('.map-widget-container').style.display = 'flex';
-            // Сохраняем выбранную вкладку
-            localStorage.setItem(ACTIVE_TAB_KEY, 'map');
         }
         
         // Дополнительно блокируем стандартные жесты прокрутки документа
@@ -476,13 +471,8 @@
             document.getElementById('forecastTab').addEventListener('click', switchToForecastTab);
             document.getElementById('mapTab').addEventListener('click', switchToMapTab);
             
-            // Восстанавливаем последнюю активную вкладку
-            const activeTab = localStorage.getItem(ACTIVE_TAB_KEY);
-            if (activeTab === 'map') {
-                switchToMapTab();
-            } else {
-                switchToForecastTab();
-            }
+            // Всегда открываем приложение на вкладке "Прогноз погоды"
+            switchToForecastTab();
             
             // Добавляем в историю только если это новый город
             const history = loadHistory();
