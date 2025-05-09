@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Погодный виджет</title>
+    <!-- Yandex.Metrika counter -->
     <script type="text/javascript">
         (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
         m[i].l=1*new Date();
@@ -19,11 +20,7 @@
         
         function getParameterByName(name) {
             var url = window.location.href;
-            name = name.replace(/[\[\]]/g, '\\<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Погодный виджет</title>
-    <style>');
+            name = name.replace(/[\[\]]/g, '\\$&');
             var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
                 results = regex.exec(url);
             if (!results) return null;
@@ -42,6 +39,7 @@
         };
     </script>
     <noscript><div><img src="https://mc.yandex.ru/watch/101522448" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    <!-- /Yandex.Metrika counter -->
     <style>
         body {font-family:Arial,sans-serif; margin:0; padding:10px; background-color:#121212; overflow-x:hidden; color:#eee;}
         .container {width:100%; max-width:500px; margin:0 auto; display:flex; flex-direction:column; align-items:center;}
@@ -87,8 +85,10 @@
     <script>
         const API_KEY = "Rn5webjm3JVIDEaK";
         const HISTORY_KEY = "weatherWidgetSearchHistory";
+        const LAST_CITY_KEY = "weatherWidgetLastCity";
         const MAX_HISTORY_ITEMS = 10;
-        let selectedCity = {id:"491422", name:"Сочи", country:"Россия", encoded:"%d0%a1%d0%be%d1%87%d0%b8_%d0%a0%d0%be%d1%81%d1%81%d0%b8%d1%8f"};
+        const DEFAULT_CITY = {id:"524901", name:"Москва", country:"Россия", encoded:"%d0%9c%d0%be%d1%81%d0%ba%d0%b2%d0%b0_%d0%a0%d0%be%d1%81%d1%81%d0%b8%d1%8f"};
+        let selectedCity;
         
         const loadHistory = () => JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
         const saveHistory = (history) => localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
@@ -204,6 +204,9 @@
         function selectCity(city) {
             selectedCity = city;
             
+            // Сохраняем выбранный город в localStorage
+            localStorage.setItem(LAST_CITY_KEY, JSON.stringify(city));
+            
             if (city.id) {
                 updateWeatherWidget(city);
             } else if (city.lat && city.lon) {
@@ -244,6 +247,10 @@
             const searchButton = document.getElementById("searchButton");
             const searchResults = document.getElementById("searchResults");
             const searchHistory = document.getElementById("searchHistory");
+            
+            // Получаем последний выбранный город или используем город по умолчанию (Москва)
+            const savedCity = localStorage.getItem(LAST_CITY_KEY);
+            selectedCity = savedCity ? JSON.parse(savedCity) : DEFAULT_CITY;
             
             let debounceTimer;
             displayHistory();
@@ -327,8 +334,13 @@
                 });
             }
             
+            // Устанавливаем выбранный или дефолтный город при загрузке
             updateWeatherWidget(selectedCity);
-            addToHistory(selectedCity);
+            // Добавляем в историю только если это новый город
+            const history = loadHistory();
+            if (!history.some(item => item.id === selectedCity.id)) {
+                addToHistory(selectedCity);
+            }
         });
         
         window.addEventListener('load', resizeIframe);
