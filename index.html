@@ -57,10 +57,10 @@
         .city-info {flex-grow:1;}
         .delete-btn {color:#ff5252; cursor:pointer; padding:2px 6px; font-size:14px; border-radius:4px;}
         .delete-btn:hover {background-color:rgba(255,82,82,0.2);}
-        .widget-container {width:100%; display:flex; justify-content:center; align-items:flex-start; background-color:#1e1e1e; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.3); overflow:hidden; position:relative; padding-top:5px;}
-        .iframe-wrapper {width:100%; position:relative; overflow:visible;}
-        iframe {border:none; width:100%; height:620px; transform-origin:0 0; margin-top:-5px;}
-        .attribution {margin-top:10px; font-size:12px; text-align:center;}
+        .widget-container {width:100%; display:flex; justify-content:center; align-items:flex-start; background-color:#1e1e1e; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.3); overflow:hidden; position:relative; padding:0; margin-bottom:0;}
+        .iframe-wrapper {width:100%; position:relative; overflow:hidden;}
+        iframe {border:none; width:100%; height:620px; transform-origin:0 0; margin:0;}
+        .attribution {display:none; margin-top:10px; font-size:12px; text-align:center;}
         .attribution a {color:#4da6ff; text-decoration:none;}
         .loading {text-align:center; padding:20px; font-style:italic; color:#999;}
     </style>
@@ -216,7 +216,7 @@
         
         function updateWeatherWidget(city) {
             const useUrl = city.url ? city.url : city.encoded;
-            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/widget/three/${useUrl}_${city.id}?geoloc=fixed&nocurrent=0&noforecast=0&days=4&tempunit=CELSIUS&windunit=METER_PER_SECOND&layout=image`;
+            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/widget/three/${useUrl}_${city.id}?geoloc=fixed&nocurrent=0&noforecast=0&days=4&tempunit=CELSIUS&windunit=METER_PER_SECOND&layout=image&nolocation=1`;
             document.getElementById("weatherWidget").src = widgetSrc;
             
             const attributionLink = document.getElementById("attributionLink");
@@ -224,7 +224,7 @@
         }
         
         function updateWidgetByCoords(lat, lon) {
-            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/widget/three/latlon?lat=${lat}&lon=${lon}&geoloc=fixed&nocurrent=0&noforecast=0&days=4&tempunit=CELSIUS&windunit=METER_PER_SECOND&layout=image`;
+            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/widget/three/latlon?lat=${lat}&lon=${lon}&geoloc=fixed&nocurrent=0&noforecast=0&days=4&tempunit=CELSIUS&windunit=METER_PER_SECOND&layout=image&nolocation=1`;
             document.getElementById("weatherWidget").src = widgetSrc;
             
             const attributionLink = document.getElementById("attributionLink");
@@ -239,7 +239,8 @@
             const scaleFactor = width / 460;
             iframe.style.transform = `scale(${scaleFactor})`;
             iframe.style.width = `${100 / scaleFactor}%`;
-            container.style.height = `${620 * scaleFactor + 15}px`;
+            // Точно подгоняем высоту контейнера под содержимое
+            container.style.height = `${600 * scaleFactor}px`;
         }
         
         document.addEventListener('DOMContentLoaded', function() {
