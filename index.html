@@ -101,7 +101,7 @@
             cursor: pointer;
             font-weight: bold;
             transition: background-color 0.3s;
-            font-size: 14px; /* Немного уменьшаем размер шрифта */
+            font-size: 13px; /* Уменьшаем размер шрифта для четырех вкладок */
         }
         .tab.active {
             background-color: rgba(135, 206, 235, 0.8);
@@ -129,7 +129,9 @@
         }
         .iframe-wrapper {width:100%; position:relative; overflow:hidden;}
         iframe {border:none; width:100%; height:620px; transform-origin:0 0; margin:0;}
-        .map-widget-container {
+        .satellite-widget-container,
+        .precipitation-widget-container,
+        .wind-widget-container {
             width: 100%; 
             display: none; 
             justify-content: center; 
@@ -155,8 +157,10 @@
         </div>
         
         <div class="tabs-container">
-            <div class="tab active" id="forecastTab">Прогноз погоды</div>
-            <div class="tab" id="mapTab">Погодные карты</div>
+            <div class="tab active" id="forecastTab">Прогноз</div>
+            <div class="tab" id="satelliteTab">Спутник</div>
+            <div class="tab" id="precipitationTab">Осадки</div>
+            <div class="tab" id="windTab">Ветер</div>
         </div>
         
         <div class="widget-container">
@@ -165,9 +169,21 @@
             </div>
         </div>
         
-        <div class="map-widget-container">
-            <div class="map-iframe-wrapper">
-                <iframe id="mapWidget" src="https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/%d0%a1%d0%be%d1%87%d0%b8_%d0%a0%d0%be%d1%81%d1%81%d0%b8%d1%8f_491422?windAnimation=1&gust=1&satellite=1&cloudsAndPrecipitation=1&temperature=1&sunshine=1&extremeForecastIndex=1&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=9&autowidth=manu" frameborder="0" scrolling="NO" allowtransparency="true" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe>
+        <div class="satellite-widget-container">
+            <div class="iframe-wrapper">
+                <iframe id="satelliteWidget" src="" frameborder="0" scrolling="NO" allowtransparency="true" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe>
+            </div>
+        </div>
+        
+        <div class="precipitation-widget-container">
+            <div class="iframe-wrapper">
+                <iframe id="precipitationWidget" src="" frameborder="0" scrolling="NO" allowtransparency="true" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe>
+            </div>
+        </div>
+        
+        <div class="wind-widget-container">
+            <div class="iframe-wrapper">
+                <iframe id="windWidget" src="" frameborder="0" scrolling="NO" allowtransparency="true" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe>
             </div>
         </div>
     </div>
@@ -299,10 +315,14 @@
             
             if (city.id) {
                 updateWeatherWidget(city);
-                updateMapWidget(city);
+                updateSatelliteWidget(city);
+                updatePrecipitationWidget(city);
+                updateWindWidget(city);
             } else if (city.lat && city.lon) {
                 updateWidgetByCoords(city.lat, city.lon);
-                updateMapWidgetByCoords(city.lat, city.lon);
+                updateSatelliteWidgetByCoords(city.lat, city.lon);
+                updatePrecipitationWidgetByCoords(city.lat, city.lon);
+                updateWindWidgetByCoords(city.lat, city.lon);
             }
         }
         
@@ -312,10 +332,22 @@
             document.getElementById("weatherWidget").src = widgetSrc;
         }
         
-        function updateMapWidget(city) {
+        function updateSatelliteWidget(city) {
             const useUrl = city.url ? city.url : city.encoded;
-            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/${useUrl}_${city.id}?windAnimation=1&gust=1&satellite=1&cloudsAndPrecipitation=1&temperature=1&sunshine=1&extremeForecastIndex=1&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=9&autowidth=manu`;
-            document.getElementById("mapWidget").src = widgetSrc;
+            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/${useUrl}_${city.id}?windAnimation=0&gust=0&satellite=1&cloudsAndPrecipitation=0&temperature=0&sunshine=0&extremeForecastIndex=0&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=5&autowidth=manu`;
+            document.getElementById("satelliteWidget").src = widgetSrc;
+        }
+        
+        function updatePrecipitationWidget(city) {
+            const useUrl = city.url ? city.url : city.encoded;
+            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/${useUrl}_${city.id}?windAnimation=0&gust=0&satellite=0&cloudsAndPrecipitation=1&temperature=0&sunshine=0&extremeForecastIndex=0&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=5&autowidth=manu`;
+            document.getElementById("precipitationWidget").src = widgetSrc;
+        }
+        
+        function updateWindWidget(city) {
+            const useUrl = city.url ? city.url : city.encoded;
+            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/${useUrl}_${city.id}?windAnimation=1&gust=0&satellite=0&cloudsAndPrecipitation=0&temperature=0&sunshine=0&extremeForecastIndex=0&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=8&autowidth=manu`;
+            document.getElementById("windWidget").src = widgetSrc;
         }
         
         function updateWidgetByCoords(lat, lon) {
@@ -323,44 +355,88 @@
             document.getElementById("weatherWidget").src = widgetSrc;
         }
         
-        function updateMapWidgetByCoords(lat, lon) {
-            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/latlon?lat=${lat}&lon=${lon}&windAnimation=1&gust=1&satellite=1&cloudsAndPrecipitation=1&temperature=1&sunshine=1&extremeForecastIndex=1&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=9&autowidth=manu`;
-            document.getElementById("mapWidget").src = widgetSrc;
+        function updateSatelliteWidgetByCoords(lat, lon) {
+            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/latlon?lat=${lat}&lon=${lon}&windAnimation=0&gust=0&satellite=1&cloudsAndPrecipitation=0&temperature=0&sunshine=0&extremeForecastIndex=0&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=5&autowidth=manu`;
+            document.getElementById("satelliteWidget").src = widgetSrc;
+        }
+        
+        function updatePrecipitationWidgetByCoords(lat, lon) {
+            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/latlon?lat=${lat}&lon=${lon}&windAnimation=0&gust=0&satellite=0&cloudsAndPrecipitation=1&temperature=0&sunshine=0&extremeForecastIndex=0&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=5&autowidth=manu`;
+            document.getElementById("precipitationWidget").src = widgetSrc;
+        }
+        
+        function updateWindWidgetByCoords(lat, lon) {
+            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/latlon?lat=${lat}&lon=${lon}&windAnimation=1&gust=0&satellite=0&cloudsAndPrecipitation=0&temperature=0&sunshine=0&extremeForecastIndex=0&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=8&autowidth=manu`;
+            document.getElementById("windWidget").src = widgetSrc;
         }
         
         function resizeIframes() {
-            // Масштабирование первого виджета (прогноз)
-            const weatherIframe = document.getElementById("weatherWidget");
-            const weatherContainer = document.querySelector(".widget-container");
-            const width = weatherContainer.offsetWidth;
+            // Масштабирование виджетов
+            const containers = [
+                { iframe: document.getElementById("weatherWidget"), container: document.querySelector(".widget-container") },
+                { iframe: document.getElementById("satelliteWidget"), container: document.querySelector(".satellite-widget-container") },
+                { iframe: document.getElementById("precipitationWidget"), container: document.querySelector(".precipitation-widget-container") },
+                { iframe: document.getElementById("windWidget"), container: document.querySelector(".wind-widget-container") }
+            ];
             
-            const scaleFactor = width / 460;
-            weatherIframe.style.transform = `scale(${scaleFactor})`;
-            weatherIframe.style.width = `${100 / scaleFactor}%`;
-            weatherContainer.style.height = `${600 * scaleFactor}px`;
-            
-            // Масштабирование второго виджета (карта)
-            const mapIframe = document.getElementById("mapWidget");
-            const mapContainer = document.querySelector(".map-widget-container");
-            
-            mapIframe.style.transform = `scale(${scaleFactor})`;
-            mapIframe.style.width = `${100 / scaleFactor}%`;
-            mapContainer.style.height = `${600 * scaleFactor}px`;
+            containers.forEach(item => {
+                if (item.iframe && item.container) {
+                    const width = item.container.offsetWidth;
+                    const scaleFactor = width / 460;
+                    item.iframe.style.transform = `scale(${scaleFactor})`;
+                    item.iframe.style.width = `${100 / scaleFactor}%`;
+                    item.container.style.height = `${600 * scaleFactor}px`;
+                }
+            });
         }
         
         // Обработчики вкладок
         function switchToForecastTab() {
             document.getElementById('forecastTab').classList.add('active');
-            document.getElementById('mapTab').classList.remove('active');
+            document.getElementById('satelliteTab').classList.remove('active');
+            document.getElementById('precipitationTab').classList.remove('active');
+            document.getElementById('windTab').classList.remove('active');
+            
             document.querySelector('.widget-container').style.display = 'flex';
-            document.querySelector('.map-widget-container').style.display = 'none';
+            document.querySelector('.satellite-widget-container').style.display = 'none';
+            document.querySelector('.precipitation-widget-container').style.display = 'none';
+            document.querySelector('.wind-widget-container').style.display = 'none';
         }
         
-        function switchToMapTab() {
+        function switchToSatelliteTab() {
             document.getElementById('forecastTab').classList.remove('active');
-            document.getElementById('mapTab').classList.add('active');
+            document.getElementById('satelliteTab').classList.add('active');
+            document.getElementById('precipitationTab').classList.remove('active');
+            document.getElementById('windTab').classList.remove('active');
+            
             document.querySelector('.widget-container').style.display = 'none';
-            document.querySelector('.map-widget-container').style.display = 'flex';
+            document.querySelector('.satellite-widget-container').style.display = 'flex';
+            document.querySelector('.precipitation-widget-container').style.display = 'none';
+            document.querySelector('.wind-widget-container').style.display = 'none';
+        }
+        
+        function switchToPrecipitationTab() {
+            document.getElementById('forecastTab').classList.remove('active');
+            document.getElementById('satelliteTab').classList.remove('active');
+            document.getElementById('precipitationTab').classList.add('active');
+            document.getElementById('windTab').classList.remove('active');
+            
+            document.querySelector('.widget-container').style.display = 'none';
+            document.querySelector('.satellite-widget-container').style.display = 'none';
+            document.querySelector('.precipitation-widget-container').style.display = 'flex';
+            document.querySelector('.wind-widget-container').style.display = 'none';
+        }
+        
+        function switchToWindTab() {
+            document.getElementById('forecastTab').classList.remove('active');
+            document.getElementById('satelliteTab').classList.remove('active');
+            document.getElementById('precipitationTab').classList.remove('active');
+            document.getElementById('windTab').classList.add('active');
+            
+            document.querySelector('.widget-container').style.display = 'none';
+            document.querySelector('.satellite-widget-container').style.display = 'none';
+            document.querySelector('.precipitation-widget-container').style.display = 'none';
+            document.querySelector('.wind-widget-container').style.display = 'flex';
         }
         
         // Дополнительно блокируем стандартные жесты прокрутки документа
