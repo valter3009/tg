@@ -401,25 +401,32 @@
         function resizeIframes() {
             console.log("Вызвана функция resizeIframes");
             
-            // Для основного прогноза на 7 дней устанавливаем особые параметры масштабирования
+            // Определяем стандартную высоту виджетов на основе ширины экрана
+            const width = document.querySelector(".widget-container").offsetWidth;
+            const standardHeightScaleFactor = width / 460;
+            const standardTargetHeight = 600 * standardHeightScaleFactor;
+            
+            // Для основного прогноза на 7 дней с сохранением пропорций
             const weatherIframe = document.getElementById("weatherWidget");
             const weatherContainer = document.querySelector(".widget-container");
             if (weatherIframe && weatherContainer) {
-                const width = weatherContainer.offsetWidth;
-                // Сохраняем полную высоту как у других виджетов (~ 600px)
-                const heightScaleFactor = width / 460; // Используем тот же коэффициент что и для других виджетов
-                const widthScaleFactor = width / 805; // Масштаб по ширине (виджет 7 дней шире)
+                // Оригинальные размеры виджета
+                const originalWidth = 805;
+                const originalHeight = 613;
                 
-                // Применяем масштабирование, которое сохранит полную высоту
-                weatherIframe.style.transform = `scale(${widthScaleFactor})`;
-                weatherIframe.style.width = `${805}px`; // Фиксированная ширина в px
-                weatherIframe.style.transformOrigin = "0 0"; // Точка трансформации - левый верхний угол
+                // Сохраняем пропорции, но делаем высоту такой же, как у других виджетов
+                const heightRatio = standardTargetHeight / originalHeight;
+                const newWidth = originalWidth * heightRatio;
                 
-                // Устанавливаем высоту контейнера такую же, как и у других виджетов
-                weatherContainer.style.height = `${600 * heightScaleFactor}px`;
+                // Применяем масштабирование
+                weatherIframe.style.width = `${newWidth}px`;
+                weatherIframe.style.height = `${standardTargetHeight}px`;
+                weatherContainer.style.height = `${standardTargetHeight}px`;
                 
-                // Но сам iframe делаем высоким, чтобы содержимое было видно полностью
-                weatherIframe.style.height = `${600 / widthScaleFactor * heightScaleFactor}px`;
+                // Убираем transform, так как мы явно задаем размеры
+                weatherIframe.style.transform = 'none';
+                
+                console.log(`Weather widget resized to width: ${newWidth}px, height: ${standardTargetHeight}px`);
             }
             
             // Для остальных виджетов применяем стандартное масштабирование
