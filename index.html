@@ -122,12 +122,22 @@
             background-color: #1e1e1e; 
             border-radius: 0 0 8px 8px; /* Закругляем только нижние углы */
             box-shadow: 0 2px 5px rgba(0,0,0,0.3); 
-            overflow: hidden; 
+            overflow-x: auto; /* Добавляем горизонтальную прокрутку */
+            overflow-y: hidden; /* Предотвращаем вертикальную прокрутку */
             position: relative; 
             padding: 0; 
             margin-bottom: 15px;
+            -webkit-overflow-scrolling: touch; /* Плавная прокрутка на iOS */
         }
-        .iframe-wrapper {width:100%; position:relative; overflow:hidden;}
+        .iframe-wrapper {
+            width: 100%; 
+            position: relative; 
+            overflow: visible; /* Позволяем содержимому выходить за пределы контейнера */
+        }
+        
+        #weatherWidget {
+            min-width: 805px; /* Фиксированная минимальная ширина для 7-дневного прогноза */
+        }
         iframe {border:none; width:100%; height:620px; transform-origin:0 0; margin:0;}
         .satellite-widget-container,
         .precipitation-widget-container,
@@ -328,7 +338,7 @@
         
         function updateWeatherWidget(city) {
             const useUrl = city.url ? city.url : city.encoded;
-            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/widget/three/${useUrl}_${city.id}?geoloc=fixed&nocurrent=0&noforecast=0&days=4&tempunit=CELSIUS&windunit=METER_PER_SECOND&layout=image&nolocation=1`;
+            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/widget/three/${useUrl}_${city.id}?geoloc=fixed&nocurrent=0&noforecast=0&days=7&tempunit=CELSIUS&windunit=METER_PER_SECOND&layout=image`;
             document.getElementById("weatherWidget").src = widgetSrc;
             console.log("Виджет прогноза обновлен:", widgetSrc);
         }
