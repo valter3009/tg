@@ -83,10 +83,42 @@
         .city-info {flex-grow:1;}
         .delete-btn {color:#ff5252; cursor:pointer; padding:2px 6px; font-size:14px; border-radius:4px;}
         .delete-btn:hover {background-color:rgba(255,82,82,0.2);}
+        
+        /* Стили для вкладок */
+        .tabs-container {
+            display: flex;
+            width: 100%;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .tab {
+            flex: 1;
+            padding: 12px 0;
+            text-align: center;
+            background-color: rgba(135, 206, 235, 0.4);
+            color: #fff;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .tab.active {
+            background-color: rgba(135, 206, 235, 0.8);
+            color: #003366;
+        }
+        .tab:first-child {
+            border-top-left-radius: 8px;
+            border-bottom-left-radius: 8px;
+        }
+        .tab:last-child {
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+        
         .widget-container {width:100%; display:flex; justify-content:center; align-items:flex-start; background-color:#1e1e1e; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.3); overflow:hidden; position:relative; padding:0; margin-bottom:15px;}
         .iframe-wrapper {width:100%; position:relative; overflow:hidden;}
         iframe {border:none; width:100%; height:620px; transform-origin:0 0; margin:0;}
-        .map-widget-container {width:100%; display:flex; justify-content:center; align-items:flex-start; background-color:#1e1e1e; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.3); overflow:hidden; position:relative; padding:0; margin-bottom:15px;}
+        .map-widget-container {width:100%; display:none; justify-content:center; align-items:flex-start; background-color:#1e1e1e; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.3); overflow:hidden; position:relative; padding:0; margin-bottom:15px;}
         .map-iframe-wrapper {width:100%; position:relative; overflow:hidden;}
         .loading {text-align:center; padding:20px; font-style:italic; color:#999;}
     </style>
@@ -97,6 +129,11 @@
             <input type="text" id="citySearch" class="search-input" placeholder="Введите название города..." autocomplete="off">
             <div class="search-results" id="searchResults"></div>
             <div class="search-history" id="searchHistory"></div>
+        </div>
+        
+        <div class="tabs-container">
+            <div class="tab active" id="forecastTab">Прогноз погоды</div>
+            <div class="tab" id="mapTab">Погодные карты</div>
         </div>
         
         <div class="widget-container">
@@ -289,6 +326,21 @@
             mapContainer.style.height = `${600 * scaleFactor}px`;
         }
         
+        // Обработчики вкладок
+        function switchToForecastTab() {
+            document.getElementById('forecastTab').classList.add('active');
+            document.getElementById('mapTab').classList.remove('active');
+            document.querySelector('.widget-container').style.display = 'flex';
+            document.querySelector('.map-widget-container').style.display = 'none';
+        }
+        
+        function switchToMapTab() {
+            document.getElementById('forecastTab').classList.remove('active');
+            document.getElementById('mapTab').classList.add('active');
+            document.querySelector('.widget-container').style.display = 'none';
+            document.querySelector('.map-widget-container').style.display = 'flex';
+        }
+        
         // Дополнительно блокируем стандартные жесты прокрутки документа
         document.addEventListener('touchmove', function(e) {
             // Блокируем только свайп вниз от самого верха страницы
@@ -397,6 +449,12 @@
             if (mapWidget.src === "") {
                 updateMapWidget(DEFAULT_MAP_CITY);
             }
+            
+            // Инициализация вкладок
+            document.getElementById('forecastTab').addEventListener('click', switchToForecastTab);
+            document.getElementById('mapTab').addEventListener('click', switchToMapTab);
+            // Устанавливаем начальное состояние - активна вкладка прогноза погоды
+            switchToForecastTab();
             
             // Добавляем в историю только если это новый город
             const history = loadHistory();
