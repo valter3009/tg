@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Погодный виджет</title>
+    <!-- Telegram WebApp Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <!-- Yandex.Metrika counter -->
     <script type="text/javascript">
         (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
@@ -36,11 +38,35 @@
                 source: source,
                 user_id: userId
             });
+            
+            // Инициализация Telegram WebApp
+            if (window.Telegram && window.Telegram.WebApp) {
+                // Отключаем возможность закрытия приложения свайпом
+                // Устанавливаем параметры viewport для запрета закрытия приложения свайпом
+                window.Telegram.WebApp.setViewportSettings({
+                    can_be_closed: true,                // Приложение может быть закрыто (кнопкой)
+                    disable_swipe_to_close: true,       // Отключаем закрытие свайпом
+                    disable_pulling_to_refresh: true    // Отключаем обновление страницы свайпом
+                });
+                
+                // Адаптируем тему приложения
+                const tgColorScheme = window.Telegram.WebApp.colorScheme;
+                if (tgColorScheme === 'dark') {
+                    document.body.classList.add('dark-theme');
+                }
+                
+                // Включаем расширение на весь экран
+                window.Telegram.WebApp.expand();
+            }
         };
     </script>
     <noscript><div><img src="https://mc.yandex.ru/watch/101522448" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
     <!-- /Yandex.Metrika counter -->
     <style>
+        html, body {
+            overscroll-behavior-y: none; /* Предотвращает свайп браузера для обновления страницы */
+            touch-action: pan-x pan-y; /* Разрешаем стандартную прокрутку, но контролируем её в JS */
+        }
         body {font-family:Arial,sans-serif; margin:0; padding:10px; background-color:#0F4778; overflow-x:hidden; color:#eee;}
         .container {width:100%; max-width:500px; margin:0 auto; display:flex; flex-direction:column; align-items:center;}
         .search-container {width:100%; margin-bottom:15px; position:relative;}
@@ -262,6 +288,14 @@
             mapIframe.style.width = `${100 / scaleFactor}%`;
             mapContainer.style.height = `${600 * scaleFactor}px`;
         }
+        
+        // Дополнительно блокируем стандартные жесты прокрутки документа
+        document.addEventListener('touchmove', function(e) {
+            // Блокируем только свайп вниз от самого верха страницы
+            if (window.scrollY <= 0 && e.touches[0].clientY > 10 && e.touches[0].clientY < 100) {
+                e.preventDefault();
+            }
+        }, { passive: false });
         
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById("citySearch");
