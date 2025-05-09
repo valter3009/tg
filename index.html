@@ -123,21 +123,34 @@
             border-radius: 0 0 8px 8px; /* Закругляем только нижние углы */
             box-shadow: 0 2px 5px rgba(0,0,0,0.3); 
             overflow-x: auto; /* Добавляем горизонтальную прокрутку */
-            overflow-y: hidden; /* Предотвращаем вертикальную прокрутку */
+            overflow-y: hidden; /* Запрещаем вертикальную прокрутку */
             position: relative; 
             padding: 0; 
             margin-bottom: 15px;
             -webkit-overflow-scrolling: touch; /* Плавная прокрутка на iOS */
-        }
-        .iframe-wrapper {
-            width: 100%; 
-            position: relative; 
-            overflow: visible; /* Позволяем содержимому выходить за пределы контейнера */
+            scroll-behavior: smooth; /* Плавная прокрутка */
+            scrollbar-width: thin; /* Тонкий скроллбар для Firefox */
         }
         
-        #weatherWidget {
-            min-width: 805px; /* Фиксированная минимальная ширина для 7-дневного прогноза */
+        /* Стили для скроллбара в Chrome/Safari */
+        .widget-container::-webkit-scrollbar {
+            height: 6px;
         }
+        
+        .widget-container::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+            border-radius: 3px;
+        }
+        
+        .widget-container::-webkit-scrollbar-thumb {
+            background: rgba(135, 206, 235, 0.5);
+            border-radius: 3px;
+        }
+        
+        .widget-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(135, 206, 235, 0.8);
+        }
+        .iframe-wrapper {width:100%; position:relative; overflow:hidden;}
         iframe {border:none; width:100%; height:620px; transform-origin:0 0; margin:0;}
         .satellite-widget-container,
         .precipitation-widget-container,
@@ -365,7 +378,7 @@
         }
         
         function updateWidgetByCoords(lat, lon) {
-            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/widget/three/latlon?lat=${lat}&lon=${lon}&geoloc=fixed&nocurrent=0&noforecast=0&days=4&tempunit=CELSIUS&windunit=METER_PER_SECOND&layout=image&nolocation=1`;
+            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/widget/three/latlon?lat=${lat}&lon=${lon}&geoloc=fixed&nocurrent=0&noforecast=0&days=7&tempunit=CELSIUS&windunit=METER_PER_SECOND&layout=image`;
             document.getElementById("weatherWidget").src = widgetSrc;
             console.log("Виджет прогноза по координатам обновлен:", widgetSrc);
         }
@@ -387,9 +400,30 @@
         
         function resizeIframes() {
             console.log("Вызвана функция resizeIframes");
-            // Масштабирование виджетов
+            
+            // Для основного прогноза на 7 дней устанавливаем особые параметры масштабирования
+            const weatherIframe = document.getElementById("weatherWidget");
+            const weatherContainer = document.querySelector(".widget-container");
+            if (weatherIframe && weatherContainer) {
+                const width = weatherContainer.offsetWidth;
+                // Сохраняем полную высоту как у других виджетов (~ 600px)
+                const heightScaleFactor = width / 460; // Используем тот же коэффициент что и для других виджетов
+                const widthScaleFactor = width / 805; // Масштаб по ширине (виджет 7 дней шире)
+                
+                // Применяем масштабирование, которое сохранит полную высоту
+                weatherIframe.style.transform = `scale(${widthScaleFactor})`;
+                weatherIframe.style.width = `${805}px`; // Фиксированная ширина в px
+                weatherIframe.style.transformOrigin = "0 0"; // Точка трансформации - левый верхний угол
+                
+                // Устанавливаем высоту контейнера такую же, как и у других виджетов
+                weatherContainer.style.height = `${600 * heightScaleFactor}px`;
+                
+                // Но сам iframe делаем высоким, чтобы содержимое было видно полностью
+                weatherIframe.style.height = `${600 / widthScaleFactor * heightScaleFactor}px`;
+            }
+            
+            // Для остальных виджетов применяем стандартное масштабирование
             const containers = [
-                { iframe: document.getElementById("weatherWidget"), container: document.querySelector(".widget-container") },
                 { iframe: document.getElementById("satelliteWidget"), container: document.querySelector(".satellite-widget-container") },
                 { iframe: document.getElementById("precipitationWidget"), container: document.querySelector(".precipitation-widget-container") },
                 { iframe: document.getElementById("windWidget"), container: document.querySelector(".wind-widget-container") }
@@ -406,14 +440,17 @@
                     // Проверка, не пуст ли iframe
                     if (!item.iframe.src || item.iframe.src === "about:blank" || item.iframe.src === "") {
                         console.log("Обнаружен пустой iframe:", item.iframe.id);
-                        // Если это основной виджет прогноза, обновляем его
-                        if (item.iframe.id === "weatherWidget" && selectedCity) {
-                            console.log("Обновляем пустой weatherWidget");
-                            updateWeatherWidget(selectedCity);
-                        }
                     }
                 }
             });
+            
+            // Проверка, не пуст ли iframe погоды
+            if (!weatherIframe.src || weatherIframe.src === "about:blank" || weatherIframe.src === "") {
+                console.log("Обнаружен пустой iframe погоды, обновляем");
+                if (selectedCity) {
+                    updateWeatherWidget(selectedCity);
+                }
+            }
         }
         
         // Обработчики вкладок
@@ -486,6 +523,40 @@
             
             // Принудительно вызываем resizeIframes для корректного отображения
             resizeIframes();
+        }
+        
+        // Добавляем обработчики для сенсорных устройств для лучшей прокрутки
+        let touchStartX = 0;
+        let scrollLeft = 0;
+        
+        function setupScrollHandlers() {
+            const container = document.querySelector('.widget-container');
+            
+            // Обработчики для сенсорных устройств
+            container.addEventListener('touchstart', function(e) {
+                touchStartX = e.targetTouches[0].pageX - container.offsetLeft;
+                scrollLeft = container.scrollLeft;
+            }, { passive: true });
+            
+            container.addEventListener('touchmove', function(e) {
+                if (!touchStartX) return;
+                
+                const touchCurrentX = e.targetTouches[0].pageX - container.offsetLeft;
+                const scrollX = touchCurrentX - touchStartX;
+                container.scrollLeft = scrollLeft - scrollX;
+            }, { passive: true });
+            
+            container.addEventListener('touchend', function(e) {
+                touchStartX = 0;
+            }, { passive: true });
+            
+            // Добавляем обработчик колесика мыши для более естественной прокрутки
+            container.addEventListener('wheel', function(e) {
+                if (e.deltaY !== 0) {
+                    e.preventDefault();
+                    container.scrollLeft += e.deltaY;
+                }
+            }, { passive: false });
         }
         
         // Дополнительно блокируем стандартные жесты прокрутки документа
@@ -628,6 +699,9 @@
                 updatePrecipitationWidget(selectedCity);
                 updateWindWidget(selectedCity);
             }
+            
+            // Настраиваем обработчики прокрутки
+            setupScrollHandlers();
             
             resizeIframes();
             
