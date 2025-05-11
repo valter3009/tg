@@ -101,7 +101,7 @@
             cursor: pointer;
             font-weight: bold;
             transition: background-color 0.3s;
-            font-size: 13px; /* Уменьшаем размер шрифта для четырех вкладок */
+            font-size: 12px; /* Уменьшаем размер шрифта для пяти вкладок */
         }
         .tab.active {
             background-color: rgba(135, 206, 235, 0.8);
@@ -114,9 +114,27 @@
             border-top-right-radius: 8px;
         }
         
-        .widget-container {
+        .four-day-widget-container {
             width: 100%; 
-            display: flex; 
+            display: none; 
+            justify-content: center; 
+            align-items: flex-start; 
+            background-color: #1e1e1e; 
+            border-radius: 0 0 8px 8px; /* Закругляем только нижние углы */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3); 
+            overflow-x: auto;
+            overflow-y: hidden;
+            position: relative; 
+            padding: 0; 
+            margin-bottom: 15px;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+        }
+        
+        .seven-day-widget-container {
+            width: 100%; 
+            display: none; 
             justify-content: center; 
             align-items: flex-start; 
             background-color: #1e1e1e; 
@@ -133,25 +151,31 @@
         }
         
         /* Стили для скроллбара в Chrome/Safari */
-        .widget-container::-webkit-scrollbar {
+        .four-day-widget-container::-webkit-scrollbar,
+        .seven-day-widget-container::-webkit-scrollbar {
             height: 6px;
         }
         
-        .widget-container::-webkit-scrollbar-track {
+        .four-day-widget-container::-webkit-scrollbar-track,
+        .seven-day-widget-container::-webkit-scrollbar-track {
             background: rgba(0,0,0,0.1);
             border-radius: 3px;
         }
         
-        .widget-container::-webkit-scrollbar-thumb {
+        .four-day-widget-container::-webkit-scrollbar-thumb,
+        .seven-day-widget-container::-webkit-scrollbar-thumb {
             background: rgba(135, 206, 235, 0.5);
             border-radius: 3px;
         }
         
-        .widget-container::-webkit-scrollbar-thumb:hover {
+        .four-day-widget-container::-webkit-scrollbar-thumb:hover,
+        .seven-day-widget-container::-webkit-scrollbar-thumb:hover {
             background: rgba(135, 206, 235, 0.8);
         }
+        
         .iframe-wrapper {width:100%; position:relative; overflow:hidden;}
         iframe {border:none; width:100%; height:620px; transform-origin:0 0; margin:0;}
+        
         .satellite-widget-container,
         .precipitation-widget-container,
         .wind-widget-container {
@@ -180,15 +204,22 @@
         </div>
         
         <div class="tabs-container">
-            <div class="tab active" id="forecastTab">Прогноз</div>
+            <div class="tab active" id="fourDayTab">4 дня</div>
+            <div class="tab" id="sevenDayTab">7 дней</div>
             <div class="tab" id="satelliteTab">Спутник</div>
             <div class="tab" id="precipitationTab">Осадки</div>
             <div class="tab" id="windTab">Ветер</div>
         </div>
         
-        <div class="widget-container">
+        <div class="four-day-widget-container">
             <div class="iframe-wrapper">
-                <iframe id="weatherWidget" src="" frameborder="0" scrolling="NO" allowtransparency="true" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe>
+                <iframe id="fourDayWidget" src="" frameborder="0" scrolling="NO" allowtransparency="true" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe>
+            </div>
+        </div>
+        
+        <div class="seven-day-widget-container">
+            <div class="iframe-wrapper">
+                <iframe id="sevenDayWidget" src="" frameborder="0" scrolling="NO" allowtransparency="true" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe>
             </div>
         </div>
         
@@ -337,23 +368,44 @@
             localStorage.setItem(LAST_CITY_KEY, JSON.stringify(city));
             
             if (city.id) {
-                updateWeatherWidget(city);
+                updateFourDayWidget(city);
+                updateSevenDayWidget(city);
                 updateSatelliteWidget(city);
                 updatePrecipitationWidget(city);
                 updateWindWidget(city);
             } else if (city.lat && city.lon) {
-                updateWidgetByCoords(city.lat, city.lon);
+                updateFourDayWidgetByCoords(city.lat, city.lon);
+                updateSevenDayWidgetByCoords(city.lat, city.lon);
                 updateSatelliteWidgetByCoords(city.lat, city.lon);
                 updatePrecipitationWidgetByCoords(city.lat, city.lon);
                 updateWindWidgetByCoords(city.lat, city.lon);
             }
         }
         
-        function updateWeatherWidget(city) {
+        function updateFourDayWidget(city) {
+            const useUrl = city.url ? city.url : city.encoded;
+            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/widget/three/${useUrl}_${city.id}?geoloc=fixed&nocurrent=0&noforecast=0&days=4&tempunit=CELSIUS&windunit=METER_PER_SECOND&layout=image`;
+            document.getElementById("fourDayWidget").src = widgetSrc;
+            console.log("Виджет 4 дня обновлен:", widgetSrc);
+        }
+        
+        function updateFourDayWidgetByCoords(lat, lon) {
+            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/widget/three/latlon?lat=${lat}&lon=${lon}&geoloc=fixed&nocurrent=0&noforecast=0&days=4&tempunit=CELSIUS&windunit=METER_PER_SECOND&layout=image`;
+            document.getElementById("fourDayWidget").src = widgetSrc;
+            console.log("Виджет 4 дня по координатам обновлен:", widgetSrc);
+        }
+        
+        function updateSevenDayWidget(city) {
             const useUrl = city.url ? city.url : city.encoded;
             const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/widget/three/${useUrl}_${city.id}?geoloc=fixed&nocurrent=0&noforecast=0&days=7&tempunit=CELSIUS&windunit=METER_PER_SECOND&layout=image`;
-            document.getElementById("weatherWidget").src = widgetSrc;
-            console.log("Виджет прогноза обновлен:", widgetSrc);
+            document.getElementById("sevenDayWidget").src = widgetSrc;
+            console.log("Виджет 7 дней обновлен:", widgetSrc);
+        }
+        
+        function updateSevenDayWidgetByCoords(lat, lon) {
+            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/widget/three/latlon?lat=${lat}&lon=${lon}&geoloc=fixed&nocurrent=0&noforecast=0&days=7&tempunit=CELSIUS&windunit=METER_PER_SECOND&layout=image`;
+            document.getElementById("sevenDayWidget").src = widgetSrc;
+            console.log("Виджет 7 дней по координатам обновлен:", widgetSrc);
         }
         
         function updateSatelliteWidget(city) {
@@ -363,11 +415,23 @@
             console.log("Спутниковый виджет обновлен:", widgetSrc);
         }
         
+        function updateSatelliteWidgetByCoords(lat, lon) {
+            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/latlon?lat=${lat}&lon=${lon}&windAnimation=0&gust=0&satellite=1&cloudsAndPrecipitation=0&temperature=0&sunshine=0&extremeForecastIndex=0&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=5&autowidth=manu`;
+            document.getElementById("satelliteWidget").src = widgetSrc;
+            console.log("Спутниковый виджет по координатам обновлен:", widgetSrc);
+        }
+        
         function updatePrecipitationWidget(city) {
             const useUrl = city.url ? city.url : city.encoded;
             const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/${useUrl}_${city.id}?windAnimation=0&gust=0&satellite=0&cloudsAndPrecipitation=1&temperature=0&sunshine=0&extremeForecastIndex=0&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=5&autowidth=manu`;
             document.getElementById("precipitationWidget").src = widgetSrc;
             console.log("Виджет осадков обновлен:", widgetSrc);
+        }
+        
+        function updatePrecipitationWidgetByCoords(lat, lon) {
+            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/latlon?lat=${lat}&lon=${lon}&windAnimation=0&gust=0&satellite=0&cloudsAndPrecipitation=1&temperature=0&sunshine=0&extremeForecastIndex=0&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=5&autowidth=manu`;
+            document.getElementById("precipitationWidget").src = widgetSrc;
+            console.log("Виджет осадков по координатам обновлен:", widgetSrc);
         }
         
         function updateWindWidget(city) {
@@ -377,49 +441,50 @@
             console.log("Виджет ветра обновлен:", widgetSrc);
         }
         
-        function updateWidgetByCoords(lat, lon) {
-            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/widget/three/latlon?lat=${lat}&lon=${lon}&geoloc=fixed&nocurrent=0&noforecast=0&days=7&tempunit=CELSIUS&windunit=METER_PER_SECOND&layout=image`;
-            document.getElementById("weatherWidget").src = widgetSrc;
-            console.log("Виджет прогноза по координатам обновлен:", widgetSrc);
-        }
-        
-        function updateSatelliteWidgetByCoords(lat, lon) {
-            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/latlon?lat=${lat}&lon=${lon}&windAnimation=0&gust=0&satellite=1&cloudsAndPrecipitation=0&temperature=0&sunshine=0&extremeForecastIndex=0&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=5&autowidth=manu`;
-            document.getElementById("satelliteWidget").src = widgetSrc;
-        }
-        
-        function updatePrecipitationWidgetByCoords(lat, lon) {
-            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/latlon?lat=${lat}&lon=${lon}&windAnimation=0&gust=0&satellite=0&cloudsAndPrecipitation=1&temperature=0&sunshine=0&extremeForecastIndex=0&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=5&autowidth=manu`;
-            document.getElementById("precipitationWidget").src = widgetSrc;
-        }
-        
         function updateWindWidgetByCoords(lat, lon) {
             const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/latlon?lat=${lat}&lon=${lon}&windAnimation=1&gust=0&satellite=0&cloudsAndPrecipitation=0&temperature=0&sunshine=0&extremeForecastIndex=0&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=8&autowidth=manu`;
             document.getElementById("windWidget").src = widgetSrc;
+            console.log("Виджет ветра по координатам обновлен:", widgetSrc);
         }
         
         function resizeIframes() {
             console.log("Вызвана функция resizeIframes");
             
-            // Для основного прогноза на 7 дней устанавливаем особые параметры масштабирования
-            const weatherIframe = document.getElementById("weatherWidget");
-            const weatherContainer = document.querySelector(".widget-container");
-            if (weatherIframe && weatherContainer) {
-                const width = weatherContainer.offsetWidth;
-                // Сохраняем полную высоту как у других виджетов (~ 600px)
+            // Для 4-дневного прогноза
+            const fourDayIframe = document.getElementById("fourDayWidget");
+            const fourDayContainer = document.querySelector(".four-day-widget-container");
+            if (fourDayIframe && fourDayContainer) {
+                const width = fourDayContainer.offsetWidth;
                 const heightScaleFactor = width / 460; // Используем тот же коэффициент что и для других виджетов
+                const widthScaleFactor = width / 460; // Масштаб по ширине
+                
+                fourDayIframe.style.transform = `scale(${widthScaleFactor})`;
+                fourDayIframe.style.width = `${460}px`; // Фиксированная ширина в px
+                fourDayIframe.style.transformOrigin = "0 0"; // Точка трансформации - левый верхний угол
+                
+                fourDayContainer.style.height = `${592 * heightScaleFactor}px`;
+                fourDayIframe.style.height = `${592}px`;
+            }
+            
+            /// Для 7-дневного прогноза
+            const sevenDayIframe = document.getElementById("sevenDayWidget");
+            const sevenDayContainer = document.querySelector(".seven-day-widget-container");
+            if (sevenDayIframe && sevenDayContainer) {
+                const width = sevenDayContainer.offsetWidth;
+                // Сохраняем полную высоту как у других виджетов (~ 600px)
+                const heightScaleFactor = width / 460;
                 const widthScaleFactor = width / 805; // Масштаб по ширине (виджет 7 дней шире)
                 
                 // Применяем масштабирование, которое сохранит полную высоту
-                weatherIframe.style.transform = `scale(${widthScaleFactor})`;
-                weatherIframe.style.width = `${805}px`; // Фиксированная ширина в px
-                weatherIframe.style.transformOrigin = "0 0"; // Точка трансформации - левый верхний угол
+                sevenDayIframe.style.transform = `scale(${widthScaleFactor})`;
+                sevenDayIframe.style.width = `${805}px`; // Фиксированная ширина в px
+                sevenDayIframe.style.transformOrigin = "0 0"; // Точка трансформации - левый верхний угол
                 
                 // Устанавливаем высоту контейнера такую же, как и у других виджетов
-                weatherContainer.style.height = `${600 * heightScaleFactor}px`;
+                sevenDayContainer.style.height = `${600 * heightScaleFactor}px`;
                 
                 // Но сам iframe делаем высоким, чтобы содержимое было видно полностью
-                weatherIframe.style.height = `${600 / widthScaleFactor * heightScaleFactor}px`;
+                sevenDayIframe.style.height = `${600 / widthScaleFactor * heightScaleFactor}px`;
             }
             
             // Для остальных виджетов применяем стандартное масштабирование
@@ -444,33 +509,67 @@
                 }
             });
             
-            // Проверка, не пуст ли iframe погоды
-            if (!weatherIframe.src || weatherIframe.src === "about:blank" || weatherIframe.src === "") {
-                console.log("Обнаружен пустой iframe погоды, обновляем");
-                if (selectedCity) {
-                    updateWeatherWidget(selectedCity);
+            // Проверка, не пусты ли iframe
+            const iframesToCheck = [
+                { iframe: document.getElementById("fourDayWidget"), update: updateFourDayWidget },
+                { iframe: document.getElementById("sevenDayWidget"), update: updateSevenDayWidget }
+            ];
+            
+            iframesToCheck.forEach(item => {
+                if (item.iframe && (!item.iframe.src || item.iframe.src === "about:blank" || item.iframe.src === "")) {
+                    console.log("Обнаружен пустой iframe, обновляем:", item.iframe.id);
+                    if (selectedCity) {
+                        item.update(selectedCity);
+                    }
                 }
-            }
+            });
         }
         
         // Обработчики вкладок
-        function switchToForecastTab() {
-            console.log("Переключение на вкладку Прогноз");
-            document.getElementById('forecastTab').classList.add('active');
+        function switchToFourDayTab() {
+            console.log("Переключение на вкладку 4 дня");
+            document.getElementById('fourDayTab').classList.add('active');
+            document.getElementById('sevenDayTab').classList.remove('active');
             document.getElementById('satelliteTab').classList.remove('active');
             document.getElementById('precipitationTab').classList.remove('active');
             document.getElementById('windTab').classList.remove('active');
             
-            document.querySelector('.widget-container').style.display = 'flex';
+            document.querySelector('.four-day-widget-container').style.display = 'flex';
+            document.querySelector('.seven-day-widget-container').style.display = 'none';
             document.querySelector('.satellite-widget-container').style.display = 'none';
             document.querySelector('.precipitation-widget-container').style.display = 'none';
             document.querySelector('.wind-widget-container').style.display = 'none';
             
             // Проверим, загружен ли виджет прогноза погоды
-            const weatherWidget = document.getElementById("weatherWidget");
-            if (!weatherWidget.src || weatherWidget.src === "about:blank" || weatherWidget.src === "") {
-                console.log("Виджет прогноза пуст, загружаем снова");
-                updateWeatherWidget(selectedCity);
+            const fourDayWidget = document.getElementById("fourDayWidget");
+            if (!fourDayWidget.src || fourDayWidget.src === "about:blank" || fourDayWidget.src === "") {
+                console.log("Виджет 4 дня пуст, загружаем снова");
+                updateFourDayWidget(selectedCity);
+            }
+            
+            // Принудительно вызываем resizeIframes для корректного отображения
+            resizeIframes();
+        }
+        
+        function switchToSevenDayTab() {
+            console.log("Переключение на вкладку 7 дней");
+            document.getElementById('fourDayTab').classList.remove('active');
+            document.getElementById('sevenDayTab').classList.add('active');
+            document.getElementById('satelliteTab').classList.remove('active');
+            document.getElementById('precipitationTab').classList.remove('active');
+            document.getElementById('windTab').classList.remove('active');
+            
+            document.querySelector('.four-day-widget-container').style.display = 'none';
+            document.querySelector('.seven-day-widget-container').style.display = 'flex';
+            document.querySelector('.satellite-widget-container').style.display = 'none';
+            document.querySelector('.precipitation-widget-container').style.display = 'none';
+            document.querySelector('.wind-widget-container').style.display = 'none';
+            
+            // Проверим, загружен ли виджет прогноза погоды
+            const sevenDayWidget = document.getElementById("sevenDayWidget");
+            if (!sevenDayWidget.src || sevenDayWidget.src === "about:blank" || sevenDayWidget.src === "") {
+                console.log("Виджет 7 дней пуст, загружаем снова");
+                updateSevenDayWidget(selectedCity);
             }
             
             // Принудительно вызываем resizeIframes для корректного отображения
@@ -479,12 +578,14 @@
         
         function switchToSatelliteTab() {
             console.log("Переключение на вкладку Спутник");
-            document.getElementById('forecastTab').classList.remove('active');
+            document.getElementById('fourDayTab').classList.remove('active');
+            document.getElementById('sevenDayTab').classList.remove('active');
             document.getElementById('satelliteTab').classList.add('active');
             document.getElementById('precipitationTab').classList.remove('active');
             document.getElementById('windTab').classList.remove('active');
             
-            document.querySelector('.widget-container').style.display = 'none';
+            document.querySelector('.four-day-widget-container').style.display = 'none';
+            document.querySelector('.seven-day-widget-container').style.display = 'none';
             document.querySelector('.satellite-widget-container').style.display = 'flex';
             document.querySelector('.precipitation-widget-container').style.display = 'none';
             document.querySelector('.wind-widget-container').style.display = 'none';
@@ -495,12 +596,14 @@
         
         function switchToPrecipitationTab() {
             console.log("Переключение на вкладку Осадки");
-            document.getElementById('forecastTab').classList.remove('active');
+            document.getElementById('fourDayTab').classList.remove('active');
+            document.getElementById('sevenDayTab').classList.remove('active');
             document.getElementById('satelliteTab').classList.remove('active');
             document.getElementById('precipitationTab').classList.add('active');
             document.getElementById('windTab').classList.remove('active');
             
-            document.querySelector('.widget-container').style.display = 'none';
+            document.querySelector('.four-day-widget-container').style.display = 'none';
+            document.querySelector('.seven-day-widget-container').style.display = 'none';
             document.querySelector('.satellite-widget-container').style.display = 'none';
             document.querySelector('.precipitation-widget-container').style.display = 'flex';
             document.querySelector('.wind-widget-container').style.display = 'none';
@@ -511,12 +614,14 @@
         
         function switchToWindTab() {
             console.log("Переключение на вкладку Ветер");
-            document.getElementById('forecastTab').classList.remove('active');
+            document.getElementById('fourDayTab').classList.remove('active');
+            document.getElementById('sevenDayTab').classList.remove('active');
             document.getElementById('satelliteTab').classList.remove('active');
             document.getElementById('precipitationTab').classList.remove('active');
             document.getElementById('windTab').classList.add('active');
             
-            document.querySelector('.widget-container').style.display = 'none';
+            document.querySelector('.four-day-widget-container').style.display = 'none';
+            document.querySelector('.seven-day-widget-container').style.display = 'none';
             document.querySelector('.satellite-widget-container').style.display = 'none';
             document.querySelector('.precipitation-widget-container').style.display = 'none';
             document.querySelector('.wind-widget-container').style.display = 'flex';
@@ -530,33 +635,40 @@
         let scrollLeft = 0;
         
         function setupScrollHandlers() {
-            const container = document.querySelector('.widget-container');
+            const containers = [
+                document.querySelector('.four-day-widget-container'),
+                document.querySelector('.seven-day-widget-container')
+            ];
             
-            // Обработчики для сенсорных устройств
-            container.addEventListener('touchstart', function(e) {
-                touchStartX = e.targetTouches[0].pageX - container.offsetLeft;
-                scrollLeft = container.scrollLeft;
-            }, { passive: true });
-            
-            container.addEventListener('touchmove', function(e) {
-                if (!touchStartX) return;
+            containers.forEach(container => {
+                if (!container) return;
                 
-                const touchCurrentX = e.targetTouches[0].pageX - container.offsetLeft;
-                const scrollX = touchCurrentX - touchStartX;
-                container.scrollLeft = scrollLeft - scrollX;
-            }, { passive: true });
-            
-            container.addEventListener('touchend', function(e) {
-                touchStartX = 0;
-            }, { passive: true });
-            
-            // Добавляем обработчик колесика мыши для более естественной прокрутки
-            container.addEventListener('wheel', function(e) {
-                if (e.deltaY !== 0) {
-                    e.preventDefault();
-                    container.scrollLeft += e.deltaY;
-                }
-            }, { passive: false });
+                // Обработчики для сенсорных устройств
+                container.addEventListener('touchstart', function(e) {
+                    touchStartX = e.targetTouches[0].pageX - container.offsetLeft;
+                    scrollLeft = container.scrollLeft;
+                }, { passive: true });
+                
+                container.addEventListener('touchmove', function(e) {
+                    if (!touchStartX) return;
+                    
+                    const touchCurrentX = e.targetTouches[0].pageX - container.offsetLeft;
+                    const scrollX = touchCurrentX - touchStartX;
+                    container.scrollLeft = scrollLeft - scrollX;
+                }, { passive: true });
+                
+                container.addEventListener('touchend', function(e) {
+                    touchStartX = 0;
+                }, { passive: true });
+                
+                // Добавляем обработчик колесика мыши для более естественной прокрутки
+                container.addEventListener('wheel', function(e) {
+                    if (e.deltaY !== 0) {
+                        e.preventDefault();
+                        container.scrollLeft += e.deltaY;
+                    }
+                }, { passive: false });
+            });
         }
         
         // Дополнительно блокируем стандартные жесты прокрутки документа
@@ -574,7 +686,8 @@
             const searchHistory = document.getElementById("searchHistory");
             
             // Инициализация вкладок
-            document.getElementById('forecastTab').addEventListener('click', switchToForecastTab);
+            document.getElementById('fourDayTab').addEventListener('click', switchToFourDayTab);
+            document.getElementById('sevenDayTab').addEventListener('click', switchToSevenDayTab);
             document.getElementById('satelliteTab').addEventListener('click', switchToSatelliteTab);
             document.getElementById('precipitationTab').addEventListener('click', switchToPrecipitationTab);
             document.getElementById('windTab').addEventListener('click', switchToWindTab);
@@ -665,16 +778,15 @@
                 });
             }
             
-            // Устанавливаем выбранный город при загрузке для обоих виджетов
-            updateWeatherWidget(selectedCity);
-            updateMapWidget(selectedCity);
+            // Устанавливаем выбранный город при загрузке для всех виджетов
+            updateFourDayWidget(selectedCity);
+            updateSevenDayWidget(selectedCity);
+            updateSatelliteWidget(selectedCity);
+            updatePrecipitationWidget(selectedCity);
+            updateWindWidget(selectedCity);
             
-            // Инициализация вкладок
-            document.getElementById('forecastTab').addEventListener('click', switchToForecastTab);
-            document.getElementById('mapTab').addEventListener('click', switchToMapTab);
-            
-            // Всегда открываем приложение на вкладке "Прогноз погоды"
-            switchToForecastTab();
+            // Всегда открываем приложение на вкладке "4 дня"
+            switchToFourDayTab();
             
             // Добавляем в историю только если это новый город
             const history = loadHistory();
@@ -686,7 +798,8 @@
         window.addEventListener('load', function() {
             console.log("Страница полностью загружена");
             // Повторно назначаем обработчики событий для вкладок после полной загрузки
-            document.getElementById('forecastTab').addEventListener('click', switchToForecastTab);
+            document.getElementById('fourDayTab').addEventListener('click', switchToFourDayTab);
+            document.getElementById('sevenDayTab').addEventListener('click', switchToSevenDayTab);
             document.getElementById('satelliteTab').addEventListener('click', switchToSatelliteTab);
             document.getElementById('precipitationTab').addEventListener('click', switchToPrecipitationTab);
             document.getElementById('windTab').addEventListener('click', switchToWindTab);
@@ -694,7 +807,8 @@
             // Повторно инициализируем виджеты
             if (selectedCity) {
                 console.log("Обновляем виджеты для города:", selectedCity.name);
-                updateWeatherWidget(selectedCity);
+                updateFourDayWidget(selectedCity);
+                updateSevenDayWidget(selectedCity);
                 updateSatelliteWidget(selectedCity);
                 updatePrecipitationWidget(selectedCity);
                 updateWindWidget(selectedCity);
@@ -707,7 +821,8 @@
             
             // Проверим, что все iframe элементы существуют
             console.log("Проверка iframe элементов:");
-            console.log("weatherWidget:", document.getElementById("weatherWidget"));
+            console.log("fourDayWidget:", document.getElementById("fourDayWidget"));
+            console.log("sevenDayWidget:", document.getElementById("sevenDayWidget"));
             console.log("satelliteWidget:", document.getElementById("satelliteWidget"));
             console.log("precipitationWidget:", document.getElementById("precipitationWidget"));
             console.log("windWidget:", document.getElementById("windWidget"));
