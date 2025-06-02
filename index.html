@@ -3,831 +3,744 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Погодный виджет</title>
-    <!-- Telegram WebApp Script -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Yandex.Metrika counter -->
-    <script type="text/javascript">
-        (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-        m[i].l=1*new Date();
-        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
-        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
-        (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
-    
-        ym(101522448, "init", {
-            clickmap:true,
-            trackLinks:true,
-            accurateTrackBounce:true
-        });
-        
-        function getParameterByName(name) {
-            var url = window.location.href;
-            name = name.replace(/[\[\]]/g, '\\$&');
-            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
-                results = regex.exec(url);
-            if (!results) return null;
-            if (!results[2]) return '';
-            return decodeURIComponent(results[2].replace(/\+/g, ' '));
-        }
-        
-        window.onload = function() {
-            var source = getParameterByName('source') || 'unknown';
-            var userId = getParameterByName('user_id') || 'unknown';
-            
-            ym(101522448, 'reachGoal', 'webapp_open', {
-                source: source,
-                user_id: userId
-            });
-            
-            // Инициализация Telegram WebApp
-            if (window.Telegram && window.Telegram.WebApp) {
-                // Отключаем возможность закрытия приложения свайпом
-                // Устанавливаем параметры viewport для запрета закрытия приложения свайпом
-                window.Telegram.WebApp.setViewportSettings({
-                    can_be_closed: true,                // Приложение может быть закрыто (кнопкой)
-                    disable_swipe_to_close: true,       // Отключаем закрытие свайпом
-                    disable_pulling_to_refresh: true    // Отключаем обновление страницы свайпом
-                });
-                
-                // Адаптируем тему приложения
-                const tgColorScheme = window.Telegram.WebApp.colorScheme;
-                if (tgColorScheme === 'dark') {
-                    document.body.classList.add('dark-theme');
-                }
-                
-                // Включаем расширение на весь экран
-                window.Telegram.WebApp.expand();
-            }
-        };
-    </script>
-    <noscript><div><img src="https://mc.yandex.ru/watch/101522448" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
-    <!-- /Yandex.Metrika counter -->
+    <title>Анонимный видеочат</title>
     <style>
-        html, body {
-            overscroll-behavior-y: none; /* Предотвращает свайп браузера для обновления страницы */
-            touch-action: pan-x pan-y; /* Разрешаем стандартную прокрутку, но контролируем её в JS */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        body {font-family:Arial,sans-serif; margin:0; padding:10px; background-color:#0F4778; overflow-x:hidden; color:#eee;}
-        .container {width:100%; max-width:500px; margin:0 auto; display:flex; flex-direction:column; align-items:center;}
-        .search-container {width:100%; margin-bottom:15px; position:relative;}
-        .search-input {width:100%; padding:12px; border:1px solid #333; border-radius:8px; font-size:16px; background-color:#87CEEB; color:#333; box-sizing:border-box;}
-        .search-input::placeholder {color:#444;}
-        .search-results {position:absolute; width:100%; max-height:200px; overflow-y:auto; background-color:rgba(135, 206, 235, 0.6); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); border:1px solid rgba(51, 51, 51, 0.5); border-radius:0 0 8px 8px; z-index:1000; display:none; box-shadow:0 4px 8px rgba(0,0,0,0.15);}
-        .search-result-item {padding:10px; cursor:pointer; border-bottom:1px solid rgba(51, 51, 51, 0.3);}
-        .search-result-item:hover {background-color:rgba(135, 206, 235, 0.8);}
-        .city-name {font-weight:bold; color:#000; text-shadow: 0px 0px 3px rgba(255, 255, 255, 0.7);}
-        .country-name {color:#222; font-size:14px; text-shadow: 0px 0px 3px rgba(255, 255, 255, 0.7);}
-        .search-history {width:100%; display:none; background-color:rgba(135, 206, 235, 0.6); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); border:1px solid rgba(51, 51, 51, 0.5); border-radius:0 0 8px 8px; position:absolute; top:100%; z-index:900; box-shadow:0 4px 8px rgba(0,0,0,0.15);}
-        .history-item {padding:8px 10px; cursor:pointer; border-bottom:1px solid rgba(51, 51, 51, 0.3); display:flex; justify-content:space-between; align-items:center; font-size:14px; color:#000; text-shadow: 0px 0px 3px rgba(255, 255, 255, 0.7);}
-        .history-item:hover {background-color:rgba(135, 206, 235, 0.95);}
-        .city-info {flex-grow:1;}
-        .delete-btn {color:#ff5252; cursor:pointer; padding:2px 6px; font-size:14px; border-radius:4px;}
-        .delete-btn:hover {background-color:rgba(255,82,82,0.2);}
-        
-        /* Стили для вкладок */
-        .tabs-container {
-            display: flex;
-            width: 100%;
-            margin-bottom: 0; /* Убираем отступ снизу */
-            border-radius: 8px 8px 0 0; /* Закругляем только верхние углы */
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            height: 100vh;
             overflow: hidden;
         }
-        .tab {
+
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ff4757;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connecting { background: #ffa502; }
+        .status-dot.connected { background: #2ed573; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .video-container {
             flex: 1;
-            padding: 6px 0; /* Уменьшаем высоту вкладок в два раза */
-            text-align: center;
-            background-color: rgba(135, 206, 235, 0.4);
-            color: #fff;
+            position: relative;
+            background: #000;
+        }
+
+        .videos {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        #localVideo {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 150px;
+            height: 100px;
+            border-radius: 10px;
+            border: 2px solid #333;
+            background: #2a2a2a;
+            z-index: 10;
+            object-fit: cover;
+        }
+
+        #remoteVideo {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            object-fit: cover;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 20;
+        }
+
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
             cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.3s;
-            font-size: 12px; /* Уменьшаем размер шрифта для пяти вкладок */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
-        .tab.active {
-            background-color: rgba(135, 206, 235, 0.8);
-            color: #003366;
+
+        .control-btn:hover {
+            transform: scale(1.1);
         }
-        .tab:first-child {
-            border-top-left-radius: 8px;
+
+        .mic-btn {
+            background: #2ed573;
         }
-        .tab:last-child {
-            border-top-right-radius: 8px;
+
+        .mic-btn.muted {
+            background: #ff4757;
         }
-        
-        .four-day-widget-container {
-            width: 100%; 
-            display: none; 
-            justify-content: center; 
-            align-items: flex-start; 
-            background-color: #1e1e1e; 
-            border-radius: 0 0 8px 8px; /* Закругляем только нижние углы */
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3); 
-            overflow-x: auto;
-            overflow-y: hidden;
-            position: relative; 
-            padding: 0; 
-            margin-bottom: 15px;
-            -webkit-overflow-scrolling: touch;
-            scroll-behavior: smooth;
-            scrollbar-width: thin;
+
+        .camera-btn {
+            background: #667eea;
         }
-        
-        .seven-day-widget-container {
-            width: 100%; 
-            display: none; 
-            justify-content: center; 
-            align-items: flex-start; 
-            background-color: #1e1e1e; 
-            border-radius: 0 0 8px 8px; /* Закругляем только нижние углы */
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3); 
-            overflow-x: auto; /* Добавляем горизонтальную прокрутку */
-            overflow-y: hidden; /* Запрещаем вертикальную прокрутку */
-            position: relative; 
-            padding: 0; 
-            margin-bottom: 15px;
-            -webkit-overflow-scrolling: touch; /* Плавная прокрутка на iOS */
-            scroll-behavior: smooth; /* Плавная прокрутка */
-            scrollbar-width: thin; /* Тонкий скроллбар для Firefox */
+
+        .camera-btn.disabled {
+            background: #ff4757;
         }
-        
-        /* Стили для скроллбара в Chrome/Safari */
-        .four-day-widget-container::-webkit-scrollbar,
-        .seven-day-widget-container::-webkit-scrollbar {
-            height: 6px;
+
+        .hangup-btn {
+            background: #ff4757;
         }
-        
-        .four-day-widget-container::-webkit-scrollbar-track,
-        .seven-day-widget-container::-webkit-scrollbar-track {
-            background: rgba(0,0,0,0.1);
-            border-radius: 3px;
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 30;
         }
-        
-        .four-day-widget-container::-webkit-scrollbar-thumb,
-        .seven-day-widget-container::-webkit-scrollbar-thumb {
-            background: rgba(135, 206, 235, 0.5);
-            border-radius: 3px;
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto 20px;
         }
-        
-        .four-day-widget-container::-webkit-scrollbar-thumb:hover,
-        .seven-day-widget-container::-webkit-scrollbar-thumb:hover {
-            background: rgba(135, 206, 235, 0.8);
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
-        
-        .iframe-wrapper {width:100%; position:relative; overflow:hidden;}
-        iframe {border:none; width:100%; height:620px; transform-origin:0 0; margin:0;}
-        
-        .satellite-widget-container,
-        .precipitation-widget-container,
-        .wind-widget-container {
-            width: 100%; 
-            display: none; 
-            justify-content: center; 
-            align-items: flex-start; 
-            background-color: #1e1e1e; 
-            border-radius: 0 0 8px 8px; /* Закругляем только нижние углы */
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3); 
-            overflow: hidden; 
-            position: relative; 
-            padding: 0; 
-            margin-bottom: 15px;
+
+        .status-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px 30px;
+            border-radius: 10px;
+            z-index: 25;
+            max-width: 300px;
         }
-        .map-iframe-wrapper {width:100%; position:relative; overflow:hidden;}
-        .loading {text-align:center; padding:20px; font-style:italic; color:#999;}
+
+        .error {
+            background: rgba(255, 71, 87, 0.9);
+        }
+
+        .success {
+            background: rgba(46, 213, 115, 0.9);
+        }
+
+        .connection-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 15;
+        }
+
+        /* Мобильная адаптация */
+        @media (max-width: 768px) {
+            #localVideo {
+                width: 120px;
+                height: 80px;
+                top: 15px;
+                right: 15px;
+            }
+            
+            .controls {
+                bottom: 20px;
+                gap: 10px;
+            }
+            
+            .control-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+            
+            .connection-info {
+                top: 15px;
+                left: 15px;
+                padding: 8px 12px;
+                font-size: 11px;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="search-container">
-            <input type="text" id="citySearch" class="search-input" placeholder="Введите название города..." autocomplete="off">
-            <div class="search-results" id="searchResults"></div>
-            <div class="search-history" id="searchHistory"></div>
+        <div class="header">
+            <h1>
+                <div class="status-dot" id="statusDot"></div>
+                Анонимный чат
+            </h1>
+            <div id="connectionStatus">Подключение...</div>
         </div>
         
-        <div class="tabs-container">
-            <div class="tab active" id="fourDayTab">4 дня</div>
-            <div class="tab" id="sevenDayTab">7 дней</div>
-            <div class="tab" id="satelliteTab">Спутник</div>
-            <div class="tab" id="precipitationTab">Осадки</div>
-            <div class="tab" id="windTab">Ветер</div>
-        </div>
-        
-        <div class="four-day-widget-container">
-            <div class="iframe-wrapper">
-                <iframe id="fourDayWidget" src="" frameborder="0" scrolling="NO" allowtransparency="true" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe>
+        <div class="video-container">
+            <div class="videos">
+                <video id="remoteVideo" autoplay playsinline></video>
+                <video id="localVideo" autoplay muted playsinline></video>
             </div>
-        </div>
-        
-        <div class="seven-day-widget-container">
-            <div class="iframe-wrapper">
-                <iframe id="sevenDayWidget" src="" frameborder="0" scrolling="NO" allowtransparency="true" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe>
+            
+            <div class="connection-info" id="connectionInfo">
+                <div>Комната: <span id="roomId">-</span></div>
+                <div>Статус: <span id="rtcStatus">Инициализация</span></div>
             </div>
-        </div>
-        
-        <div class="satellite-widget-container">
-            <div class="iframe-wrapper">
-                <iframe id="satelliteWidget" src="" frameborder="0" scrolling="NO" allowtransparency="true" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe>
+            
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p>Устанавливаем соединение...</p>
+                <p style="font-size: 14px; margin-top: 10px; opacity: 0.7;">
+                    Ожидаем подключения собеседника
+                </p>
             </div>
-        </div>
-        
-        <div class="precipitation-widget-container">
-            <div class="iframe-wrapper">
-                <iframe id="precipitationWidget" src="" frameborder="0" scrolling="NO" allowtransparency="true" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe>
-            </div>
-        </div>
-        
-        <div class="wind-widget-container">
-            <div class="iframe-wrapper">
-                <iframe id="windWidget" src="" frameborder="0" scrolling="NO" allowtransparency="true" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe>
+            
+            <div class="status-message hidden" id="statusMessage"></div>
+            
+            <div class="controls">
+                <button class="control-btn mic-btn" id="micBtn" onclick="toggleMicrophone()">
+                    🎤
+                </button>
+                <button class="control-btn camera-btn" id="cameraBtn" onclick="toggleCamera()">
+                    📹
+                </button>
+                <button class="control-btn hangup-btn" onclick="endCall()">
+                    📞
+                </button>
             </div>
         </div>
     </div>
 
     <script>
-        const API_KEY = "Rn5webjm3JVIDEaK";
-        const HISTORY_KEY = "weatherWidgetSearchHistory";
-        const LAST_CITY_KEY = "weatherWidgetLastCity";
-        const MAX_HISTORY_ITEMS = 10;
-        const DEFAULT_CITY = {id:"524901", name:"Москва", country:"Россия", encoded:"%d0%9c%d0%be%d1%81%d0%ba%d0%b2%d0%b0_%d0%a0%d0%be%d1%81%d1%81%d0%b8%d1%8f"};
-        let selectedCity;
-        
-        const loadHistory = () => JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
-        const saveHistory = (history) => localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-        
-        function addToHistory(city) {
-            let history = loadHistory();
-            const idx = history.findIndex(i => i.id === city.id || (i.name === city.name && i.country === city.country));
-            if (idx !== -1) history.splice(idx, 1);
-            history.unshift(city);
-            if (history.length > MAX_HISTORY_ITEMS) history = history.slice(0, MAX_HISTORY_ITEMS);
-            saveHistory(history);
-            displayHistory();
+        // Глобальные переменные
+        let localStream = null;
+        let remoteStream = null;
+        let peerConnection = null;
+        let roomId = null;
+        let isInitiator = false;
+        let isConnected = false;
+        let pollingInterval = null;
+        let connectionAttempts = 0;
+        let maxConnectionAttempts = 10;
+
+        // WebRTC конфигурация
+        const rtcConfiguration = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' }
+            ]
+        };
+
+        // Получаем параметры из URL
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
         }
-        
-        function removeFromHistory(index) {
-            const history = loadHistory();
-            history.splice(index, 1);
-            saveHistory(history);
-            displayHistory();
+
+        // Логирование
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            console.log(`[${timestamp}] [${type.toUpperCase()}] ${message}`);
         }
-        
-        function displayHistory() {
-            const history = loadHistory();
-            const container = document.getElementById("searchHistory");
-            container.innerHTML = '';
+
+        // Обновление статуса
+        function updateStatus(status, type = 'info') {
+            const statusEl = document.getElementById('connectionStatus');
+            const statusDot = document.getElementById('statusDot');
+            const rtcStatusEl = document.getElementById('rtcStatus');
             
-            if (history.length === 0) {
-                container.style.display = 'none';
-                return;
+            statusEl.textContent = status;
+            rtcStatusEl.textContent = status;
+            
+            // Обновляем индикатор
+            statusDot.className = 'status-dot';
+            if (type === 'connected') {
+                statusDot.classList.add('connected');
+            } else if (type === 'connecting') {
+                statusDot.classList.add('connecting');
             }
             
-            history.forEach((city, index) => {
-                const item = document.createElement('div');
-                item.className = 'history-item';
-                item.innerHTML = `<div class="city-info">${city.name}</div><div class="delete-btn">×</div>`;
-                
-                item.querySelector('.city-info').addEventListener('click', () => {
-                    selectCity(city);
-                    document.getElementById("searchHistory").style.display = 'none';
-                    document.getElementById("citySearch").value = '';
-                });
-                
-                item.querySelector('.delete-btn').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    removeFromHistory(index);
-                });
-                
-                container.appendChild(item);
-            });
+            log(`Статус: ${status}`);
         }
-        
-        async function searchCities(query) {
-            if (!query || query.length < 2) return [];
+
+        // Показать сообщение
+        function showMessage(message, type = 'info', duration = 3000) {
+            const messageEl = document.getElementById('statusMessage');
+            messageEl.textContent = message;
+            messageEl.className = `status-message ${type}`;
             
+            setTimeout(() => {
+                messageEl.classList.add('hidden');
+            }, duration);
+        }
+
+        // Скрыть загрузку
+        function hideLoading() {
+            document.getElementById('loading').classList.add('hidden');
+        }
+
+        // Инициализация медиа устройств
+        async function initializeMedia() {
             try {
-                const url = `https://www.meteoblue.com/ru/server/search/query3?query=${encodeURIComponent(query)}&apikey=${API_KEY}`;
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Network error');
-                const data = await response.json();
-                return data.results || [];
-            } catch (error) {
-                return [];
-            }
-        }
-        
-        function encodeCity(name, country) {
-            return encodeURIComponent(`${name}_${country}`).replace(/%/g, '%25');
-        }
-        
-        function displayResults(results) {
-            const container = document.getElementById("searchResults");
-            container.innerHTML = !results || results.length === 0 ? 
-                '<div class="search-result-item">Города не найдены</div>' : '';
-            
-            if (!results || results.length === 0) {
-                container.style.display = 'block';
-                return;
-            }
-            
-            results.forEach(result => {
-                const item = document.createElement('div');
-                item.className = 'search-result-item';
-                const adminInfo = result.admin1 ? `, ${result.admin1}` : '';
+                updateStatus('Получаем доступ к камере и микрофону', 'connecting');
                 
-                item.innerHTML = `
-                    <span class="city-name">${result.name}</span>
-                    <span class="country-name">${result.country}${adminInfo}</span>
-                `;
-                
-                item.addEventListener('click', () => {
-                    const city = {
-                        id: result.id || result.geonameId || "",
-                        name: result.name,
-                        country: result.country,
-                        lat: result.lat,
-                        lon: result.lon,
-                        encoded: encodeCity(result.name, result.country),
-                        url: result.url || ''
-                    };
-                    
-                    selectCity(city);
-                    document.getElementById("searchResults").style.display = 'none';
-                    document.getElementById("citySearch").value = '';
-                    addToHistory(city);
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: 'user'
+                    },
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
                 });
                 
-                container.appendChild(item);
-            });
-            
-            container.style.display = 'block';
-        }
-        
-        function selectCity(city) {
-            selectedCity = city;
-            
-            // Сохраняем выбранный город в localStorage
-            localStorage.setItem(LAST_CITY_KEY, JSON.stringify(city));
-            
-            if (city.id) {
-                updateFourDayWidget(city);
-                updateSevenDayWidget(city);
-                updateSatelliteWidget(city);
-                updatePrecipitationWidget(city);
-                updateWindWidget(city);
-            } else if (city.lat && city.lon) {
-                updateFourDayWidgetByCoords(city.lat, city.lon);
-                updateSevenDayWidgetByCoords(city.lat, city.lon);
-                updateSatelliteWidgetByCoords(city.lat, city.lon);
-                updatePrecipitationWidgetByCoords(city.lat, city.lon);
-                updateWindWidgetByCoords(city.lat, city.lon);
+                document.getElementById('localVideo').srcObject = localStream;
+                log('Локальное видео инициализировано');
+                
+                updateStatus('Создаем WebRTC соединение', 'connecting');
+                await initializePeerConnection();
+                
+            } catch (error) {
+                log(`Ошибка доступа к медиа: ${error.message}`, 'error');
+                showMessage('Не удалось получить доступ к камере или микрофону', 'error');
+                updateStatus('Ошибка доступа к медиа', 'error');
             }
         }
-        
-        function updateFourDayWidget(city) {
-            const useUrl = city.url ? city.url : city.encoded;
-            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/widget/three/${useUrl}_${city.id}?geoloc=fixed&nocurrent=0&noforecast=0&days=4&tempunit=CELSIUS&windunit=METER_PER_SECOND&layout=image`;
-            document.getElementById("fourDayWidget").src = widgetSrc;
-            console.log("Виджет 4 дня обновлен:", widgetSrc);
-        }
-        
-        function updateFourDayWidgetByCoords(lat, lon) {
-            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/widget/three/latlon?lat=${lat}&lon=${lon}&geoloc=fixed&nocurrent=0&noforecast=0&days=4&tempunit=CELSIUS&windunit=METER_PER_SECOND&layout=image`;
-            document.getElementById("fourDayWidget").src = widgetSrc;
-            console.log("Виджет 4 дня по координатам обновлен:", widgetSrc);
-        }
-        
-        function updateSevenDayWidget(city) {
-            const useUrl = city.url ? city.url : city.encoded;
-            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/widget/three/${useUrl}_${city.id}?geoloc=fixed&nocurrent=0&noforecast=0&days=7&tempunit=CELSIUS&windunit=METER_PER_SECOND&layout=image`;
-            document.getElementById("sevenDayWidget").src = widgetSrc;
-            console.log("Виджет 7 дней обновлен:", widgetSrc);
-        }
-        
-        function updateSevenDayWidgetByCoords(lat, lon) {
-            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/widget/three/latlon?lat=${lat}&lon=${lon}&geoloc=fixed&nocurrent=0&noforecast=0&days=7&tempunit=CELSIUS&windunit=METER_PER_SECOND&layout=image`;
-            document.getElementById("sevenDayWidget").src = widgetSrc;
-            console.log("Виджет 7 дней по координатам обновлен:", widgetSrc);
-        }
-        
-        function updateSatelliteWidget(city) {
-            const useUrl = city.url ? city.url : city.encoded;
-            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/${useUrl}_${city.id}?windAnimation=0&gust=0&satellite=1&cloudsAndPrecipitation=0&temperature=0&sunshine=0&extremeForecastIndex=0&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=5&autowidth=manu`;
-            document.getElementById("satelliteWidget").src = widgetSrc;
-            console.log("Спутниковый виджет обновлен:", widgetSrc);
-        }
-        
-        function updateSatelliteWidgetByCoords(lat, lon) {
-            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/latlon?lat=${lat}&lon=${lon}&windAnimation=0&gust=0&satellite=1&cloudsAndPrecipitation=0&temperature=0&sunshine=0&extremeForecastIndex=0&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=5&autowidth=manu`;
-            document.getElementById("satelliteWidget").src = widgetSrc;
-            console.log("Спутниковый виджет по координатам обновлен:", widgetSrc);
-        }
-        
-        function updatePrecipitationWidget(city) {
-            const useUrl = city.url ? city.url : city.encoded;
-            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/${useUrl}_${city.id}?windAnimation=0&gust=0&satellite=0&cloudsAndPrecipitation=1&temperature=0&sunshine=0&extremeForecastIndex=0&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=5&autowidth=manu`;
-            document.getElementById("precipitationWidget").src = widgetSrc;
-            console.log("Виджет осадков обновлен:", widgetSrc);
-        }
-        
-        function updatePrecipitationWidgetByCoords(lat, lon) {
-            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/latlon?lat=${lat}&lon=${lon}&windAnimation=0&gust=0&satellite=0&cloudsAndPrecipitation=1&temperature=0&sunshine=0&extremeForecastIndex=0&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=5&autowidth=manu`;
-            document.getElementById("precipitationWidget").src = widgetSrc;
-            console.log("Виджет осадков по координатам обновлен:", widgetSrc);
-        }
-        
-        function updateWindWidget(city) {
-            const useUrl = city.url ? city.url : city.encoded;
-            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/${useUrl}_${city.id}?windAnimation=1&gust=0&satellite=0&cloudsAndPrecipitation=0&temperature=0&sunshine=0&extremeForecastIndex=0&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=8&autowidth=manu`;
-            document.getElementById("windWidget").src = widgetSrc;
-            console.log("Виджет ветра обновлен:", widgetSrc);
-        }
-        
-        function updateWindWidgetByCoords(lat, lon) {
-            const widgetSrc = `https://www.meteoblue.com/ru/%D0%BF%D0%BE%D0%B3%D0%BE%D0%B4%D0%B0/%D0%BA%D0%B0%D1%80%D1%82%D1%8B/widget/latlon?lat=${lat}&lon=${lon}&windAnimation=1&gust=0&satellite=0&cloudsAndPrecipitation=0&temperature=0&sunshine=0&extremeForecastIndex=0&geoloc=fixed&tempunit=C&windunit=m%252Fs&lengthunit=metric&zoom=8&autowidth=manu`;
-            document.getElementById("windWidget").src = widgetSrc;
-            console.log("Виджет ветра по координатам обновлен:", widgetSrc);
-        }
-        
-        function resizeIframes() {
-            console.log("Вызвана функция resizeIframes");
-            
-            // Для 4-дневного прогноза
-            const fourDayIframe = document.getElementById("fourDayWidget");
-            const fourDayContainer = document.querySelector(".four-day-widget-container");
-            if (fourDayIframe && fourDayContainer) {
-                const width = fourDayContainer.offsetWidth;
-                const heightScaleFactor = width / 460; // Используем тот же коэффициент что и для других виджетов
-                const widthScaleFactor = width / 460; // Масштаб по ширине
+
+        // Инициализация WebRTC соединения
+        async function initializePeerConnection() {
+            try {
+                peerConnection = new RTCPeerConnection(rtcConfiguration);
                 
-                fourDayIframe.style.transform = `scale(${widthScaleFactor})`;
-                fourDayIframe.style.width = `${460}px`; // Фиксированная ширина в px
-                fourDayIframe.style.transformOrigin = "0 0"; // Точка трансформации - левый верхний угол
+                // Добавляем локальные треки
+                localStream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, localStream);
+                });
                 
-                fourDayContainer.style.height = `${592 * heightScaleFactor}px`;
-                fourDayIframe.style.height = `${592}px`;
-            }
-            
-            /// Для 7-дневного прогноза
-            const sevenDayIframe = document.getElementById("sevenDayWidget");
-            const sevenDayContainer = document.querySelector(".seven-day-widget-container");
-            if (sevenDayIframe && sevenDayContainer) {
-                const width = sevenDayContainer.offsetWidth;
-                // Сохраняем полную высоту как у других виджетов (~ 600px)
-                const heightScaleFactor = width / 460;
-                const widthScaleFactor = width / 805; // Масштаб по ширине (виджет 7 дней шире)
+                // Обработка удаленного потока
+                peerConnection.ontrack = (event) => {
+                    log('Получен удаленный поток');
+                    remoteStream = event.streams[0];
+                    document.getElementById('remoteVideo').srcObject = remoteStream;
+                    hideLoading();
+                    updateStatus('Подключено', 'connected');
+                    isConnected = true;
+                    showMessage('Соединение установлено!', 'success');
+                };
                 
-                // Применяем масштабирование, которое сохранит полную высоту
-                sevenDayIframe.style.transform = `scale(${widthScaleFactor})`;
-                sevenDayIframe.style.width = `${805}px`; // Фиксированная ширина в px
-                sevenDayIframe.style.transformOrigin = "0 0"; // Точка трансформации - левый верхний угол
+                // Обработка ICE кандидатов
+                peerConnection.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        log('Отправляем ICE candidate');
+                        sendSignal({
+                            type: 'ice-candidate',
+                            data: {
+                                candidate: event.candidate.candidate,
+                                sdpMLineIndex: event.candidate.sdpMLineIndex,
+                                sdpMid: event.candidate.sdpMid
+                            }
+                        });
+                    }
+                };
                 
-                // Устанавливаем высоту контейнера такую же, как и у других виджетов
-                sevenDayContainer.style.height = `${600 * heightScaleFactor}px`;
-                
-                // Но сам iframe делаем высоким, чтобы содержимое было видно полностью
-                sevenDayIframe.style.height = `${600 / widthScaleFactor * heightScaleFactor}px`;
-            }
-            
-            // Для остальных виджетов применяем стандартное масштабирование
-            const containers = [
-                { iframe: document.getElementById("satelliteWidget"), container: document.querySelector(".satellite-widget-container") },
-                { iframe: document.getElementById("precipitationWidget"), container: document.querySelector(".precipitation-widget-container") },
-                { iframe: document.getElementById("windWidget"), container: document.querySelector(".wind-widget-container") }
-            ];
-            
-            containers.forEach(item => {
-                if (item.iframe && item.container) {
-                    const width = item.container.offsetWidth;
-                    const scaleFactor = width / 460;
-                    item.iframe.style.transform = `scale(${scaleFactor})`;
-                    item.iframe.style.width = `${100 / scaleFactor}%`;
-                    item.container.style.height = `${600 * scaleFactor}px`;
+                // Мониторинг состояния соединения
+                peerConnection.onconnectionstatechange = () => {
+                    const state = peerConnection.connectionState;
+                    log(`Состояние соединения: ${state}`);
                     
-                    // Проверка, не пуст ли iframe
-                    if (!item.iframe.src || item.iframe.src === "about:blank" || item.iframe.src === "") {
-                        console.log("Обнаружен пустой iframe:", item.iframe.id);
+                    switch (state) {
+                        case 'connected':
+                            updateStatus('Подключено', 'connected');
+                            isConnected = true;
+                            hideLoading();
+                            break;
+                        case 'connecting':
+                            updateStatus('Соединяемся...', 'connecting');
+                            break;
+                        case 'disconnected':
+                            updateStatus('Соединение потеряно', 'error');
+                            showMessage('Соединение прервано', 'error');
+                            break;
+                        case 'failed':
+                            updateStatus('Ошибка соединения', 'error');
+                            showMessage('Не удалось установить соединение', 'error');
+                            break;
                     }
-                }
-            });
-            
-            // Проверка, не пусты ли iframe
-            const iframesToCheck = [
-                { iframe: document.getElementById("fourDayWidget"), update: updateFourDayWidget },
-                { iframe: document.getElementById("sevenDayWidget"), update: updateSevenDayWidget }
-            ];
-            
-            iframesToCheck.forEach(item => {
-                if (item.iframe && (!item.iframe.src || item.iframe.src === "about:blank" || item.iframe.src === "")) {
-                    console.log("Обнаружен пустой iframe, обновляем:", item.iframe.id);
-                    if (selectedCity) {
-                        item.update(selectedCity);
+                };
+                
+                log('WebRTC соединение инициализировано');
+                
+                // Определяем, кто инициирует звонок (первый подключившийся)
+                setTimeout(async () => {
+                    if (!isConnected && connectionAttempts < maxConnectionAttempts) {
+                        isInitiator = true;
+                        log('Становимся инициатором');
+                        await createOffer();
                     }
-                }
-            });
-        }
-        
-        // Обработчики вкладок
-        function switchToFourDayTab() {
-            console.log("Переключение на вкладку 4 дня");
-            document.getElementById('fourDayTab').classList.add('active');
-            document.getElementById('sevenDayTab').classList.remove('active');
-            document.getElementById('satelliteTab').classList.remove('active');
-            document.getElementById('precipitationTab').classList.remove('active');
-            document.getElementById('windTab').classList.remove('active');
-            
-            document.querySelector('.four-day-widget-container').style.display = 'flex';
-            document.querySelector('.seven-day-widget-container').style.display = 'none';
-            document.querySelector('.satellite-widget-container').style.display = 'none';
-            document.querySelector('.precipitation-widget-container').style.display = 'none';
-            document.querySelector('.wind-widget-container').style.display = 'none';
-            
-            // Проверим, загружен ли виджет прогноза погоды
-            const fourDayWidget = document.getElementById("fourDayWidget");
-            if (!fourDayWidget.src || fourDayWidget.src === "about:blank" || fourDayWidget.src === "") {
-                console.log("Виджет 4 дня пуст, загружаем снова");
-                updateFourDayWidget(selectedCity);
-            }
-            
-            // Принудительно вызываем resizeIframes для корректного отображения
-            resizeIframes();
-        }
-        
-        function switchToSevenDayTab() {
-            console.log("Переключение на вкладку 7 дней");
-            document.getElementById('fourDayTab').classList.remove('active');
-            document.getElementById('sevenDayTab').classList.add('active');
-            document.getElementById('satelliteTab').classList.remove('active');
-            document.getElementById('precipitationTab').classList.remove('active');
-            document.getElementById('windTab').classList.remove('active');
-            
-            document.querySelector('.four-day-widget-container').style.display = 'none';
-            document.querySelector('.seven-day-widget-container').style.display = 'flex';
-            document.querySelector('.satellite-widget-container').style.display = 'none';
-            document.querySelector('.precipitation-widget-container').style.display = 'none';
-            document.querySelector('.wind-widget-container').style.display = 'none';
-            
-            // Проверим, загружен ли виджет прогноза погоды
-            const sevenDayWidget = document.getElementById("sevenDayWidget");
-            if (!sevenDayWidget.src || sevenDayWidget.src === "about:blank" || sevenDayWidget.src === "") {
-                console.log("Виджет 7 дней пуст, загружаем снова");
-                updateSevenDayWidget(selectedCity);
-            }
-            
-            // Принудительно вызываем resizeIframes для корректного отображения
-            resizeIframes();
-        }
-        
-        function switchToSatelliteTab() {
-            console.log("Переключение на вкладку Спутник");
-            document.getElementById('fourDayTab').classList.remove('active');
-            document.getElementById('sevenDayTab').classList.remove('active');
-            document.getElementById('satelliteTab').classList.add('active');
-            document.getElementById('precipitationTab').classList.remove('active');
-            document.getElementById('windTab').classList.remove('active');
-            
-            document.querySelector('.four-day-widget-container').style.display = 'none';
-            document.querySelector('.seven-day-widget-container').style.display = 'none';
-            document.querySelector('.satellite-widget-container').style.display = 'flex';
-            document.querySelector('.precipitation-widget-container').style.display = 'none';
-            document.querySelector('.wind-widget-container').style.display = 'none';
-            
-            // Принудительно вызываем resizeIframes для корректного отображения
-            resizeIframes();
-        }
-        
-        function switchToPrecipitationTab() {
-            console.log("Переключение на вкладку Осадки");
-            document.getElementById('fourDayTab').classList.remove('active');
-            document.getElementById('sevenDayTab').classList.remove('active');
-            document.getElementById('satelliteTab').classList.remove('active');
-            document.getElementById('precipitationTab').classList.add('active');
-            document.getElementById('windTab').classList.remove('active');
-            
-            document.querySelector('.four-day-widget-container').style.display = 'none';
-            document.querySelector('.seven-day-widget-container').style.display = 'none';
-            document.querySelector('.satellite-widget-container').style.display = 'none';
-            document.querySelector('.precipitation-widget-container').style.display = 'flex';
-            document.querySelector('.wind-widget-container').style.display = 'none';
-            
-            // Принудительно вызываем resizeIframes для корректного отображения
-            resizeIframes();
-        }
-        
-        function switchToWindTab() {
-            console.log("Переключение на вкладку Ветер");
-            document.getElementById('fourDayTab').classList.remove('active');
-            document.getElementById('sevenDayTab').classList.remove('active');
-            document.getElementById('satelliteTab').classList.remove('active');
-            document.getElementById('precipitationTab').classList.remove('active');
-            document.getElementById('windTab').classList.add('active');
-            
-            document.querySelector('.four-day-widget-container').style.display = 'none';
-            document.querySelector('.seven-day-widget-container').style.display = 'none';
-            document.querySelector('.satellite-widget-container').style.display = 'none';
-            document.querySelector('.precipitation-widget-container').style.display = 'none';
-            document.querySelector('.wind-widget-container').style.display = 'flex';
-            
-            // Принудительно вызываем resizeIframes для корректного отображения
-            resizeIframes();
-        }
-        
-        // Добавляем обработчики для сенсорных устройств для лучшей прокрутки
-        let touchStartX = 0;
-        let scrollLeft = 0;
-        
-        function setupScrollHandlers() {
-            const containers = [
-                document.querySelector('.four-day-widget-container'),
-                document.querySelector('.seven-day-widget-container')
-            ];
-            
-            containers.forEach(container => {
-                if (!container) return;
+                }, 2000);
                 
-                // Обработчики для сенсорных устройств
-                container.addEventListener('touchstart', function(e) {
-                    touchStartX = e.targetTouches[0].pageX - container.offsetLeft;
-                    scrollLeft = container.scrollLeft;
-                }, { passive: true });
+            } catch (error) {
+                log(`Ошибка инициализации WebRTC: ${error.message}`, 'error');
+                updateStatus('Ошибка WebRTC', 'error');
+            }
+        }
+
+        // Создание offer
+        async function createOffer() {
+            try {
+                updateStatus('Создаем предложение соединения', 'connecting');
                 
-                container.addEventListener('touchmove', function(e) {
-                    if (!touchStartX) return;
+                const offer = await peerConnection.createOffer({
+                    offerToReceiveAudio: true,
+                    offerToReceiveVideo: true
+                });
+                
+                await peerConnection.setLocalDescription(offer);
+                
+                log('Offer создан и установлен как локальное описание');
+                
+                sendSignal({
+                    type: 'offer',
+                    data: {
+                        sdp: offer.sdp,
+                        type: offer.type
+                    }
+                });
+                
+            } catch (error) {
+                log(`Ошибка создания offer: ${error.message}`, 'error');
+                showMessage('Ошибка создания предложения', 'error');
+            }
+        }
+
+        // Создание answer
+        async function createAnswer(offerData) {
+            try {
+                updateStatus('Отвечаем на предложение', 'connecting');
+                
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(offerData));
+                
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+                
+                log('Answer создан и установлен как локальное описание');
+                
+                sendSignal({
+                    type: 'answer',
+                    data: {
+                        sdp: answer.sdp,
+                        type: answer.type
+                    }
+                });
+                
+            } catch (error) {
+                log(`Ошибка создания answer: ${error.message}`, 'error');
+                showMessage('Ошибка ответа на предложение', 'error');
+            }
+        }
+
+        // Обработка answer
+        async function handleAnswer(answerData) {
+            try {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(answerData));
+                log('Answer обработан');
+            } catch (error) {
+                log(`Ошибка обработки answer: ${error.message}`, 'error');
+            }
+        }
+
+        // Обработка ICE candidate
+        async function handleIceCandidate(candidateData) {
+            try {
+                const candidate = new RTCIceCandidate({
+                    candidate: candidateData.candidate,
+                    sdpMLineIndex: candidateData.sdpMLineIndex,
+                    sdpMid: candidateData.sdpMid
+                });
+                
+                await peerConnection.addIceCandidate(candidate);
+                log('ICE candidate добавлен');
+            } catch (error) {
+                log(`Ошибка обработки ICE candidate: ${error.message}`, 'error');
+            }
+        }
+
+        // Отправка сигнала через Telegram бота
+        function sendSignal(signal) {
+            try {
+                // Используем Telegram WebApp API для отправки данных боту
+                if (window.Telegram && window.Telegram.WebApp) {
+                    const signalData = JSON.stringify(signal);
                     
-                    const touchCurrentX = e.targetTouches[0].pageX - container.offsetLeft;
-                    const scrollX = touchCurrentX - touchStartX;
-                    container.scrollLeft = scrollLeft - scrollX;
-                }, { passive: true });
+                    // Отправляем через невидимую форму или специальный метод
+                    fetch(`https://api.telegram.org/bot7807194370:AAH0bbTu_HwaOXUOoT2DU9oGS0xDIHSSjSs/sendMessage`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            chat_id: window.Telegram.WebApp.initDataUnsafe?.user?.id,
+                            text: `/webrtc_signal ${signalData}`
+                        })
+                    });
+                }
                 
-                container.addEventListener('touchend', function(e) {
-                    touchStartX = 0;
-                }, { passive: true });
-                
-                // Добавляем обработчик колесика мыши для более естественной прокрутки
-                container.addEventListener('wheel', function(e) {
-                    if (e.deltaY !== 0) {
-                        e.preventDefault();
-                        container.scrollLeft += e.deltaY;
-                    }
-                }, { passive: false });
-            });
-        }
-        
-        // Дополнительно блокируем стандартные жесты прокрутки документа
-        document.addEventListener('touchmove', function(e) {
-            // Блокируем только свайп вниз от самого верха страницы
-            if (window.scrollY <= 0 && e.touches[0].clientY > 10 && e.touches[0].clientY < 100) {
-                e.preventDefault();
+                log(`Сигнал отправлен: ${signal.type}`);
+            } catch (error) {
+                log(`Ошибка отправки сигнала: ${error.message}`, 'error');
             }
-        }, { passive: false });
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById("citySearch");
-            const searchButton = document.getElementById("searchButton");
-            const searchResults = document.getElementById("searchResults");
-            const searchHistory = document.getElementById("searchHistory");
-            
-            // Инициализация вкладок
-            document.getElementById('fourDayTab').addEventListener('click', switchToFourDayTab);
-            document.getElementById('sevenDayTab').addEventListener('click', switchToSevenDayTab);
-            document.getElementById('satelliteTab').addEventListener('click', switchToSatelliteTab);
-            document.getElementById('precipitationTab').addEventListener('click', switchToPrecipitationTab);
-            document.getElementById('windTab').addEventListener('click', switchToWindTab);
-            
-            // Получаем последний выбранный город или используем город по умолчанию (Москва)
-            const savedCity = localStorage.getItem(LAST_CITY_KEY);
-            selectedCity = savedCity ? JSON.parse(savedCity) : DEFAULT_CITY;
-            
-            let debounceTimer;
-            displayHistory();
-            
-            searchInput.addEventListener('focus', function() {
-                if (searchInput.value.trim() === '') {
-                    searchResults.style.display = 'none';
-                    if (loadHistory().length > 0) {
-                        searchHistory.style.display = 'block';
-                    }
-                } else if (searchInput.value.trim().length >= 2) {
-                    searchHistory.style.display = 'none';
-                    searchResults.style.display = 'block';
+        }
+
+        // Получение сигналов от бота
+        async function pollSignals() {
+            try {
+                if (window.Telegram && window.Telegram.WebApp) {
+                    const response = await fetch(`https://api.telegram.org/bot7807194370:AAH0bbTu_HwaOXUOoT2DU9oGS0xDIHSSjSs/sendMessage`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            chat_id: window.Telegram.WebApp.initDataUnsafe?.user?.id,
+                            text: '/get_signals'
+                        })
+                    });
+                    
+                    // В реальной реализации здесь должен быть механизм получения ответа
+                    // Для простоты используем polling через интервалы
+                }
+            } catch (error) {
+                log(`Ошибка получения сигналов: ${error.message}`, 'error');
+            }
+        }
+
+        // Обработка полученных сигналов
+        function processSignals(signals) {
+            signals.forEach(async (signal) => {
+                log(`Получен сигнал: ${signal.type}`);
+                
+                switch (signal.type) {
+                    case 'offer':
+                        if (!isInitiator) {
+                            await createAnswer(signal.data);
+                        }
+                        break;
+                    case 'answer':
+                        if (isInitiator) {
+                            await handleAnswer(signal.data);
+                        }
+                        break;
+                    case 'ice-candidate':
+                        await handleIceCandidate(signal.data);
+                        break;
+                    case 'disconnect':
+                        endCall();
+                        break;
                 }
             });
-            
-            searchInput.addEventListener('input', function() {
-                clearTimeout(debounceTimer);
-                
-                if (searchInput.value.trim() === '') {
-                    searchResults.style.display = 'none';
-                    if (loadHistory().length > 0) {
-                        searchHistory.style.display = 'block';
+        }
+
+        // Управление микрофоном
+        function toggleMicrophone() {
+            if (localStream) {
+                const audioTrack = localStream.getAudioTracks()[0];
+                if (audioTrack) {
+                    audioTrack.enabled = !audioTrack.enabled;
+                    const micBtn = document.getElementById('micBtn');
+                    
+                    if (audioTrack.enabled) {
+                        micBtn.classList.remove('muted');
+                        micBtn.textContent = '🎤';
+                        showMessage('Микрофон включен', 'success', 1000);
+                    } else {
+                        micBtn.classList.add('muted');
+                        micBtn.textContent = '🎤';
+                        showMessage('Микрофон выключен', 'info', 1000);
                     }
+                    
+                    log(`Микрофон ${audioTrack.enabled ? 'включен' : 'выключен'}`);
+                }
+            }
+        }
+
+        // Управление камерой
+        function toggleCamera() {
+            if (localStream) {
+                const videoTrack = localStream.getVideoTracks()[0];
+                if (videoTrack) {
+                    videoTrack.enabled = !videoTrack.enabled;
+                    const cameraBtn = document.getElementById('cameraBtn');
+                    
+                    if (videoTrack.enabled) {
+                        cameraBtn.classList.remove('disabled');
+                        cameraBtn.textContent = '📹';
+                        showMessage('Камера включена', 'success', 1000);
+                    } else {
+                        cameraBtn.classList.add('disabled');
+                        cameraBtn.textContent = '📹';
+                        showMessage('Камера выключена', 'info', 1000);
+                    }
+                    
+                    log(`Камера ${videoTrack.enabled ? 'включена' : 'выключена'}`);
+                }
+            }
+        }
+
+        // Завершение звонка
+        function endCall() {
+            log('Завершаем звонок');
+            
+            // Отправляем сигнал о завершении
+            sendSignal({
+                type: 'disconnect',
+                data: {}
+            });
+            
+            // Закрываем соединения
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            
+            if (peerConnection) {
+                peerConnection.close();
+            }
+            
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+            
+            // Закрываем WebApp
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.close();
+            } else {
+                window.close();
+            }
+        }
+
+        // Инициализация приложения
+        async function initializeApp() {
+            try {
+                roomId = getUrlParameter('room');
+                
+                if (!roomId) {
+                    showMessage('Не указан ID комнаты', 'error');
                     return;
                 }
                 
-                searchHistory.style.display = 'none';
+                document.getElementById('roomId').textContent = roomId;
+                log(`Инициализация для комнаты: ${roomId}`);
                 
-                debounceTimer = setTimeout(async () => {
-                    const query = searchInput.value.trim();
-                    if (query.length >= 2) {
-                        try {
-                            const results = await searchCities(query);
-                            displayResults(results);
-                        } catch (error) {
-                            searchResults.innerHTML = '<div class="search-result-item">Ошибка при поиске</div>';
-                            searchResults.style.display = 'block';
-                        }
-                    } else {
-                        searchResults.style.display = 'none';
-                    }
-                }, 300);
-            });
-            
-            searchInput.addEventListener('blur', function(e) {
-                setTimeout(() => {
-                    if (!document.activeElement.closest('#searchResults') && 
-                        !document.activeElement.closest('#searchHistory')) {
-                        searchResults.style.display = 'none';
-                        searchHistory.style.display = 'none';
-                    }
-                }, 150);
-            });
-            
-            document.addEventListener('click', function(e) {
-                if (!searchInput.contains(e.target) && 
-                    !searchResults.contains(e.target) && 
-                    !searchHistory.contains(e.target)) {
-                    searchResults.style.display = 'none';
-                    searchHistory.style.display = 'none';
+                // Инициализация Telegram WebApp
+                if (window.Telegram && window.Telegram.WebApp) {
+                    window.Telegram.WebApp.ready();
+                    window.Telegram.WebApp.expand();
+                    window.Telegram.WebApp.setHeaderColor('#1a1a1a');
+                    window.Telegram.WebApp.setBackgroundColor('#1a1a1a');
+                    
+                    // Кнопка "Назад"
+                    window.Telegram.WebApp.BackButton.show();
+                    window.Telegram.WebApp.BackButton.onClick(endCall);
+                    
+                    log('Telegram WebApp инициализирован');
+                } else {
+                    log('Telegram WebApp недоступен - тестовый режим');
                 }
-            });
-            
-            if (searchButton) {
-                searchButton.addEventListener('click', async function() {
-                    const query = searchInput.value.trim();
-                    if (query.length >= 2) {
-                        searchResults.innerHTML = '<div class="loading">Загрузка...</div>';
-                        searchResults.style.display = 'block';
-                        searchHistory.classList.remove('active');
-                        
-                        try {
-                            const results = await searchCities(query);
-                            displayResults(results);
-                        } catch (error) {
-                            searchResults.innerHTML = '<div class="search-result-item">Ошибка при поиске</div>';
-                            searchResults.style.display = 'block';
-                        }
-                    }
-                });
+                
+                // Запускаем инициализацию медиа
+                await initializeMedia();
+                
+                // Запускаем polling сигналов
+                pollingInterval = setInterval(pollSignals, 1000);
+                
+                log('Приложение инициализировано');
+                
+            } catch (error) {
+                log(`Ошибка инициализации приложения: ${error.message}`, 'error');
+                showMessage('Ошибка инициализации', 'error');
             }
-            
-            // Устанавливаем выбранный город при загрузке для всех виджетов
-            updateFourDayWidget(selectedCity);
-            updateSevenDayWidget(selectedCity);
-            updateSatelliteWidget(selectedCity);
-            updatePrecipitationWidget(selectedCity);
-            updateWindWidget(selectedCity);
-            
-            // Всегда открываем приложение на вкладке "4 дня"
-            switchToFourDayTab();
-            
-            // Добавляем в историю только если это новый город
-            const history = loadHistory();
-            if (!history.some(item => item.id === selectedCity.id)) {
-                addToHistory(selectedCity);
-            }
+        }
+
+        // Обработка закрытия окна
+        window.addEventListener('beforeunload', () => {
+            endCall();
         });
-        
-        window.addEventListener('load', function() {
-            console.log("Страница полностью загружена");
-            // Повторно назначаем обработчики событий для вкладок после полной загрузки
-            document.getElementById('fourDayTab').addEventListener('click', switchToFourDayTab);
-            document.getElementById('sevenDayTab').addEventListener('click', switchToSevenDayTab);
-            document.getElementById('satelliteTab').addEventListener('click', switchToSatelliteTab);
-            document.getElementById('precipitationTab').addEventListener('click', switchToPrecipitationTab);
-            document.getElementById('windTab').addEventListener('click', switchToWindTab);
-            
-            // Повторно инициализируем виджеты
-            if (selectedCity) {
-                console.log("Обновляем виджеты для города:", selectedCity.name);
-                updateFourDayWidget(selectedCity);
-                updateSevenDayWidget(selectedCity);
-                updateSatelliteWidget(selectedCity);
-                updatePrecipitationWidget(selectedCity);
-                updateWindWidget(selectedCity);
-            }
-            
-            // Настраиваем обработчики прокрутки
-            setupScrollHandlers();
-            
-            resizeIframes();
-            
-            // Проверим, что все iframe элементы существуют
-            console.log("Проверка iframe элементов:");
-            console.log("fourDayWidget:", document.getElementById("fourDayWidget"));
-            console.log("sevenDayWidget:", document.getElementById("sevenDayWidget"));
-            console.log("satelliteWidget:", document.getElementById("satelliteWidget"));
-            console.log("precipitationWidget:", document.getElementById("precipitationWidget"));
-            console.log("windWidget:", document.getElementById("windWidget"));
+
+        // Запуск приложения
+        document.addEventListener('DOMContentLoaded', () => {
+            log('DOM загружен, запускаем приложение');
+            setTimeout(initializeApp, 500);
         });
-        window.addEventListener('resize', resizeIframes);
+
+        // Обработка ошибок
+        window.addEventListener('error', (event) => {
+            log(`JavaScript ошибка: ${event.error?.message}`, 'error');
+            showMessage('Произошла ошибка приложения', 'error');
+        });
     </script>
 </body>
 </html>
