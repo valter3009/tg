@@ -1,0 +1,386 @@
+{
+    "471789857": {
+        "first_start": "2025-07-07 20:54:52",
+        "active": true
+    },
+    "425748474": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": true,
+        "source": "additional_list"
+    },
+    "6118023060": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": true,
+        "source": "additional_list"
+    },
+    "6488366997": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": true,
+        "source": "additional_list"
+    },
+    "5934413419": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": true,
+        "source": "additional_list"
+    },
+    "6615704791": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": false,
+        "source": "additional_list"
+    },
+    "1134118381": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": false,
+        "source": "additional_list"
+    },
+    "1823348752": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": false,
+        "source": "additional_list"
+    },
+    "6579300547": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": false,
+        "source": "additional_list"
+    },
+    "5174302370": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": false,
+        "source": "additional_list"
+    },
+    "1344487460": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": true,
+        "source": "additional_list"
+    },
+    "7791445179": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": true,
+        "source": "additional_list"
+    },
+    "1276348447": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": false,
+        "source": "additional_list"
+    },
+    "278283980": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": false,
+        "source": "additional_list"
+    },
+    "6556640321": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": false,
+        "source": "additional_list"
+    },
+    "1521820146": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": false,
+        "source": "additional_list"
+    },
+    "7523695427": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": true,
+        "source": "additional_list"
+    },
+    "7880850349": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": true,
+        "source": "additional_list"
+    },
+    "832185475": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": false,
+        "source": "additional_list"
+    },
+    "149653247": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": false,
+        "source": "additional_list"
+    },
+    "1775572520": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": false,
+        "source": "additional_list"
+    },
+    "7643533302": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": true,
+        "source": "additional_list"
+    },
+    "352808232": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": false,
+        "source": "additional_list"
+    },
+    "7456672724": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": true,
+        "source": "additional_list"
+    },
+    "5969931672": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": false,
+        "source": "additional_list"
+    },
+    "993675994": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": false,
+        "source": "additional_list"
+    },
+    "543397394": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": false,
+        "source": "additional_list"
+    },
+    "5935464436": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": false,
+        "source": "additional_list"
+    },
+    "1812257315": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": false,
+        "source": "additional_list"
+    },
+    "6260364812": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": true,
+        "source": "additional_list"
+    },
+    "434939312": {
+        "first_start": "2025-07-07 23:32:58",
+        "active": false,
+        "source": "additional_list"
+    },
+    "8054876525": {
+        "first_start": "2025-07-08 12:34:14",
+        "active": true,
+        "source": "start_command"
+    },
+    "5109057179": {
+        "first_start": "2025-07-15 04:24:20",
+        "active": false,
+        "source": "start_command"
+    },
+    "998881702": {
+        "first_start": "2025-07-22 19:06:07",
+        "active": false,
+        "source": "start_command"
+    },
+    "589443185": {
+        "first_start": "2025-07-25 20:35:02",
+        "active": false,
+        "source": "start_command"
+    },
+    "1881858179": {
+        "first_start": "2025-07-25 21:00:48",
+        "active": true,
+        "source": "start_command"
+    },
+    "1408826632": {
+        "first_start": "2025-07-28 15:52:39",
+        "active": true,
+        "source": "start_command"
+    },
+    "5004255288": {
+        "first_start": "2025-07-29 07:31:10",
+        "active": false,
+        "source": "start_command"
+    },
+    "296749364": {
+        "first_start": "2025-07-30 00:20:11",
+        "active": false,
+        "source": "start_command"
+    },
+    "302488501": {
+        "first_start": "2025-07-30 05:00:57",
+        "active": false,
+        "source": "start_command"
+    },
+    "391662775": {
+        "first_start": "2025-07-30 05:56:51",
+        "active": true,
+        "source": "start_command"
+    },
+    "236538507": {
+        "first_start": "2025-07-30 13:52:26",
+        "active": true,
+        "source": "start_command"
+    },
+    "5536904160": {
+        "first_start": "2025-08-05 08:24:03",
+        "active": true,
+        "source": "start_command"
+    },
+    "194217940": {
+        "first_start": "2025-08-09 14:45:53",
+        "active": false,
+        "source": "start_command"
+    },
+    "503803549": {
+        "first_start": "2025-08-09 18:06:43",
+        "active": true,
+        "source": "start_command"
+    },
+    "66526887": {
+        "first_start": "2025-08-12 20:56:05",
+        "active": true,
+        "source": "start_command"
+    },
+    "867768680": {
+        "first_start": "2025-08-14 15:22:14",
+        "active": false,
+        "source": "start_command"
+    },
+    "676971751": {
+        "first_start": "2025-08-17 09:09:37",
+        "active": true,
+        "source": "start_command"
+    },
+    "8257570790": {
+        "first_start": "2025-08-18 08:28:44",
+        "active": false,
+        "source": "start_command"
+    },
+    "105121736": {
+        "first_start": "2025-08-18 11:42:46",
+        "active": false,
+        "source": "start_command"
+    },
+    "7051838827": {
+        "first_start": "2025-08-18 14:00:40",
+        "active": true,
+        "source": "start_command"
+    },
+    "939086586": {
+        "first_start": "2025-08-19 17:09:57",
+        "active": false,
+        "source": "start_command"
+    },
+    "1239885399": {
+        "first_start": "2025-08-21 21:52:40",
+        "active": true,
+        "source": "start_command"
+    },
+    "1731945104": {
+        "first_start": "2025-08-25 17:25:42",
+        "active": false,
+        "source": "start_command"
+    },
+    "171480477": {
+        "first_start": "2025-08-25 22:40:51",
+        "active": false,
+        "source": "start_command"
+    },
+    "702048831": {
+        "first_start": "2025-08-26 17:26:31",
+        "active": false,
+        "source": "start_command"
+    },
+    "100448690": {
+        "first_start": "2025-08-26 18:28:31",
+        "active": false,
+        "source": "start_command"
+    },
+    "581716429": {
+        "first_start": "2025-08-29 17:39:30",
+        "active": false,
+        "source": "start_command"
+    },
+    "674796905": {
+        "first_start": "2025-09-02 08:28:10",
+        "active": false,
+        "source": "start_command"
+    },
+    "978931426": {
+        "first_start": "2025-09-04 11:46:06",
+        "active": true,
+        "source": "start_command"
+    },
+    "1091620692": {
+        "first_start": "2025-09-06 00:00:08",
+        "active": true,
+        "source": "start_command"
+    },
+    "6734902640": {
+        "first_start": "2025-09-07 17:18:35",
+        "active": false,
+        "source": "start_command"
+    },
+    "929397689": {
+        "first_start": "2025-09-14 01:25:30",
+        "active": false,
+        "source": "start_command"
+    },
+    "5045347659": {
+        "first_start": "2025-09-15 20:48:58",
+        "active": true,
+        "source": "start_command"
+    },
+    "13230234": {
+        "first_start": "2025-09-18 13:26:38",
+        "active": false,
+        "source": "start_command"
+    },
+    "1411243109": {
+        "first_start": "2025-09-22 08:29:04",
+        "active": false,
+        "source": "start_command"
+    },
+    "389015279": {
+        "first_start": "2025-09-24 07:47:13",
+        "active": false,
+        "source": "start_command"
+    },
+    "483144150": {
+        "first_start": "2025-09-29 07:04:10",
+        "active": true,
+        "source": "start_command"
+    },
+    "1069534714": {
+        "first_start": "2025-09-29 21:52:22",
+        "active": false,
+        "source": "start_command"
+    },
+    "5925312168": {
+        "first_start": "2025-10-02 09:41:28",
+        "active": false,
+        "source": "start_command"
+    },
+    "1685588020": {
+        "first_start": "2025-10-04 17:03:07",
+        "active": true,
+        "source": "start_command"
+    },
+    "7707815072": {
+        "first_start": "2025-10-07 20:23:58",
+        "active": false,
+        "source": "start_command"
+    },
+    "7463863498": {
+        "first_start": "2025-10-13 16:02:05",
+        "active": false,
+        "source": "start_command"
+    },
+    "6186333458": {
+        "first_start": "2025-10-13 17:44:07",
+        "active": false,
+        "source": "start_command"
+    },
+    "1548449185": {
+        "first_start": "2025-10-14 07:41:38",
+        "active": true,
+        "source": "start_command"
+    },
+    "475072568": {
+        "first_start": "2025-10-15 03:05:23",
+        "active": true,
+        "source": "start_command"
+    },
+    "995364940": {
+        "first_start": "2025-10-19 07:13:33",
+        "active": true,
+        "source": "start_command"
+    }
+}
