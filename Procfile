@@ -1,1 +1,1 @@
-worker: python z.py
+web: python z.py
