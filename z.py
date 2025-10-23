@@ -18,6 +18,8 @@ from openpyxl.utils.exceptions import InvalidFileException
 from openpyxl.styles import Font, Alignment
 from clothes_advice import get_clothing_advice
 import config
+from flask import Flask
+from threading import Thread
 
 # Настройка логирования
 logging.basicConfig(
@@ -1347,16 +1349,31 @@ def clean_message_cache():
     while True:
         try:
             current_time = time.time()
-            to_delete = [chat_id for chat_id, msg_info in last_messages.items() 
+            to_delete = [chat_id for chat_id, msg_info in last_messages.items()
                         if current_time - msg_info.get('timestamp', 0) > 604800]
-            
+
             for chat_id in to_delete:
                 del last_messages[chat_id]
-            
+
             time.sleep(86400)
         except Exception as e:
             logger.error(f"Ошибка в clean_message_cache: {e}")
             time.sleep(3600)
+
+# Flask сервер для Railway (keepalive)
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "GidMeteo Bot is running!", 200
+
+@app.route('/health')
+def health():
+    return "OK", 200
+
+def run_flask():
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=port)
 
 def update_all_weather_info():
     while True:
@@ -1396,7 +1413,12 @@ if __name__ == '__main__':
     threading.Thread(target=clean_message_cache, daemon=True).start()
     threading.Thread(target=update_all_weather_info, daemon=True).start()
     threading.Thread(target=auto_update_users, daemon=True).start()
-    
+
+    # Запускаем Flask сервер в отдельном потоке (для Railway)
+    if os.environ.get('PORT'):
+        threading.Thread(target=run_flask, daemon=True).start()
+        logger.info(f"Flask сервер запущен на порту {os.environ.get('PORT')}")
+
     logger.info("Бот GidMeteo запущен")
     print("Бот GidMeteo запущен. Нажмите Ctrl+C для остановки.")
     print("Отслеживание активности включено. Данные сохраняются в файл:", ACTIVITY_LOG_FILE)
