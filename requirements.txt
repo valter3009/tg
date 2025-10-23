@@ -1,5 +1,16 @@
+# Telegram Bot API
 pyTelegramBotAPI==4.14.0
+
+# HTTP Requests
 requests==2.31.0
+
+# Database
+SQLAlchemy==2.0.23
+psycopg2-binary==2.9.9
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# Optional: for migration from old format
 pandas==2.1.4
 openpyxl==3.1.2
-python-dotenv==1.0.0

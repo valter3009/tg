@@ -23,3 +23,33 @@ Thumbs.db
 # Environment variables
 .env
 .env.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+gidmeteo.db
+
+# Old data files (migration artifacts)
+user_cities.json
+weather_cache.json
+all_users.json
+user_data.json
+message_history.json
+user_notifications.json
+notifications.json
+weather_bot.db
+bot_activity_log.xlsx
+user_activity.xlsx
+users_data.xlsx
+
+# Logs
+*.log
+bot_errors.log
+activity_tracker.log
+bot.log
+auto_updates.log
+
+# Old main file (backup)
+z.py.bak
+config.py.bak
