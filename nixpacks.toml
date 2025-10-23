@@ -1,8 +1,14 @@
+[variables]
+PYTHON_VERSION = "3.11"
+
 [phases.setup]
 nixPkgs = ["python311", "gcc"]
 
 [phases.install]
-cmds = ["pip install -r requirements.txt"]
+cmds = [
+  "python3.11 -m pip install --upgrade pip",
+  "python3.11 -m pip install -r requirements.txt"
+]
 
 [start]
-cmd = "python z.py"
+cmd = "python3.11 z.py"
