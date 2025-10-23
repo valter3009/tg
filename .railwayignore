@@ -1,0 +1,19 @@
+# Игнорировать локальные данные при деплое
+*.log
+*.xlsx
+*.db
+user_*.json
+weather_cache.json
+message_history.json
+notifications.json
+all_users.json
+
+# Python
+__pycache__/
+*.pyc
+.env
+venv/
+
+# OS
+.DS_Store
+.git/

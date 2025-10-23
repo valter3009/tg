@@ -17,6 +17,7 @@ from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 from openpyxl.styles import Font, Alignment
 from clothes_advice import get_clothing_advice
+import config
 
 # Настройка логирования
 logging.basicConfig(
@@ -33,7 +34,7 @@ activity_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(leve
 activity_logger.addHandler(activity_handler)
 activity_logger.setLevel(logging.INFO)
 
-bot = telebot.TeleBot('7980762530:AAFQ-KEhcLSvItsVX3T9aFBOjbXSyJdK4AU')
+bot = telebot.TeleBot(config.TELEGRAM_TOKEN)
 
 USER_DATA_FILE = 'user_cities.json'
 WEATHER_CACHE_FILE = 'weather_cache.json'
@@ -225,7 +226,7 @@ def get_weather_emoji(description):
         return '🌦️'
 
 def get_weather_data(city, weather_cache):
-    url = f'https://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&lang=ru&appid=79d1ca96933b0328e1c7e3e7a26cb347'
+    url = f'https://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&lang=ru&appid={config.OPENWEATHER_API_KEY}'
     
     try:
         response = requests.get(url)
@@ -956,7 +957,7 @@ def check_users(message):
         bot.send_message(message.chat.id, "Произошла ошибка при проверке пользователей.")
 
 def get_and_send_weather(chat_id, city, user_data, weather_cache, message_id=None, force_new_message=False):
-    url = f'https://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&lang=ru&appid=79d1ca96933b0328e1c7e3e7a26cb347'
+    url = f'https://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&lang=ru&appid={config.OPENWEATHER_API_KEY}'
     
     try:
         weather_data = requests.get(url).json()
@@ -1267,7 +1268,7 @@ def handle_inline_query(query):
             return
 
         # Получаем реальные данные о погоде
-        url = f'https://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&lang=ru&appid=79d1ca96933b0328e1c7e3e7a26cb347'
+        url = f'https://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&lang=ru&appid={config.OPENWEATHER_API_KEY}'
         response = requests.get(url)
         response.raise_for_status()
         weather_data = response.json()
