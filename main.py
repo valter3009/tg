@@ -204,8 +204,8 @@ def handle_migrate(message):
 def handle_text(message):
     """Обработчик текстовых сообщений (город)"""
     try:
-        # Удаляем сообщение пользователя через 1 секунду
-        threading.Timer(1.0, lambda: delete_message_safe(message.chat.id, message.message_id)).start()
+        # Удаляем сообщение пользователя сразу
+        delete_message_safe(message.chat.id, message.message_id)
 
         db = get_db()
         city_name = message.text.strip()
@@ -226,10 +226,13 @@ def handle_text(message):
         weather = WeatherService.get_weather(db, city_name)
 
         if not weather:
-            bot.send_message(
+            # Если город не найден, отправляем временное сообщение
+            error_msg = bot.send_message(
                 message.chat.id,
                 f"❌ Город '{city_name}' не найден. Проверьте правильность написания."
             )
+            # Удаляем сообщение об ошибке через 3 секунды
+            threading.Timer(3.0, lambda: delete_message_safe(message.chat.id, error_msg.message_id)).start()
             db.close()
             return
 
@@ -255,14 +258,38 @@ def handle_text(message):
             f"{advice}"
         )
 
-        # Отправляем ответ с кнопкой добавления
-        markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton(
-            "➕ Добавить в избранное",
-            callback_data=f"add_{city_name}"
-        ))
+        # Создаем кнопки "Назад" и "Добавить в избранное"
+        markup = types.InlineKeyboardMarkup(row_width=2)
+        markup.add(
+            types.InlineKeyboardButton("◀️ Назад", callback_data="back_to_start"),
+            types.InlineKeyboardButton("➕ Добавить в избранное", callback_data=f"add_{city_name}")
+        )
 
-        bot.send_message(message.chat.id, response, reply_markup=markup, parse_mode='Markdown')
+        # Пытаемся редактировать последнее стартовое сообщение
+        if message.chat.id in last_messages:
+            last_msg_id = last_messages[message.chat.id].get('message_id')
+            if last_msg_id:
+                try:
+                    bot.edit_message_text(
+                        response,
+                        message.chat.id,
+                        last_msg_id,
+                        reply_markup=markup,
+                        parse_mode='Markdown'
+                    )
+                except Exception as e:
+                    logger.debug(f"Не удалось отредактировать сообщение {last_msg_id}: {e}")
+                    # Если не удалось отредактировать, отправляем новое
+                    sent_msg = bot.send_message(message.chat.id, response, reply_markup=markup, parse_mode='Markdown')
+                    last_messages[message.chat.id] = {'message_id': sent_msg.message_id, 'timestamp': time.time()}
+            else:
+                # Если нет ID сообщения, отправляем новое
+                sent_msg = bot.send_message(message.chat.id, response, reply_markup=markup, parse_mode='Markdown')
+                last_messages[message.chat.id] = {'message_id': sent_msg.message_id, 'timestamp': time.time()}
+        else:
+            # Если нет записи о последнем сообщении, отправляем новое
+            sent_msg = bot.send_message(message.chat.id, response, reply_markup=markup, parse_mode='Markdown')
+            last_messages[message.chat.id] = {'message_id': sent_msg.message_id, 'timestamp': time.time()}
 
         # Если у пользователя нет timezone, пытаемся определить
         if user.timezone == 'UTC':
@@ -276,7 +303,9 @@ def handle_text(message):
 
     except Exception as e:
         logger.error(f"Ошибка в handle_text: {e}")
-        bot.send_message(message.chat.id, "Произошла ошибка. Попробуйте еще раз.")
+        # Отправляем временное сообщение об ошибке
+        error_msg = bot.send_message(message.chat.id, "Произошла ошибка. Попробуйте еще раз.")
+        threading.Timer(3.0, lambda: delete_message_safe(message.chat.id, error_msg.message_id)).start()
 
 
 # =======================
@@ -405,11 +434,8 @@ def handle_add_city(call):
         if success:
             bot.answer_callback_query(call.id, f"✅ {message}")
 
-            # Очищаем чат (удаляем все сообщения кроме стартового)
-            clear_chat(call.message.chat.id, call.message.message_id)
-
-            # Отправляем обновленное стартовое сообщение
-            send_welcome_message(call.message.chat.id, db, user)
+            # Редактируем сообщение в обновленное стартовое сообщение
+            send_welcome_message(call.message.chat.id, db, user, call.message.message_id)
         else:
             bot.answer_callback_query(call.id, f"❌ {message}")
 
@@ -432,11 +458,8 @@ def handle_back_to_start(call):
             db.close()
             return
 
-        # Очищаем чат (удаляем последние несколько сообщений)
-        clear_chat(call.message.chat.id, call.message.message_id)
-
-        # Отправляем стартовое сообщение
-        send_welcome_message(call.message.chat.id, db, user)
+        # Редактируем сообщение обратно в стартовое сообщение
+        send_welcome_message(call.message.chat.id, db, user, call.message.message_id)
 
         bot.answer_callback_query(call.id, "")
         db.close()
@@ -590,26 +613,6 @@ def delete_message_safe(chat_id, message_id):
         bot.delete_message(chat_id, message_id)
     except Exception as e:
         logger.debug(f"Не удалось удалить сообщение {message_id}: {e}")
-
-
-def clear_chat(chat_id, current_message_id=None):
-    """
-    Очищает чат, удаляя последние сообщения
-
-    Args:
-        chat_id: ID чата
-        current_message_id: ID текущего сообщения (будет удалено вместе с предыдущими)
-    """
-    try:
-        if current_message_id:
-            # Удаляем текущее сообщение и несколько предыдущих
-            for i in range(10):  # Пытаемся удалить последние 10 сообщений
-                try:
-                    bot.delete_message(chat_id, current_message_id - i)
-                except:
-                    pass  # Игнорируем ошибки (сообщение может не существовать)
-    except Exception as e:
-        logger.debug(f"Ошибка при очистке чата {chat_id}: {e}")
 
 
 def send_welcome_message(chat_id, db, user, message_id=None):
