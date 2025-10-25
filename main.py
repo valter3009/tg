@@ -4,6 +4,8 @@
 import logging
 import time
 import threading
+import os
+import json
 from datetime import datetime
 import telebot
 from telebot import types
@@ -96,37 +98,115 @@ def handle_stats(message):
     try:
         db = get_db()
 
-        # Получаем статистику
+        # РЕАЛЬНЫЙ подсчет прямо из базы
+        total_real = db.query(User).count()
+        active_real = db.query(User).filter(User.is_active == True).count()
+
+        # Получаем статистику через сервис
         user_stats = AnalyticsService.get_user_stats(db)
         activity_stats = AnalyticsService.get_activity_stats(db, days=7)
 
+        # Проверяем, что статистика получена
+        if not user_stats:
+            bot.send_message(message.chat.id, "⚠️ Не удалось получить статистику пользователей")
+            db.close()
+            return
+
         stats_message = (
-            "📊 *Статистика бота*\n\n"
-            f"👥 Всего пользователей: {user_stats.get('total_users', 0)}\n"
-            f"✅ Активных: {user_stats.get('active_users', 0)}\n"
+            "📊 Статистика бота\n\n"
+            f"👥 Всего пользователей: {user_stats.get('total_users', 0)} (реально в БД: {total_real})\n"
+            f"✅ Активных: {user_stats.get('active_users', 0)} (реально: {active_real})\n"
             f"❌ Неактивных: {user_stats.get('inactive_users', 0)}\n"
             f"🏙️ С городами: {user_stats.get('users_with_cities', 0)}\n"
             f"🚫 Без городов: {user_stats.get('users_without_cities', 0)}\n\n"
-            f"📈 *Активность за 7 дней:*\n"
+            f"📈 Активность за 7 дней:\n"
         )
 
         activity_by_type = activity_stats.get('activity_by_type', {})
-        for activity_type, count in activity_by_type.items():
-            stats_message += f"• {activity_type}: {count}\n"
+        if activity_by_type:
+            for activity_type, count in activity_by_type.items():
+                stats_message += f"• {activity_type}: {count}\n"
+        else:
+            stats_message += "Нет активности за последние 7 дней\n"
 
-        bot.send_message(message.chat.id, stats_message, parse_mode='Markdown')
+        bot.send_message(message.chat.id, stats_message)
 
         db.close()
 
     except Exception as e:
-        logger.error(f"Ошибка в handle_stats: {e}")
-        bot.send_message(message.chat.id, "Ошибка при получении статистики.")
+        logger.error(f"Ошибка в handle_stats: {e}", exc_info=True)
+        bot.send_message(message.chat.id, f"Ошибка при получении статистики: {str(e)}")
+
+
+@bot.message_handler(commands=['migrate'])
+def handle_migrate(message):
+    """Обработчик команды /migrate - принудительная миграция данных"""
+    try:
+        db = get_db()
+
+        if not os.path.exists('all_users.json'):
+            bot.send_message(message.chat.id, "❌ Файл all_users.json не найден")
+            db.close()
+            return
+
+        # Показываем информацию о файлах
+        with open('all_users.json', 'r', encoding='utf-8') as f:
+            all_users = json.load(f)
+
+        with open('user_cities.json', 'r', encoding='utf-8') as f:
+            user_cities = json.load(f)
+
+        bot.send_message(
+            message.chat.id,
+            f"📦 Найдены файлы:\n"
+            f"• all_users.json: {len(all_users)} пользователей\n"
+            f"• user_cities.json: {len(user_cities)} записей\n\n"
+            f"⏳ Запуск миграции..."
+        )
+
+        from migrate_data import migrate_users, migrate_cities_and_user_cities
+
+        users_before = db.query(User).count()
+        active_before = db.query(User).filter(User.is_active == True).count()
+
+        migrate_users(db)
+        migrate_cities_and_user_cities(db)
+
+        users_after = db.query(User).count()
+        active_after = db.query(User).filter(User.is_active == True).count()
+        new_users = users_after - users_before
+
+        # Детальная статистика
+        all_users_list = db.query(User).all()
+        sources = {}
+        for u in all_users_list:
+            sources[u.source] = sources.get(u.source, 0) + 1
+
+        source_text = "\n".join([f"  • {k}: {v}" for k, v in sources.items()])
+
+        bot.send_message(
+            message.chat.id,
+            f"✅ Миграция завершена!\n\n"
+            f"Было пользователей: {users_before} (активных: {active_before})\n"
+            f"Стало пользователей: {users_after} (активных: {active_after})\n"
+            f"Добавлено новых: {new_users}\n\n"
+            f"📊 Источники регистрации:\n{source_text}"
+        )
+
+        db.close()
+
+    except Exception as e:
+        logger.error(f"Ошибка при миграции: {e}", exc_info=True)
+        bot.send_message(message.chat.id, f"❌ Ошибка при миграции: {str(e)}")
 
 
 @bot.message_handler(func=lambda message: True, content_types=['text'])
 def handle_text(message):
     """Обработчик текстовых сообщений (город)"""
     try:
+        # Удаляем сообщение пользователя через 1 секунду
+        threading.Timer(1.0, lambda: delete_message_safe(message.chat.id, message.message_id)).start()
+
         db = get_db()
         city_name = message.text.strip()
 
@@ -276,8 +356,26 @@ def handle_city_click(call):
             f"{advice}"
         )
 
-        # Отправляем новое сообщение
-        bot.send_message(call.message.chat.id, response, parse_mode='Markdown')
+        # Добавляем кнопки "Назад" и "Удалить город"
+        markup = types.InlineKeyboardMarkup(row_width=2)
+        markup.add(
+            types.InlineKeyboardButton("◀️ Назад", callback_data="refresh"),
+            types.InlineKeyboardButton("🗑️ Удалить город", callback_data=f"delete_{city_name}")
+        )
+
+        # Редактируем сообщение вместо отправки нового
+        try:
+            bot.edit_message_text(
+                response,
+                call.message.chat.id,
+                call.message.message_id,
+                reply_markup=markup,
+                parse_mode='Markdown'
+            )
+        except:
+            # Если не удалось отредактировать, отправляем новое
+            bot.send_message(call.message.chat.id, response, reply_markup=markup, parse_mode='Markdown')
+
         bot.answer_callback_query(call.id, "✅ Погода обновлена")
 
         db.close()
@@ -307,8 +405,8 @@ def handle_add_city(call):
         if success:
             bot.answer_callback_query(call.id, f"✅ {message}")
 
-            # Обновляем приветственное сообщение
-            send_welcome_message(call.message.chat.id, db, user)
+            # Обновляем приветственное сообщение (редактируем)
+            send_welcome_message(call.message.chat.id, db, user, call.message.message_id)
         else:
             bot.answer_callback_query(call.id, f"❌ {message}")
 
@@ -319,9 +417,151 @@ def handle_add_city(call):
         bot.answer_callback_query(call.id, "Ошибка при добавлении")
 
 
+@bot.callback_query_handler(func=lambda call: call.data.startswith('delete_'))
+def handle_delete_city(call):
+    """Обработчик удаления города из избранного"""
+    try:
+        db = get_db()
+        city_name = call.data.replace('delete_', '')
+
+        user = db.query(User).filter(User.telegram_id == call.from_user.id).first()
+
+        if not user:
+            bot.answer_callback_query(call.id, "Ошибка. Начните с /start")
+            db.close()
+            return
+
+        # Импортируем функцию удаления
+        from bot.utils.helpers import remove_city_from_user
+
+        # Удаляем город
+        success, message = remove_city_from_user(db, user, city_name)
+
+        if success:
+            bot.answer_callback_query(call.id, f"✅ {message}")
+
+            # Обновляем приветственное сообщение (редактируем)
+            send_welcome_message(call.message.chat.id, db, user, call.message.message_id)
+        else:
+            bot.answer_callback_query(call.id, f"❌ {message}")
+
+        db.close()
+
+    except Exception as e:
+        logger.error(f"Ошибка в handle_delete_city: {e}")
+        bot.answer_callback_query(call.id, "Ошибка при удалении")
+
+
+@bot.inline_handler(func=lambda query: True)
+def handle_inline_query(query):
+    """Обработчик inline-запросов"""
+    try:
+        city_name = query.query.strip()
+
+        if not city_name:
+            # Если город не указан, показываем подсказку
+            results = []
+            article = types.InlineQueryResultArticle(
+                id='1',
+                title='🌤️ Введите название города',
+                description='Начните вводить название города для получения погоды',
+                input_message_content=types.InputTextMessageContent(
+                    message_text='Используйте @gidmeteo_bot <название города> для получения погоды'
+                )
+            )
+            results.append(article)
+            bot.answer_inline_query(query.id, results, cache_time=1)
+            return
+
+        db = get_db()
+
+        # Получаем погоду
+        weather = WeatherService.get_weather(db, city_name)
+
+        if not weather:
+            # Город не найден
+            results = []
+            article = types.InlineQueryResultArticle(
+                id='1',
+                title=f'❌ Город "{city_name}" не найден',
+                description='Проверьте правильность написания',
+                input_message_content=types.InputTextMessageContent(
+                    message_text=f'Город "{city_name}" не найден. Проверьте правильность написания.'
+                )
+            )
+            results.append(article)
+            bot.answer_inline_query(query.id, results, cache_time=1)
+            db.close()
+            return
+
+        # Получаем местное время города
+        local_time, timezone_name, formatted_time = TimezoneService.format_city_time(city_name)
+
+        # Получаем совет по одежде
+        advice = get_clothing_advice(
+            weather['temp'],
+            weather['description'],
+            wind_speed=weather['wind_speed'],
+            local_datetime=local_time
+        )
+
+        # Форматируем сообщение
+        temp_str = format_temperature(weather['temp'])
+        message_text = (
+            f"{weather['emoji']} *{city_name}*\n"
+            f"🕐 Местное время: {formatted_time}\n\n"
+            f"🌡️ Температура: {temp_str}°C\n"
+            f"☁️ {weather['description'].capitalize()}\n"
+            f"💨 Ветер: {weather['wind_speed']} м/с\n\n"
+            f"{advice}"
+        )
+
+        # Создаем результат
+        results = []
+        article = types.InlineQueryResultArticle(
+            id='1',
+            title=f'{weather["emoji"]} {city_name}: {temp_str}°C',
+            description=f'{weather["description"].capitalize()}, ветер {weather["wind_speed"]} м/с',
+            input_message_content=types.InputTextMessageContent(
+                message_text=message_text,
+                parse_mode='Markdown'
+            )
+        )
+        results.append(article)
+
+        bot.answer_inline_query(query.id, results, cache_time=300)
+
+        db.close()
+
+    except Exception as e:
+        logger.error(f"Ошибка в handle_inline_query: {e}")
+        try:
+            results = []
+            article = types.InlineQueryResultArticle(
+                id='1',
+                title='❌ Ошибка',
+                description='Произошла ошибка при получении погоды',
+                input_message_content=types.InputTextMessageContent(
+                    message_text='Произошла ошибка при получении погоды. Попробуйте позже.'
+                )
+            )
+            results.append(article)
+            bot.answer_inline_query(query.id, results, cache_time=1)
+        except:
+            pass
+
+
 # =======================
 # ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 # =======================
+
+def delete_message_safe(chat_id, message_id):
+    """Безопасно удаляет сообщение, игнорируя ошибки"""
+    try:
+        bot.delete_message(chat_id, message_id)
+    except Exception as e:
+        logger.debug(f"Не удалось удалить сообщение {message_id}: {e}")
+
 
 def send_welcome_message(chat_id, db, user, message_id=None):
     """Отправляет приветственное сообщение с городами пользователя"""
@@ -344,8 +584,9 @@ def send_welcome_message(chat_id, db, user, message_id=None):
                 time_emoji = TimezoneService.get_time_of_day_emoji(local_time.hour)
 
                 temp_str = format_temperature(weather['temp'])
-                button_text = f"{weather['emoji']} {city.name} {temp_str}°C {time_emoji}"
-                cities_weather_text.append(f"{weather['emoji']} {city.name} {temp_str}°C {time_emoji}")
+                wind_speed = weather['wind_speed']
+                button_text = f"{weather['emoji']} {city.name} {temp_str}°C 💨 {wind_speed} м/с {time_emoji}"
+                cities_weather_text.append(f"{weather['emoji']} {city.name} {temp_str}°C 💨 {wind_speed} м/с {time_emoji}")
             else:
                 button_text = city.name
                 cities_weather_text.append(city.name)
@@ -432,6 +673,27 @@ def main():
         # Инициализация базы данных
         logger.info("Инициализация базы данных...")
         init_db()
+
+        # Автоматическая миграция данных при первом запуске
+        try:
+            db = get_db()
+            user_count = db.query(User).count()
+
+            if user_count == 0 and os.path.exists('all_users.json'):
+                logger.info("База данных пустая. Запуск миграции данных...")
+                from migrate_data import migrate_users, migrate_cities_and_user_cities
+
+                migrate_users(db)
+                migrate_cities_and_user_cities(db)
+
+                new_user_count = db.query(User).count()
+                logger.info(f"Миграция завершена! Восстановлено пользователей: {new_user_count}")
+            elif user_count > 0:
+                logger.info(f"В базе данных уже есть {user_count} пользователей")
+
+            db.close()
+        except Exception as e:
+            logger.warning(f"Не удалось выполнить миграцию: {e}")
 
         # Запуск Flask keepalive в отдельном потоке
         logger.info(f"Запуск Flask сервера на порту {config.FLASK_PORT}...")
