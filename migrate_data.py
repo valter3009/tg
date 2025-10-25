@@ -42,11 +42,6 @@ def migrate_users(db):
                 # Проверяем, не существует ли уже пользователь
                 existing_user = db.query(User).filter(User.telegram_id == telegram_id).first()
 
-                if existing_user:
-                    logger.debug(f"Пользователь {telegram_id} уже существует, пропускаем")
-                    skipped += 1
-                    continue
-
                 # Парсим дату первого старта
                 first_start_str = user_data.get('first_start')
                 if first_start_str:
@@ -57,18 +52,28 @@ def migrate_users(db):
                 else:
                     created_at = datetime.utcnow()
 
-                # Создаем пользователя
-                user = User(
-                    telegram_id=telegram_id,
-                    is_active=user_data.get('active', True),
-                    created_at=created_at,
-                    updated_at=created_at,
-                    source=user_data.get('source', 'migration'),
-                    timezone='UTC'  # По умолчанию UTC, будет обновлено при добавлении городов
-                )
+                if existing_user:
+                    # Обновляем существующего пользователя
+                    existing_user.is_active = user_data.get('active', True)
+                    existing_user.created_at = created_at
+                    # Обновляем source только если он был 'migration'
+                    if user_data.get('source') and existing_user.source == 'migration':
+                        existing_user.source = user_data.get('source', 'migration')
+                    logger.debug(f"Пользователь {telegram_id} обновлен (active={existing_user.is_active})")
+                    skipped += 1
+                else:
+                    # Создаем нового пользователя
+                    user = User(
+                        telegram_id=telegram_id,
+                        is_active=user_data.get('active', True),
+                        created_at=created_at,
+                        updated_at=created_at,
+                        source=user_data.get('source', 'migration'),
+                        timezone='UTC'  # По умолчанию UTC, будет обновлено при добавлении городов
+                    )
 
-                db.add(user)
-                migrated += 1
+                    db.add(user)
+                    migrated += 1
 
                 if migrated % 10 == 0:
                     db.commit()
@@ -80,7 +85,7 @@ def migrate_users(db):
                 continue
 
         db.commit()
-        logger.info(f"Миграция пользователей завершена. Мигрировано: {migrated}, пропущено: {skipped}, ошибок: {errors}")
+        logger.info(f"Миграция пользователей завершена. Создано новых: {migrated}, обновлено: {skipped}, ошибок: {errors}")
 
     except FileNotFoundError:
         logger.warning("Файл all_users.json не найден, пропускаем миграцию пользователей")

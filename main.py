@@ -184,13 +184,20 @@ def handle_migrate(message):
 
         source_text = "\n".join([f"  • {k}: {v}" for k, v in sources.items()])
 
+        # Подсчитываем изменения
+        users_created = new_users
+        users_updated = users_before  # Все существующие пользователи были обновлены
+        active_change = active_after - active_before
+
         bot.send_message(
             message.chat.id,
             f"✅ Миграция завершена!\n\n"
-            f"Было пользователей: {users_before} (активных: {active_before})\n"
-            f"Стало пользователей: {users_after} (активных: {active_after})\n"
-            f"Добавлено новых: {new_users}\n\n"
-            f"📊 Источники регистрации:\n{source_text}"
+            f"📊 Результаты:\n"
+            f"• Всего пользователей: {users_after} (было: {users_before})\n"
+            f"• Активных пользователей: {active_after} (было: {active_before}, изменение: {'+' if active_change >= 0 else ''}{active_change})\n"
+            f"• Создано новых: {users_created}\n"
+            f"• Обновлено существующих: {users_updated}\n\n"
+            f"📋 Источники регистрации:\n{source_text}"
         )
 
         db.close()
