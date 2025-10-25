@@ -156,3 +156,56 @@ class TimezoneService:
         except Exception as e:
             logger.error(f"Ошибка при форматировании времени: {e}")
             return dt.strftime(format_str)
+
+    @staticmethod
+    def get_time_of_day_emoji(local_hour: int) -> str:
+        """
+        Возвращает эмодзи для времени суток
+
+        Args:
+            local_hour: Час в локальном времени
+
+        Returns:
+            Эмодзи времени суток
+        """
+        if 6 <= local_hour < 12:
+            return '🌅'  # Утро
+        elif 12 <= local_hour < 18:
+            return '☀️'  # День
+        elif 18 <= local_hour < 22:
+            return '🌆'  # Вечер
+        else:
+            return '🌙'  # Ночь
+
+    @staticmethod
+    def format_city_time(city_name: str) -> tuple:
+        """
+        Получает локальное время для города
+
+        Args:
+            city_name: Название города
+
+        Returns:
+            Кортеж (локальное_время: datetime, timezone_name: str, formatted_time: str)
+        """
+        try:
+            # Определяем timezone города
+            timezone_name = TimezoneService.get_timezone_from_city(city_name)
+
+            if not timezone_name:
+                # Если не удалось определить, используем UTC
+                timezone_name = 'UTC'
+
+            # Получаем текущее время в timezone города
+            local_time = TimezoneService.get_current_local_time(timezone_name)
+
+            # Форматируем время с эмодзи
+            time_emoji = TimezoneService.get_time_of_day_emoji(local_time.hour)
+            formatted = f"{time_emoji} {local_time.strftime('%H:%M')}"
+
+            return local_time, timezone_name, formatted
+
+        except Exception as e:
+            logger.error(f"Ошибка при форматировании времени города {city_name}: {e}")
+            now = datetime.now(pytz.UTC)
+            return now, 'UTC', f"🌍 {now.strftime('%H:%M')}"
