@@ -133,6 +133,45 @@ def handle_stats(message):
         bot.send_message(message.chat.id, f"Ошибка при получении статистики: {str(e)}")
 
 
+@bot.message_handler(commands=['migrate'])
+def handle_migrate(message):
+    """Обработчик команды /migrate - принудительная миграция данных"""
+    try:
+        db = get_db()
+
+        if not os.path.exists('all_users.json'):
+            bot.send_message(message.chat.id, "❌ Файл all_users.json не найден")
+            db.close()
+            return
+
+        # Запускаем миграцию
+        bot.send_message(message.chat.id, "⏳ Запуск миграции данных...")
+
+        from migrate_data import migrate_users, migrate_cities_and_user_cities
+
+        users_before = db.query(User).count()
+
+        migrate_users(db)
+        migrate_cities_and_user_cities(db)
+
+        users_after = db.query(User).count()
+        new_users = users_after - users_before
+
+        bot.send_message(
+            message.chat.id,
+            f"✅ Миграция завершена!\n\n"
+            f"Было пользователей: {users_before}\n"
+            f"Стало пользователей: {users_after}\n"
+            f"Добавлено новых: {new_users}"
+        )
+
+        db.close()
+
+    except Exception as e:
+        logger.error(f"Ошибка при миграции: {e}", exc_info=True)
+        bot.send_message(message.chat.id, f"❌ Ошибка при миграции: {str(e)}")
+
+
 @bot.message_handler(func=lambda message: True, content_types=['text'])
 def handle_text(message):
     """Обработчик текстовых сообщений (город)"""
