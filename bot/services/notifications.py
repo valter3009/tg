@@ -22,7 +22,7 @@ class NotificationService:
 
     def send_weather_update(self, db: Session, user: User) -> bool:
         """
-        Отправляет обновление погоды пользователю
+        Отправляет обновление погоды пользователю в виде стартового сообщения с кнопками
 
         Args:
             db: Сессия базы данных
@@ -32,38 +32,56 @@ class NotificationService:
             True если успешно, False иначе
         """
         try:
-            # Получаем города пользователя
-            user_cities = db.query(UserCity).filter(
-                UserCity.user_id == user.id
-            ).order_by(UserCity.order).all()
+            from telebot import types
+            from bot.utils.helpers import get_user_cities, format_temperature
 
-            if not user_cities:
+            # Получаем города пользователя
+            cities = get_user_cities(db, user)
+
+            if not cities:
                 # Отправляем напоминание добавить город
                 return self.send_reminder(user)
 
-            # Формируем сообщение с погодой
-            weather_messages = []
+            # Создаем клавиатуру с городами
+            markup = types.InlineKeyboardMarkup(row_width=1)
+            cities_weather_text = []
 
-            for user_city in user_cities:
-                city = db.query(City).filter(City.id == user_city.city_id).first()
-                if not city:
-                    continue
-
+            for city in cities:
+                # Получаем погоду из кэша
                 weather = WeatherService.get_weather(db, city.name)
 
                 if weather:
-                    temp_str = f"+{weather['temp']}" if weather['temp'] > 0 else f"{weather['temp']}"
-                    weather_messages.append(
-                        f"{weather['emoji']} {city.name}: {temp_str}°C, {weather['description']}, "
-                        f"ветер {weather['wind_speed']} м/с"
-                    )
+                    # Получаем местное время города
+                    local_time, _, formatted_time = TimezoneService.format_city_time(city.name)
+                    time_emoji = TimezoneService.get_time_of_day_emoji(local_time.hour)
 
-            if not weather_messages:
-                return False
+                    temp_str = format_temperature(weather['temp'])
+                    wind_speed = weather['wind_speed']
+                    button_text = f"{weather['emoji']} {city.name} {temp_str}°C 💨 {wind_speed} м/с {time_emoji}"
+                    cities_weather_text.append(button_text)
+                else:
+                    button_text = city.name
+                    cities_weather_text.append(city.name)
 
-            message = "🌤️ Обновление погоды:\n\n" + "\n".join(weather_messages)
+                markup.add(types.InlineKeyboardButton(
+                    text=button_text,
+                    callback_data=f"city_{city.name}"
+                ))
 
-            self.bot.send_message(user.telegram_id, message)
+            # Добавляем кнопку обновления
+            if cities:
+                markup.add(types.InlineKeyboardButton(text="🔄 Обновить", callback_data="refresh"))
+
+            # Формируем текст сообщения
+            welcome_text = (
+                "\n".join(cities_weather_text) +
+                "\n\nОтправь мне название населенного пункта и я скажу какая там погода и температура, "
+                "дам советы по одежде.\n\n"
+                "💡 Отправляй прогнозы в любой чат: введи @MeteoblueBot + город в любом чате Телеграм"
+            )
+
+            # Отправляем сообщение с кнопками
+            self.bot.send_message(user.telegram_id, welcome_text, reply_markup=markup)
 
             # Логируем активность
             AnalyticsService.log_activity(db, user.telegram_id, 'auto_update')

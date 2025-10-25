@@ -405,8 +405,11 @@ def handle_add_city(call):
         if success:
             bot.answer_callback_query(call.id, f"✅ {message}")
 
-            # Обновляем приветственное сообщение (редактируем)
-            send_welcome_message(call.message.chat.id, db, user, call.message.message_id)
+            # Очищаем чат (удаляем все сообщения кроме стартового)
+            clear_chat(call.message.chat.id, call.message.message_id)
+
+            # Отправляем обновленное стартовое сообщение
+            send_welcome_message(call.message.chat.id, db, user)
         else:
             bot.answer_callback_query(call.id, f"❌ {message}")
 
@@ -415,6 +418,32 @@ def handle_add_city(call):
     except Exception as e:
         logger.error(f"Ошибка в handle_add_city: {e}")
         bot.answer_callback_query(call.id, "Ошибка при добавлении")
+
+
+@bot.callback_query_handler(func=lambda call: call.data == 'back_to_start')
+def handle_back_to_start(call):
+    """Обработчик кнопки 'Назад' - возврат к стартовому сообщению"""
+    try:
+        db = get_db()
+        user = db.query(User).filter(User.telegram_id == call.from_user.id).first()
+
+        if not user:
+            bot.answer_callback_query(call.id, "Ошибка. Начните с /start")
+            db.close()
+            return
+
+        # Очищаем чат (удаляем последние несколько сообщений)
+        clear_chat(call.message.chat.id, call.message.message_id)
+
+        # Отправляем стартовое сообщение
+        send_welcome_message(call.message.chat.id, db, user)
+
+        bot.answer_callback_query(call.id, "")
+        db.close()
+
+    except Exception as e:
+        logger.error(f"Ошибка в handle_back_to_start: {e}")
+        bot.answer_callback_query(call.id, "Ошибка")
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('delete_'))
@@ -561,6 +590,26 @@ def delete_message_safe(chat_id, message_id):
         bot.delete_message(chat_id, message_id)
     except Exception as e:
         logger.debug(f"Не удалось удалить сообщение {message_id}: {e}")
+
+
+def clear_chat(chat_id, current_message_id=None):
+    """
+    Очищает чат, удаляя последние сообщения
+
+    Args:
+        chat_id: ID чата
+        current_message_id: ID текущего сообщения (будет удалено вместе с предыдущими)
+    """
+    try:
+        if current_message_id:
+            # Удаляем текущее сообщение и несколько предыдущих
+            for i in range(10):  # Пытаемся удалить последние 10 сообщений
+                try:
+                    bot.delete_message(chat_id, current_message_id - i)
+                except:
+                    pass  # Игнорируем ошибки (сообщение может не существовать)
+    except Exception as e:
+        logger.debug(f"Ошибка при очистке чата {chat_id}: {e}")
 
 
 def send_welcome_message(chat_id, db, user, message_id=None):
