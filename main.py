@@ -108,13 +108,13 @@ def handle_stats(message):
             return
 
         stats_message = (
-            "📊 *Статистика бота*\n\n"
+            "📊 Статистика бота\n\n"
             f"👥 Всего пользователей: {user_stats.get('total_users', 0)}\n"
             f"✅ Активных: {user_stats.get('active_users', 0)}\n"
             f"❌ Неактивных: {user_stats.get('inactive_users', 0)}\n"
             f"🏙️ С городами: {user_stats.get('users_with_cities', 0)}\n"
             f"🚫 Без городов: {user_stats.get('users_without_cities', 0)}\n\n"
-            f"📈 *Активность за 7 дней:*\n"
+            f"📈 Активность за 7 дней:\n"
         )
 
         activity_by_type = activity_stats.get('activity_by_type', {})
@@ -124,7 +124,7 @@ def handle_stats(message):
         else:
             stats_message += "Нет активности за последние 7 дней\n"
 
-        bot.send_message(message.chat.id, stats_message, parse_mode='Markdown')
+        bot.send_message(message.chat.id, stats_message)
 
         db.close()
 
@@ -137,6 +137,9 @@ def handle_stats(message):
 def handle_text(message):
     """Обработчик текстовых сообщений (город)"""
     try:
+        # Удаляем сообщение пользователя через 1 секунду
+        threading.Timer(1.0, lambda: delete_message_safe(message.chat.id, message.message_id)).start()
+
         db = get_db()
         city_name = message.text.strip()
 
@@ -293,8 +296,19 @@ def handle_city_click(call):
             types.InlineKeyboardButton("🗑️ Удалить город", callback_data=f"delete_{city_name}")
         )
 
-        # Отправляем новое сообщение
-        bot.send_message(call.message.chat.id, response, reply_markup=markup, parse_mode='Markdown')
+        # Редактируем сообщение вместо отправки нового
+        try:
+            bot.edit_message_text(
+                response,
+                call.message.chat.id,
+                call.message.message_id,
+                reply_markup=markup,
+                parse_mode='Markdown'
+            )
+        except:
+            # Если не удалось отредактировать, отправляем новое
+            bot.send_message(call.message.chat.id, response, reply_markup=markup, parse_mode='Markdown')
+
         bot.answer_callback_query(call.id, "✅ Погода обновлена")
 
         db.close()
@@ -324,8 +338,8 @@ def handle_add_city(call):
         if success:
             bot.answer_callback_query(call.id, f"✅ {message}")
 
-            # Обновляем приветственное сообщение
-            send_welcome_message(call.message.chat.id, db, user)
+            # Обновляем приветственное сообщение (редактируем)
+            send_welcome_message(call.message.chat.id, db, user, call.message.message_id)
         else:
             bot.answer_callback_query(call.id, f"❌ {message}")
 
@@ -359,8 +373,8 @@ def handle_delete_city(call):
         if success:
             bot.answer_callback_query(call.id, f"✅ {message}")
 
-            # Обновляем приветственное сообщение
-            send_welcome_message(call.message.chat.id, db, user)
+            # Обновляем приветственное сообщение (редактируем)
+            send_welcome_message(call.message.chat.id, db, user, call.message.message_id)
         else:
             bot.answer_callback_query(call.id, f"❌ {message}")
 
@@ -474,6 +488,14 @@ def handle_inline_query(query):
 # ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 # =======================
 
+def delete_message_safe(chat_id, message_id):
+    """Безопасно удаляет сообщение, игнорируя ошибки"""
+    try:
+        bot.delete_message(chat_id, message_id)
+    except Exception as e:
+        logger.debug(f"Не удалось удалить сообщение {message_id}: {e}")
+
+
 def send_welcome_message(chat_id, db, user, message_id=None):
     """Отправляет приветственное сообщение с городами пользователя"""
     try:
@@ -495,8 +517,9 @@ def send_welcome_message(chat_id, db, user, message_id=None):
                 time_emoji = TimezoneService.get_time_of_day_emoji(local_time.hour)
 
                 temp_str = format_temperature(weather['temp'])
-                button_text = f"{weather['emoji']} {city.name} {temp_str}°C {time_emoji}"
-                cities_weather_text.append(f"{weather['emoji']} {city.name} {temp_str}°C {time_emoji}")
+                wind_speed = weather['wind_speed']
+                button_text = f"{weather['emoji']} {city.name} {temp_str}°C 💨 {wind_speed} м/с {time_emoji}"
+                cities_weather_text.append(f"{weather['emoji']} {city.name} {temp_str}°C 💨 {wind_speed} м/с {time_emoji}")
             else:
                 button_text = city.name
                 cities_weather_text.append(city.name)
