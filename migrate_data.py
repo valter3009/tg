@@ -27,10 +27,17 @@ def migrate_users(db):
 
         migrated = 0
         skipped = 0
+        errors = 0
 
         for telegram_id_str, user_data in all_users.items():
             try:
-                telegram_id = int(telegram_id_str)
+                # Пытаемся преобразовать в int
+                try:
+                    telegram_id = int(telegram_id_str)
+                except ValueError:
+                    logger.error(f"Невалидный telegram_id: {telegram_id_str}, пропускаем")
+                    errors += 1
+                    continue
 
                 # Проверяем, не существует ли уже пользователь
                 existing_user = db.query(User).filter(User.telegram_id == telegram_id).first()
@@ -68,16 +75,17 @@ def migrate_users(db):
                     logger.info(f"Мигрировано пользователей: {migrated}")
 
             except Exception as e:
-                logger.error(f"Ошибка при миграции пользователя {telegram_id_str}: {e}")
+                logger.error(f"Ошибка при миграции пользователя {telegram_id_str}: {e}", exc_info=True)
+                errors += 1
                 continue
 
         db.commit()
-        logger.info(f"Миграция пользователей завершена. Мигрировано: {migrated}, пропущено: {skipped}")
+        logger.info(f"Миграция пользователей завершена. Мигрировано: {migrated}, пропущено: {skipped}, ошибок: {errors}")
 
     except FileNotFoundError:
         logger.warning("Файл all_users.json не найден, пропускаем миграцию пользователей")
     except Exception as e:
-        logger.error(f"Ошибка при миграции пользователей: {e}")
+        logger.error(f"Ошибка при миграции пользователей: {e}", exc_info=True)
         db.rollback()
 
 
