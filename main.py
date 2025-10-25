@@ -98,7 +98,11 @@ def handle_stats(message):
     try:
         db = get_db()
 
-        # Получаем статистику
+        # РЕАЛЬНЫЙ подсчет прямо из базы
+        total_real = db.query(User).count()
+        active_real = db.query(User).filter(User.is_active == True).count()
+
+        # Получаем статистику через сервис
         user_stats = AnalyticsService.get_user_stats(db)
         activity_stats = AnalyticsService.get_activity_stats(db, days=7)
 
@@ -110,8 +114,8 @@ def handle_stats(message):
 
         stats_message = (
             "📊 Статистика бота\n\n"
-            f"👥 Всего пользователей: {user_stats.get('total_users', 0)}\n"
-            f"✅ Активных: {user_stats.get('active_users', 0)}\n"
+            f"👥 Всего пользователей: {user_stats.get('total_users', 0)} (реально в БД: {total_real})\n"
+            f"✅ Активных: {user_stats.get('active_users', 0)} (реально: {active_real})\n"
             f"❌ Неактивных: {user_stats.get('inactive_users', 0)}\n"
             f"🏙️ С городами: {user_stats.get('users_with_cities', 0)}\n"
             f"🚫 Без городов: {user_stats.get('users_without_cities', 0)}\n\n"
@@ -163,19 +167,30 @@ def handle_migrate(message):
         from migrate_data import migrate_users, migrate_cities_and_user_cities
 
         users_before = db.query(User).count()
+        active_before = db.query(User).filter(User.is_active == True).count()
 
         migrate_users(db)
         migrate_cities_and_user_cities(db)
 
         users_after = db.query(User).count()
+        active_after = db.query(User).filter(User.is_active == True).count()
         new_users = users_after - users_before
+
+        # Детальная статистика
+        all_users_list = db.query(User).all()
+        sources = {}
+        for u in all_users_list:
+            sources[u.source] = sources.get(u.source, 0) + 1
+
+        source_text = "\n".join([f"  • {k}: {v}" for k, v in sources.items()])
 
         bot.send_message(
             message.chat.id,
             f"✅ Миграция завершена!\n\n"
-            f"Было пользователей: {users_before}\n"
-            f"Стало пользователей: {users_after}\n"
-            f"Добавлено новых: {new_users}"
+            f"Было пользователей: {users_before} (активных: {active_before})\n"
+            f"Стало пользователей: {users_after} (активных: {active_after})\n"
+            f"Добавлено новых: {new_users}\n\n"
+            f"📊 Источники регистрации:\n{source_text}"
         )
 
         db.close()
