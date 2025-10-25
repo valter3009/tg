@@ -153,17 +153,22 @@ def handle_text(message):
             db.close()
             return
 
-        # Получаем совет по одежде
+        # Получаем местное время города
+        local_time, timezone_name, formatted_time = TimezoneService.format_city_time(city_name)
+
+        # Получаем совет по одежде с учетом местного времени ГОРОДА
         advice = get_clothing_advice(
             weather['temp'],
             weather['description'],
-            weather['wind_speed']
+            wind_speed=weather['wind_speed'],
+            local_datetime=local_time
         )
 
-        # Форматируем ответ
+        # Форматируем ответ с местным временем города
         temp_str = format_temperature(weather['temp'])
         response = (
-            f"{weather['emoji']} *{city_name}*\n\n"
+            f"{weather['emoji']} *{city_name}*\n"
+            f"🕐 Местное время: {formatted_time}\n\n"
             f"🌡️ Температура: {temp_str}°C\n"
             f"☁️ {weather['description'].capitalize()}\n"
             f"💨 Ветер: {weather['wind_speed']} м/с\n\n"
@@ -249,17 +254,22 @@ def handle_city_click(call):
             db.close()
             return
 
-        # Получаем совет по одежде
+        # Получаем местное время города
+        local_time, timezone_name, formatted_time = TimezoneService.format_city_time(city_name)
+
+        # Получаем совет по одежде с учетом местного времени ГОРОДА
         advice = get_clothing_advice(
             weather['temp'],
             weather['description'],
-            weather['wind_speed']
+            wind_speed=weather['wind_speed'],
+            local_datetime=local_time
         )
 
-        # Форматируем ответ
+        # Форматируем ответ с местным временем города
         temp_str = format_temperature(weather['temp'])
         response = (
-            f"{weather['emoji']} *{city_name}*\n\n"
+            f"{weather['emoji']} *{city_name}*\n"
+            f"🕐 Местное время: {formatted_time}\n\n"
             f"🌡️ Температура: {temp_str}°C\n"
             f"☁️ {weather['description'].capitalize()}\n"
             f"💨 Ветер: {weather['wind_speed']} м/с\n\n"
@@ -329,9 +339,13 @@ def send_welcome_message(chat_id, db, user, message_id=None):
             weather = WeatherService.get_weather(db, city.name)
 
             if weather:
+                # Получаем местное время города
+                local_time, _, formatted_time = TimezoneService.format_city_time(city.name)
+                time_emoji = TimezoneService.get_time_of_day_emoji(local_time.hour)
+
                 temp_str = format_temperature(weather['temp'])
-                button_text = f"{weather['emoji']} {city.name} {temp_str}°C 💨{weather['wind_speed']}м/с"
-                cities_weather_text.append(f"{weather['emoji']} {city.name} {temp_str}°C")
+                button_text = f"{weather['emoji']} {city.name} {temp_str}°C {time_emoji}"
+                cities_weather_text.append(f"{weather['emoji']} {city.name} {temp_str}°C {time_emoji}")
             else:
                 button_text = city.name
                 cities_weather_text.append(city.name)
