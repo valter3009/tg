@@ -4,6 +4,7 @@
 import logging
 import time
 import threading
+import os
 from datetime import datetime
 import telebot
 from telebot import types
@@ -370,6 +371,105 @@ def handle_delete_city(call):
         bot.answer_callback_query(call.id, "Ошибка при удалении")
 
 
+@bot.inline_handler(func=lambda query: True)
+def handle_inline_query(query):
+    """Обработчик inline-запросов"""
+    try:
+        city_name = query.query.strip()
+
+        if not city_name:
+            # Если город не указан, показываем подсказку
+            results = []
+            article = types.InlineQueryResultArticle(
+                id='1',
+                title='🌤️ Введите название города',
+                description='Начните вводить название города для получения погоды',
+                input_message_content=types.InputTextMessageContent(
+                    message_text='Используйте @gidmeteo_bot <название города> для получения погоды'
+                )
+            )
+            results.append(article)
+            bot.answer_inline_query(query.id, results, cache_time=1)
+            return
+
+        db = get_db()
+
+        # Получаем погоду
+        weather = WeatherService.get_weather(db, city_name)
+
+        if not weather:
+            # Город не найден
+            results = []
+            article = types.InlineQueryResultArticle(
+                id='1',
+                title=f'❌ Город "{city_name}" не найден',
+                description='Проверьте правильность написания',
+                input_message_content=types.InputTextMessageContent(
+                    message_text=f'Город "{city_name}" не найден. Проверьте правильность написания.'
+                )
+            )
+            results.append(article)
+            bot.answer_inline_query(query.id, results, cache_time=1)
+            db.close()
+            return
+
+        # Получаем местное время города
+        local_time, timezone_name, formatted_time = TimezoneService.format_city_time(city_name)
+
+        # Получаем совет по одежде
+        advice = get_clothing_advice(
+            weather['temp'],
+            weather['description'],
+            wind_speed=weather['wind_speed'],
+            local_datetime=local_time
+        )
+
+        # Форматируем сообщение
+        temp_str = format_temperature(weather['temp'])
+        message_text = (
+            f"{weather['emoji']} *{city_name}*\n"
+            f"🕐 Местное время: {formatted_time}\n\n"
+            f"🌡️ Температура: {temp_str}°C\n"
+            f"☁️ {weather['description'].capitalize()}\n"
+            f"💨 Ветер: {weather['wind_speed']} м/с\n\n"
+            f"{advice}"
+        )
+
+        # Создаем результат
+        results = []
+        article = types.InlineQueryResultArticle(
+            id='1',
+            title=f'{weather["emoji"]} {city_name}: {temp_str}°C',
+            description=f'{weather["description"].capitalize()}, ветер {weather["wind_speed"]} м/с',
+            input_message_content=types.InputTextMessageContent(
+                message_text=message_text,
+                parse_mode='Markdown'
+            )
+        )
+        results.append(article)
+
+        bot.answer_inline_query(query.id, results, cache_time=300)
+
+        db.close()
+
+    except Exception as e:
+        logger.error(f"Ошибка в handle_inline_query: {e}")
+        try:
+            results = []
+            article = types.InlineQueryResultArticle(
+                id='1',
+                title='❌ Ошибка',
+                description='Произошла ошибка при получении погоды',
+                input_message_content=types.InputTextMessageContent(
+                    message_text='Произошла ошибка при получении погоды. Попробуйте позже.'
+                )
+            )
+            results.append(article)
+            bot.answer_inline_query(query.id, results, cache_time=1)
+        except:
+            pass
+
+
 # =======================
 # ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 # =======================
@@ -483,6 +583,27 @@ def main():
         # Инициализация базы данных
         logger.info("Инициализация базы данных...")
         init_db()
+
+        # Автоматическая миграция данных при первом запуске
+        try:
+            db = get_db()
+            user_count = db.query(User).count()
+
+            if user_count == 0 and os.path.exists('all_users.json'):
+                logger.info("База данных пустая. Запуск миграции данных...")
+                from migrate_data import migrate_users, migrate_cities_and_user_cities
+
+                migrate_users(db)
+                migrate_cities_and_user_cities(db)
+
+                new_user_count = db.query(User).count()
+                logger.info(f"Миграция завершена! Восстановлено пользователей: {new_user_count}")
+            elif user_count > 0:
+                logger.info(f"В базе данных уже есть {user_count} пользователей")
+
+            db.close()
+        except Exception as e:
+            logger.warning(f"Не удалось выполнить миграцию: {e}")
 
         # Запуск Flask keepalive в отдельном потоке
         logger.info(f"Запуск Flask сервера на порту {config.FLASK_PORT}...")

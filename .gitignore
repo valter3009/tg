@@ -31,9 +31,10 @@ Thumbs.db
 gidmeteo.db
 
 # Legacy data files (JSON/Excel from old version)
-user_cities.json
+# Keep all_users.json and user_cities.json for migration
+# user_cities.json
 weather_cache.json
-all_users.json
+# all_users.json
 message_history.json
 user_data.json
 user_notifications.json
