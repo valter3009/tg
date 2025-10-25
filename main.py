@@ -100,6 +100,12 @@ def handle_stats(message):
         user_stats = AnalyticsService.get_user_stats(db)
         activity_stats = AnalyticsService.get_activity_stats(db, days=7)
 
+        # Проверяем, что статистика получена
+        if not user_stats:
+            bot.send_message(message.chat.id, "⚠️ Не удалось получить статистику пользователей")
+            db.close()
+            return
+
         stats_message = (
             "📊 *Статистика бота*\n\n"
             f"👥 Всего пользователей: {user_stats.get('total_users', 0)}\n"
@@ -111,16 +117,19 @@ def handle_stats(message):
         )
 
         activity_by_type = activity_stats.get('activity_by_type', {})
-        for activity_type, count in activity_by_type.items():
-            stats_message += f"• {activity_type}: {count}\n"
+        if activity_by_type:
+            for activity_type, count in activity_by_type.items():
+                stats_message += f"• {activity_type}: {count}\n"
+        else:
+            stats_message += "Нет активности за последние 7 дней\n"
 
         bot.send_message(message.chat.id, stats_message, parse_mode='Markdown')
 
         db.close()
 
     except Exception as e:
-        logger.error(f"Ошибка в handle_stats: {e}")
-        bot.send_message(message.chat.id, "Ошибка при получении статистики.")
+        logger.error(f"Ошибка в handle_stats: {e}", exc_info=True)
+        bot.send_message(message.chat.id, f"Ошибка при получении статистики: {str(e)}")
 
 
 @bot.message_handler(func=lambda message: True, content_types=['text'])
@@ -276,8 +285,15 @@ def handle_city_click(call):
             f"{advice}"
         )
 
+        # Добавляем кнопки "Назад" и "Удалить город"
+        markup = types.InlineKeyboardMarkup(row_width=2)
+        markup.add(
+            types.InlineKeyboardButton("◀️ Назад", callback_data="refresh"),
+            types.InlineKeyboardButton("🗑️ Удалить город", callback_data=f"delete_{city_name}")
+        )
+
         # Отправляем новое сообщение
-        bot.send_message(call.message.chat.id, response, parse_mode='Markdown')
+        bot.send_message(call.message.chat.id, response, reply_markup=markup, parse_mode='Markdown')
         bot.answer_callback_query(call.id, "✅ Погода обновлена")
 
         db.close()
@@ -317,6 +333,41 @@ def handle_add_city(call):
     except Exception as e:
         logger.error(f"Ошибка в handle_add_city: {e}")
         bot.answer_callback_query(call.id, "Ошибка при добавлении")
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('delete_'))
+def handle_delete_city(call):
+    """Обработчик удаления города из избранного"""
+    try:
+        db = get_db()
+        city_name = call.data.replace('delete_', '')
+
+        user = db.query(User).filter(User.telegram_id == call.from_user.id).first()
+
+        if not user:
+            bot.answer_callback_query(call.id, "Ошибка. Начните с /start")
+            db.close()
+            return
+
+        # Импортируем функцию удаления
+        from bot.utils.helpers import remove_city_from_user
+
+        # Удаляем город
+        success, message = remove_city_from_user(db, user, city_name)
+
+        if success:
+            bot.answer_callback_query(call.id, f"✅ {message}")
+
+            # Обновляем приветственное сообщение
+            send_welcome_message(call.message.chat.id, db, user)
+        else:
+            bot.answer_callback_query(call.id, f"❌ {message}")
+
+        db.close()
+
+    except Exception as e:
+        logger.error(f"Ошибка в handle_delete_city: {e}")
+        bot.answer_callback_query(call.id, "Ошибка при удалении")
 
 
 # =======================

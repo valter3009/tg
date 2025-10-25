@@ -69,8 +69,13 @@ class AnalyticsService:
                 func.count(User.id)
             ).group_by(User.source).all()
 
-            # Пользователи с городами
-            users_with_cities = db.query(User.id).join(UserCity).distinct().count()
+            # Пользователи с городами - используем outer join чтобы не падать на пустой таблице
+            try:
+                users_with_cities = db.query(User.id).join(UserCity).distinct().count()
+            except Exception as join_error:
+                logger.warning(f"Ошибка при подсчете пользователей с городами: {join_error}")
+                users_with_cities = 0
+
             users_without_cities = total_users - users_with_cities
 
             return {
@@ -79,12 +84,19 @@ class AnalyticsService:
                 'inactive_users': inactive_users,
                 'users_with_cities': users_with_cities,
                 'users_without_cities': users_without_cities,
-                'sources': dict(source_stats)
+                'sources': dict(source_stats) if source_stats else {}
             }
 
         except Exception as e:
-            logger.error(f"Ошибка при получении статистики пользователей: {e}")
-            return {}
+            logger.error(f"Ошибка при получении статистики пользователей: {e}", exc_info=True)
+            return {
+                'total_users': 0,
+                'active_users': 0,
+                'inactive_users': 0,
+                'users_with_cities': 0,
+                'users_without_cities': 0,
+                'sources': {}
+            }
 
     @staticmethod
     def get_activity_stats(db: Session, days: int = 7) -> Dict:
