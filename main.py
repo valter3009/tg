@@ -1,0 +1,449 @@
+"""
+Основной файл Telegram бота GidMeteo
+"""
+import logging
+import time
+import threading
+from datetime import datetime
+import telebot
+from telebot import types
+from flask import Flask
+from threading import Thread
+
+# Импорты проекта
+from bot.config import config
+from bot.database import init_db, get_db, close_db
+from bot.models import User, UserCity, City
+from bot.services.weather import WeatherService
+from bot.services.notifications import NotificationService
+from bot.services.analytics import AnalyticsService
+from bot.services.timezone import TimezoneService
+from bot.utils.helpers import get_or_create_user, add_city_to_user, get_user_cities, format_temperature
+from bot.utils.clothes_advice import get_clothing_advice
+
+# Настройка логирования
+logging.basicConfig(
+    level=getattr(logging, config.LOG_LEVEL),
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(config.LOG_FILE),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# Инициализация бота
+bot = telebot.TeleBot(config.TELEGRAM_TOKEN)
+notification_service = NotificationService(bot)
+
+# Хранилище последних сообщений
+last_messages = {}
+
+
+# Flask keepalive для Railway
+app = Flask(__name__)
+
+
+@app.route('/')
+def home():
+    return "GidMeteo Bot is running!"
+
+
+def run_flask():
+    """Запуск Flask сервера в отдельном потоке"""
+    app.run(host='0.0.0.0', port=config.FLASK_PORT)
+
+
+# =======================
+# ОБРАБОТЧИКИ КОМАНД
+# =======================
+
+@bot.message_handler(commands=['start'])
+def handle_start(message):
+    """Обработчик команды /start"""
+    try:
+        db = get_db()
+
+        # Получаем или создаем пользователя
+        user = get_or_create_user(
+            db,
+            message.from_user.id,
+            message.from_user.username,
+            message.from_user.first_name,
+            message.from_user.last_name
+        )
+
+        if not user:
+            bot.send_message(message.chat.id, "Ошибка при регистрации пользователя. Попробуйте позже.")
+            return
+
+        # Логируем активность
+        AnalyticsService.log_activity(db, message.from_user.id, 'start')
+
+        # Отправляем приветственное сообщение
+        send_welcome_message(message.chat.id, db, user)
+
+        db.close()
+
+    except Exception as e:
+        logger.error(f"Ошибка в handle_start: {e}")
+        bot.send_message(message.chat.id, "Произошла ошибка. Попробуйте позже.")
+
+
+@bot.message_handler(commands=['stats'])
+def handle_stats(message):
+    """Обработчик команды /stats (только для админов)"""
+    try:
+        db = get_db()
+
+        # Получаем статистику
+        user_stats = AnalyticsService.get_user_stats(db)
+        activity_stats = AnalyticsService.get_activity_stats(db, days=7)
+
+        stats_message = (
+            "📊 *Статистика бота*\n\n"
+            f"👥 Всего пользователей: {user_stats.get('total_users', 0)}\n"
+            f"✅ Активных: {user_stats.get('active_users', 0)}\n"
+            f"❌ Неактивных: {user_stats.get('inactive_users', 0)}\n"
+            f"🏙️ С городами: {user_stats.get('users_with_cities', 0)}\n"
+            f"🚫 Без городов: {user_stats.get('users_without_cities', 0)}\n\n"
+            f"📈 *Активность за 7 дней:*\n"
+        )
+
+        activity_by_type = activity_stats.get('activity_by_type', {})
+        for activity_type, count in activity_by_type.items():
+            stats_message += f"• {activity_type}: {count}\n"
+
+        bot.send_message(message.chat.id, stats_message, parse_mode='Markdown')
+
+        db.close()
+
+    except Exception as e:
+        logger.error(f"Ошибка в handle_stats: {e}")
+        bot.send_message(message.chat.id, "Ошибка при получении статистики.")
+
+
+@bot.message_handler(func=lambda message: True, content_types=['text'])
+def handle_text(message):
+    """Обработчик текстовых сообщений (город)"""
+    try:
+        db = get_db()
+        city_name = message.text.strip()
+
+        # Получаем пользователя
+        user = db.query(User).filter(User.telegram_id == message.from_user.id).first()
+
+        if not user:
+            user = get_or_create_user(
+                db,
+                message.from_user.id,
+                message.from_user.username,
+                message.from_user.first_name,
+                message.from_user.last_name
+            )
+
+        # Получаем погоду
+        weather = WeatherService.get_weather(db, city_name)
+
+        if not weather:
+            bot.send_message(
+                message.chat.id,
+                f"❌ Город '{city_name}' не найден. Проверьте правильность написания."
+            )
+            db.close()
+            return
+
+        # Получаем совет по одежде
+        advice = get_clothing_advice(
+            weather['temp'],
+            weather['description'],
+            weather['wind_speed']
+        )
+
+        # Форматируем ответ
+        temp_str = format_temperature(weather['temp'])
+        response = (
+            f"{weather['emoji']} *{city_name}*\n\n"
+            f"🌡️ Температура: {temp_str}°C\n"
+            f"☁️ {weather['description'].capitalize()}\n"
+            f"💨 Ветер: {weather['wind_speed']} м/с\n\n"
+            f"{advice}"
+        )
+
+        # Отправляем ответ с кнопкой добавления
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton(
+            "➕ Добавить в избранное",
+            callback_data=f"add_{city_name}"
+        ))
+
+        bot.send_message(message.chat.id, response, reply_markup=markup, parse_mode='Markdown')
+
+        # Если у пользователя нет timezone, пытаемся определить
+        if user.timezone == 'UTC':
+            timezone = TimezoneService.get_timezone_from_city(city_name)
+            if timezone and timezone != 'UTC':
+                user.timezone = timezone
+                db.commit()
+                logger.info(f"Установлен timezone {timezone} для пользователя {user.telegram_id}")
+
+        db.close()
+
+    except Exception as e:
+        logger.error(f"Ошибка в handle_text: {e}")
+        bot.send_message(message.chat.id, "Произошла ошибка. Попробуйте еще раз.")
+
+
+# =======================
+# ОБРАБОТЧИКИ CALLBACK
+# =======================
+
+@bot.callback_query_handler(func=lambda call: call.data == 'refresh')
+def handle_refresh(call):
+    """Обработчик кнопки обновления"""
+    try:
+        db = get_db()
+        user = db.query(User).filter(User.telegram_id == call.from_user.id).first()
+
+        if not user:
+            bot.answer_callback_query(call.id, "Ошибка. Начните с /start")
+            db.close()
+            return
+
+        # Логируем активность
+        AnalyticsService.log_activity(db, call.from_user.id, 'refresh')
+
+        # Обновляем сообщение
+        send_welcome_message(call.message.chat.id, db, user, call.message.message_id)
+
+        bot.answer_callback_query(call.id, "✅ Обновлено")
+        db.close()
+
+    except Exception as e:
+        logger.error(f"Ошибка в handle_refresh: {e}")
+        bot.answer_callback_query(call.id, "Ошибка при обновлении")
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('city_'))
+def handle_city_click(call):
+    """Обработчик нажатия на город"""
+    try:
+        db = get_db()
+        city_name = call.data.replace('city_', '')
+
+        user = db.query(User).filter(User.telegram_id == call.from_user.id).first()
+
+        if not user:
+            bot.answer_callback_query(call.id, "Ошибка. Начните с /start")
+            db.close()
+            return
+
+        # Логируем активность
+        AnalyticsService.log_activity(db, call.from_user.id, 'city_click', city_name)
+
+        # Получаем погоду
+        weather = WeatherService.get_weather(db, city_name, use_cache=False)  # Принудительно обновляем
+
+        if not weather:
+            bot.answer_callback_query(call.id, "❌ Ошибка при получении погоды")
+            db.close()
+            return
+
+        # Получаем совет по одежде
+        advice = get_clothing_advice(
+            weather['temp'],
+            weather['description'],
+            weather['wind_speed']
+        )
+
+        # Форматируем ответ
+        temp_str = format_temperature(weather['temp'])
+        response = (
+            f"{weather['emoji']} *{city_name}*\n\n"
+            f"🌡️ Температура: {temp_str}°C\n"
+            f"☁️ {weather['description'].capitalize()}\n"
+            f"💨 Ветер: {weather['wind_speed']} м/с\n\n"
+            f"{advice}"
+        )
+
+        # Отправляем новое сообщение
+        bot.send_message(call.message.chat.id, response, parse_mode='Markdown')
+        bot.answer_callback_query(call.id, "✅ Погода обновлена")
+
+        db.close()
+
+    except Exception as e:
+        logger.error(f"Ошибка в handle_city_click: {e}")
+        bot.answer_callback_query(call.id, "Ошибка")
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('add_'))
+def handle_add_city(call):
+    """Обработчик добавления города в избранное"""
+    try:
+        db = get_db()
+        city_name = call.data.replace('add_', '')
+
+        user = db.query(User).filter(User.telegram_id == call.from_user.id).first()
+
+        if not user:
+            bot.answer_callback_query(call.id, "Ошибка. Начните с /start")
+            db.close()
+            return
+
+        # Добавляем город
+        success, message = add_city_to_user(db, user, city_name)
+
+        if success:
+            bot.answer_callback_query(call.id, f"✅ {message}")
+
+            # Обновляем приветственное сообщение
+            send_welcome_message(call.message.chat.id, db, user)
+        else:
+            bot.answer_callback_query(call.id, f"❌ {message}")
+
+        db.close()
+
+    except Exception as e:
+        logger.error(f"Ошибка в handle_add_city: {e}")
+        bot.answer_callback_query(call.id, "Ошибка при добавлении")
+
+
+# =======================
+# ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+# =======================
+
+def send_welcome_message(chat_id, db, user, message_id=None):
+    """Отправляет приветственное сообщение с городами пользователя"""
+    try:
+        # Получаем города пользователя
+        cities = get_user_cities(db, user)
+
+        # Создаем клавиатуру
+        markup = types.InlineKeyboardMarkup(row_width=1)
+
+        cities_weather_text = []
+
+        for city in cities:
+            # Получаем погоду из кэша
+            weather = WeatherService.get_weather(db, city.name)
+
+            if weather:
+                temp_str = format_temperature(weather['temp'])
+                button_text = f"{weather['emoji']} {city.name} {temp_str}°C 💨{weather['wind_speed']}м/с"
+                cities_weather_text.append(f"{weather['emoji']} {city.name} {temp_str}°C")
+            else:
+                button_text = city.name
+                cities_weather_text.append(city.name)
+
+            markup.add(types.InlineKeyboardButton(
+                text=button_text,
+                callback_data=f"city_{city.name}"
+            ))
+
+        # Добавляем кнопку обновления
+        if cities:
+            markup.add(types.InlineKeyboardButton(text="🔄 Обновить", callback_data="refresh"))
+
+        # Формируем текст сообщения
+        if cities_weather_text:
+            welcome_text = (
+                "\n".join(cities_weather_text) +
+                "\n\nОтправь мне название населенного пункта и я скажу какая там погода и температура, "
+                "дам советы по одежде.\n\n"
+                "💡 Отправляй прогнозы в любой чат: введи @MeteoblueBot + город в любом чате Телеграм"
+            )
+        else:
+            welcome_text = (
+                "Отправь мне название населенного пункта и я скажу какая там погода и температура, "
+                "дам советы по одежде.\n\n"
+                "💡 Отправляй прогнозы в любой чат: введи @MeteoblueBot + город в любом чате Телеграм"
+            )
+
+        # Отправляем или обновляем сообщение
+        if message_id:
+            try:
+                bot.edit_message_text(
+                    text=welcome_text,
+                    chat_id=chat_id,
+                    message_id=message_id,
+                    reply_markup=markup
+                )
+            except telebot.apihelper.ApiTelegramException:
+                # Сообщение не найдено, отправляем новое
+                sent_msg = bot.send_message(chat_id, welcome_text, reply_markup=markup)
+                last_messages[chat_id] = {'message_id': sent_msg.message_id, 'timestamp': time.time()}
+        else:
+            sent_msg = bot.send_message(chat_id, welcome_text, reply_markup=markup)
+            last_messages[chat_id] = {'message_id': sent_msg.message_id, 'timestamp': time.time()}
+
+    except Exception as e:
+        logger.error(f"Ошибка в send_welcome_message: {e}")
+
+
+def auto_update_task():
+    """Задача автоматического обновления (выполняется в отдельном потоке)"""
+    logger.info("Запущена задача автоматического обновления")
+
+    while True:
+        try:
+            db = get_db()
+
+            # Отправляем обновления
+            stats = notification_service.send_auto_updates(db)
+
+            logger.info(f"Автообновление: отправлено {stats['messages_sent']} из {stats['total_attempts']}")
+
+            db.close()
+
+            # Ждем 1 минуту перед следующей проверкой
+            time.sleep(60)
+
+        except Exception as e:
+            logger.error(f"Ошибка в auto_update_task: {e}")
+            time.sleep(300)  # 5 минут при ошибке
+
+
+# =======================
+# ГЛАВНАЯ ФУНКЦИЯ
+# =======================
+
+def main():
+    """Главная функция запуска бота"""
+    logger.info("=" * 50)
+    logger.info("Запуск GidMeteo бота v2.0")
+    logger.info("=" * 50)
+
+    try:
+        # Инициализация базы данных
+        logger.info("Инициализация базы данных...")
+        init_db()
+
+        # Запуск Flask keepalive в отдельном потоке
+        logger.info(f"Запуск Flask сервера на порту {config.FLASK_PORT}...")
+        flask_thread = Thread(target=run_flask, daemon=True)
+        flask_thread.start()
+
+        # Запуск задачи автообновления
+        logger.info("Запуск задачи автоматического обновления...")
+        auto_update_thread = threading.Thread(target=auto_update_task, daemon=True)
+        auto_update_thread.start()
+
+        # Запуск бота
+        logger.info("Бот GidMeteo запущен. Нажмите Ctrl+C для остановки.")
+        logger.info("Автоматические обновления с учетом часовых поясов пользователей")
+
+        bot.infinity_polling(timeout=60, long_polling_timeout=60)
+
+    except KeyboardInterrupt:
+        logger.info("Получен сигнал остановки. Завершение работы...")
+        close_db()
+    except Exception as e:
+        logger.critical(f"Критическая ошибка: {e}")
+        raise
+    finally:
+        logger.info("Бот остановлен")
+
+
+if __name__ == "__main__":
+    main()
