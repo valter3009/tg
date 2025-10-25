@@ -5,6 +5,7 @@ import logging
 import time
 import threading
 import os
+import json
 from datetime import datetime
 import telebot
 from telebot import types
@@ -144,8 +145,20 @@ def handle_migrate(message):
             db.close()
             return
 
-        # Запускаем миграцию
-        bot.send_message(message.chat.id, "⏳ Запуск миграции данных...")
+        # Показываем информацию о файлах
+        with open('all_users.json', 'r', encoding='utf-8') as f:
+            all_users = json.load(f)
+
+        with open('user_cities.json', 'r', encoding='utf-8') as f:
+            user_cities = json.load(f)
+
+        bot.send_message(
+            message.chat.id,
+            f"📦 Найдены файлы:\n"
+            f"• all_users.json: {len(all_users)} пользователей\n"
+            f"• user_cities.json: {len(user_cities)} записей\n\n"
+            f"⏳ Запуск миграции..."
+        )
 
         from migrate_data import migrate_users, migrate_cities_and_user_cities
 
