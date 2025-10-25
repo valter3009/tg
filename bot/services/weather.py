@@ -115,12 +115,28 @@ class WeatherService:
             city = db.query(City).filter(City.name_lower == city_name_lower).first()
 
             if not city:
-                # Создаем новый город
-                city = City(name=city_name, name_lower=city_name_lower)
+                # Определяем часовой пояс для нового города
+                from bot.services.timezone import TimezoneService
+                timezone = TimezoneService.get_timezone_from_city(city_name)
+
+                # Создаем новый город с timezone
+                city = City(
+                    name=city_name,
+                    name_lower=city_name_lower,
+                    timezone=timezone
+                )
                 db.add(city)
                 db.commit()
                 db.refresh(city)
-                logger.info(f"Создан новый город: {city_name}")
+                logger.info(f"Создан новый город: {city_name} (timezone: {timezone})")
+            elif not city.timezone:
+                # Если город существует, но у него нет timezone, определяем и сохраняем
+                from bot.services.timezone import TimezoneService
+                timezone = TimezoneService.get_timezone_from_city(city_name)
+                if timezone:
+                    city.timezone = timezone
+                    db.commit()
+                    logger.info(f"Обновлен timezone для {city_name}: {timezone}")
 
             return city
 

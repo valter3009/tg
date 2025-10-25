@@ -10,9 +10,12 @@ from timezonefinder import TimezoneFinder
 
 logger = logging.getLogger(__name__)
 
-# Инициализация
+# Инициализация с правильным user agent для избежания 403 ошибок
 tf = TimezoneFinder()
-geolocator = Nominatim(user_agent="gidmeteo_bot")
+geolocator = Nominatim(
+    user_agent="GidMeteo Weather Bot/2.0 (https://t.me/MeteoblueBot)",
+    timeout=10
+)
 
 
 class TimezoneService:
@@ -30,6 +33,17 @@ class TimezoneService:
             Название часового пояса (например, 'Europe/Moscow') или None
         """
         try:
+            # Сначала пытаемся найти в статическом маппинге
+            from bot.services.timezone_mappings import get_timezone_from_mapping
+            timezone_name = get_timezone_from_mapping(city_name)
+
+            if timezone_name:
+                logger.info(f"Определен часовой пояс для {city_name} из маппинга: {timezone_name}")
+                return timezone_name
+
+            # Если не найдено в маппинге, пытаемся через Nominatim
+            logger.debug(f"Город {city_name} не найден в маппинге, пытаемся через Nominatim...")
+
             # Получаем координаты города
             location = geolocator.geocode(city_name, timeout=10)
 
@@ -38,7 +52,7 @@ class TimezoneService:
                 timezone_name = tf.timezone_at(lat=location.latitude, lng=location.longitude)
 
                 if timezone_name:
-                    logger.info(f"Определен часовой пояс для {city_name}: {timezone_name}")
+                    logger.info(f"Определен часовой пояс для {city_name} через Nominatim: {timezone_name}")
                     return timezone_name
                 else:
                     logger.warning(f"Не удалось определить часовой пояс для {city_name}")
@@ -178,23 +192,48 @@ class TimezoneService:
             return '🌙'  # Ночь
 
     @staticmethod
-    def format_city_time(city_name: str) -> tuple:
+    def format_city_time(city_name: str, city_obj=None, db=None) -> tuple:
         """
         Получает локальное время для города
 
         Args:
             city_name: Название города
+            city_obj: Объект City из базы данных (опционально)
+            db: Сессия базы данных (опционально)
 
         Returns:
             Кортеж (локальное_время: datetime, timezone_name: str, formatted_time: str)
         """
         try:
-            # Определяем timezone города
-            timezone_name = TimezoneService.get_timezone_from_city(city_name)
+            timezone_name = None
+
+            # Пытаемся получить timezone из объекта города
+            if city_obj and hasattr(city_obj, 'timezone') and city_obj.timezone:
+                timezone_name = city_obj.timezone
+                logger.debug(f"Используем кэшированный timezone для {city_name}: {timezone_name}")
+            # Если нет объекта, пытаемся получить из базы данных
+            elif db:
+                from bot.models import City
+                city_from_db = db.query(City).filter(City.name_lower == city_name.lower()).first()
+                if city_from_db and city_from_db.timezone:
+                    timezone_name = city_from_db.timezone
+                    logger.debug(f"Получен timezone из БД для {city_name}: {timezone_name}")
+
+            # Если timezone не найден в кэше, определяем через Nominatim
+            if not timezone_name:
+                logger.debug(f"Определяем timezone для {city_name} через Nominatim...")
+                timezone_name = TimezoneService.get_timezone_from_city(city_name)
+
+                # Сохраняем timezone в базу данных, если возможно
+                if timezone_name and db and city_obj:
+                    city_obj.timezone = timezone_name
+                    db.commit()
+                    logger.info(f"Сохранен timezone {timezone_name} для города {city_name}")
 
             if not timezone_name:
                 # Если не удалось определить, используем UTC
                 timezone_name = 'UTC'
+                logger.warning(f"Не удалось определить timezone для {city_name}, используем UTC")
 
             # Получаем текущее время в timezone города
             local_time = TimezoneService.get_current_local_time(timezone_name)

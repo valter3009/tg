@@ -38,6 +38,7 @@ class City(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(255), unique=True, nullable=False, index=True)
     name_lower = Column(String(255), unique=True, nullable=False, index=True)  # Для быстрого поиска
+    timezone = Column(String(50), nullable=True)  # Часовой пояс города (Europe/Moscow, America/New_York, etc.)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     # Связи

@@ -142,9 +142,17 @@ def handle_text(message):
                 message.from_user.last_name
             )
 
-        # Получаем погоду
-        weather = WeatherService.get_weather(db, city_name)
+        # Получаем или создаем город и получаем погоду
+        city = WeatherService.get_or_create_city(db, city_name)
+        if not city:
+            bot.send_message(
+                message.chat.id,
+                f"❌ Ошибка при обработке города '{city_name}'."
+            )
+            db.close()
+            return
 
+        weather = WeatherService.get_weather(db, city_name)
         if not weather:
             bot.send_message(
                 message.chat.id,
@@ -153,8 +161,10 @@ def handle_text(message):
             db.close()
             return
 
-        # Получаем местное время города
-        local_time, timezone_name, formatted_time = TimezoneService.format_city_time(city_name)
+        # Получаем местное время города с кэшированным timezone
+        local_time, timezone_name, formatted_time = TimezoneService.format_city_time(
+            city_name, city_obj=city, db=db
+        )
 
         # Получаем совет по одежде с учетом местного времени ГОРОДА
         advice = get_clothing_advice(
@@ -246,16 +256,24 @@ def handle_city_click(call):
         # Логируем активность
         AnalyticsService.log_activity(db, call.from_user.id, 'city_click', city_name)
 
+        # Получаем город
+        city = WeatherService.get_or_create_city(db, city_name)
+        if not city:
+            bot.answer_callback_query(call.id, "❌ Ошибка при обработке города")
+            db.close()
+            return
+
         # Получаем погоду
         weather = WeatherService.get_weather(db, city_name, use_cache=False)  # Принудительно обновляем
-
         if not weather:
             bot.answer_callback_query(call.id, "❌ Ошибка при получении погоды")
             db.close()
             return
 
-        # Получаем местное время города
-        local_time, timezone_name, formatted_time = TimezoneService.format_city_time(city_name)
+        # Получаем местное время города с кэшированным timezone
+        local_time, timezone_name, formatted_time = TimezoneService.format_city_time(
+            city_name, city_obj=city, db=db
+        )
 
         # Получаем совет по одежде с учетом местного времени ГОРОДА
         advice = get_clothing_advice(
@@ -339,8 +357,10 @@ def send_welcome_message(chat_id, db, user, message_id=None):
             weather = WeatherService.get_weather(db, city.name)
 
             if weather:
-                # Получаем местное время города
-                local_time, _, formatted_time = TimezoneService.format_city_time(city.name)
+                # Получаем местное время города с кэшированным timezone
+                local_time, _, formatted_time = TimezoneService.format_city_time(
+                    city.name, city_obj=city, db=db
+                )
                 time_emoji = TimezoneService.get_time_of_day_emoji(local_time.hour)
 
                 temp_str = format_temperature(weather['temp'])
