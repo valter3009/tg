@@ -382,6 +382,10 @@ def create_cities_keyboard(user_id, user_data, weather_cache, user_languages):
         refresh_text = t('refresh_button', language)
         markup.add(types.InlineKeyboardButton(text=refresh_text, callback_data="refresh"))
 
+    # Добавляем кнопку выбора языка
+    language_text = "🌐 " + t('language_selection', language).split(' / ')[0]
+    markup.add(types.InlineKeyboardButton(text=language_text, callback_data="select_language"))
+
     return markup
 
 def send_new_message(chat_id, text, markup=None, parse_mode='Markdown'):
@@ -1181,7 +1185,8 @@ def get_and_send_weather(chat_id, city, user_data, weather_cache, user_languages
             'emoji': weather_emoji,
             'description': weather_description,
             'wind_speed': wind_speed,
-            'updated_at': current_time
+            'timezone': timezone_offset,
+            'updated_at': int(time.time())
         }
         update_cached_weather(city, cache_data, weather_cache)
         
@@ -1255,8 +1260,27 @@ def callback_handler(call):
     user_languages = load_user_languages()
 
     try:
+        # Обработка открытия меню выбора языка
+        if call.data == "select_language":
+            language = get_user_language(call.message.chat.id, user_languages)
+            markup = types.InlineKeyboardMarkup(row_width=2)
+            buttons = [
+                types.InlineKeyboardButton("🇷🇺 Русский", callback_data="lang_ru"),
+                types.InlineKeyboardButton("🇬🇧 English", callback_data="lang_en"),
+                types.InlineKeyboardButton("🇪🇸 Español", callback_data="lang_es"),
+                types.InlineKeyboardButton("🇩🇪 Deutsch", callback_data="lang_de")
+            ]
+            markup.add(*buttons)
+            selection_text = t('language_selection', language)
+            bot.edit_message_text(
+                selection_text,
+                call.message.chat.id,
+                call.message.message_id,
+                reply_markup=markup
+            )
+
         # Обработка выбора языка
-        if call.data.startswith("lang_"):
+        elif call.data.startswith("lang_"):
             lang_code = call.data[5:]
             if lang_code in SUPPORTED_LANGUAGES:
                 user_languages = set_user_language(call.message.chat.id, lang_code, user_languages)
