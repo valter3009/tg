@@ -726,6 +726,14 @@ def main():
         logger.info("Инициализация базы данных...")
         init_db()
 
+        # Автоматическая миграция схемы: добавление поля language
+        try:
+            logger.info("Проверка необходимости миграции схемы...")
+            from migrate_add_language import migrate_add_language
+            migrate_add_language()
+        except Exception as e:
+            logger.warning(f"Миграция схемы: {e}")
+
         # Автоматическая миграция данных при первом запуске
         try:
             db = get_db()
