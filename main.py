@@ -674,6 +674,14 @@ def main():
         logger.info("Инициализация базы данных...")
         init_db()
 
+        # Автоматическая миграция схемы базы данных
+        try:
+            from migrate_add_message_id import migrate
+            logger.info("Проверка необходимости миграции базы данных...")
+            migrate()
+        except Exception as e:
+            logger.warning(f"Ошибка при миграции базы данных: {e}")
+
         # Автоматическая миграция данных при первом запуске
         try:
             db = get_db()
