@@ -209,7 +209,26 @@ def get_clothing_advice(temp, weather_condition, season=None, time_of_day=None, 
                 temp_range = "+21 до +30"  # Максимальная реалистичная температура для весны/осени
     
     # Получаем совет по одежде из базы советов
-    advice = get_specific_advice(temp_range, condition, season, time_of_day)
+    # Get clothing advice from database
+    if language == 'en':
+        # Для английского языка используем систему переводов
+        # For English, use the translation system
+        try:
+            from clothes_advice_translations import get_clothing_advice_i18n, translate_key_ru_to_en
+            # Переводим ключ на английский
+            en_temp, en_condition, en_season, en_time = translate_key_ru_to_en(temp_range, condition, season, time_of_day)
+            advice = get_clothing_advice_i18n(en_temp, en_condition, en_season, en_time, 'en')
+            if advice is None:
+                # Fallback to Russian if translation not found
+                advice = get_specific_advice(temp_range, condition, season, time_of_day)
+        except ImportError:
+            # Если не удалось загрузить переводы, используем русскую версию
+            # If translations failed to load, use Russian version
+            advice = get_specific_advice(temp_range, condition, season, time_of_day)
+    else:
+        # Для русского и других языков используем оригинальную функцию
+        # For Russian and other languages, use original function
+        advice = get_specific_advice(temp_range, condition, season, time_of_day)
 
     # Получаем информацию о ветре на нужном языке
     wind_name, wind_range, wind_description = get_wind_description(wind_speed, language)
