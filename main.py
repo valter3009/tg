@@ -17,6 +17,7 @@ from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 from openpyxl.styles import Font, Alignment
 from clothes_advice import get_clothing_advice, get_local_time_str, get_time_of_day
+from translations import get_text, get_weather_api_lang
 from dotenv import load_dotenv
 
 # Загрузка переменных окружения
@@ -51,6 +52,7 @@ bot = telebot.TeleBot(TELEGRAM_TOKEN)
 USER_DATA_FILE = 'user_cities.json'
 WEATHER_CACHE_FILE = 'weather_cache.json'
 ALL_USERS_FILE = 'all_users.json'  # Новый файл для хранения всех пользователей
+USER_LANGUAGES_FILE = 'user_languages.json'  # Файл для хранения языковых предпочтений
 CACHE_UPDATE_INTERVAL = 3600
 ACTIVITY_LOG_FILE = 'bot_activity_log.xlsx'
 AUTO_UPDATE_LOG_FILE = 'auto_updates.log'
@@ -96,6 +98,35 @@ def save_user_data(data):
             json.dump(data, f, ensure_ascii=False, indent=4)
     except Exception as e:
         logger.error(f"Ошибка сохранения user_data: {e}")
+
+# Функции для работы с языковыми предпочтениями
+def load_user_languages():
+    try:
+        if os.path.exists(USER_LANGUAGES_FILE):
+            with open(USER_LANGUAGES_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return {}
+    except Exception as e:
+        logger.error(f"Ошибка загрузки user_languages: {e}")
+        return {}
+
+def save_user_languages(data):
+    try:
+        with open(USER_LANGUAGES_FILE, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+    except Exception as e:
+        logger.error(f"Ошибка сохранения user_languages: {e}")
+
+def get_user_language(user_id):
+    """Get user's language preference (default: 'ru')"""
+    user_languages = load_user_languages()
+    return user_languages.get(str(user_id), 'ru')
+
+def set_user_language(user_id, language):
+    """Set user's language preference"""
+    user_languages = load_user_languages()
+    user_languages[str(user_id)] = language
+    save_user_languages(user_languages)
 
 # Новые функции для работы со всеми пользователями
 def load_all_users():
@@ -241,25 +272,35 @@ def get_time_of_day_emoji(timezone_offset):
 def get_weather_emoji(description):
     description = description.lower()
 
-    if any(word in description for word in ['ясно', 'чистое небо', 'безоблачно']):
+    # Russian and English keywords
+    clear_keywords = ['ясно', 'чистое небо', 'безоблачно', 'clear', 'clear sky']
+    partly_cloudy_keywords = ['облачно с прояснениями', 'переменная облачность', 'partly cloudy', 'few clouds', 'scattered clouds']
+    cloudy_keywords = ['облачно', 'пасмурно', 'cloudy', 'overcast', 'broken clouds']
+    rain_keywords = ['дождь', 'ливень', 'rain', 'drizzle', 'shower']
+    thunderstorm_keywords = ['гроза', 'thunderstorm', 'storm']
+    snow_keywords = ['снег', 'снегопад', 'snow']
+    fog_keywords = ['туман', 'мгла', 'fog', 'mist', 'haze']
+
+    if any(word in description for word in clear_keywords):
         return '☀️'
-    elif any(word in description for word in ['облачно с прояснениями', 'переменная облачность']):
+    elif any(word in description for word in partly_cloudy_keywords):
         return '⛅'
-    elif any(word in description for word in ['облачно', 'пасмурно']):
+    elif any(word in description for word in cloudy_keywords):
         return '☁️'
-    elif any(word in description for word in ['дождь', 'ливень']):
+    elif any(word in description for word in rain_keywords):
         return '🌧️'
-    elif any(word in description for word in ['гроза']):
+    elif any(word in description for word in thunderstorm_keywords):
         return '⛈️'
-    elif any(word in description for word in ['снег', 'снегопад']):
+    elif any(word in description for word in snow_keywords):
         return '❄️'
-    elif any(word in description for word in ['туман', 'мгла']):
+    elif any(word in description for word in fog_keywords):
         return '🌫️'
     else:
         return '🌦️'
 
-def get_weather_data(city, weather_cache):
-    url = f'https://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&lang=ru&appid={OPENWEATHER_API_KEY}'
+def get_weather_data(city, weather_cache, lang='ru'):
+    api_lang = get_weather_api_lang(lang)
+    url = f'https://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&lang={api_lang}&appid={OPENWEATHER_API_KEY}'
 
     try:
         response = requests.get(url)
@@ -326,33 +367,52 @@ def update_weather_cache(weather_cache, user_data):
             logger.error(f"Ошибка при обновлении погоды для {city}: {e}")
 
 def create_cities_keyboard(user_id, user_data, weather_cache):
-    markup = types.InlineKeyboardMarkup(row_width=1)
+    markup = types.InlineKeyboardMarkup(row_width=2)
     user_cities = get_user_cities(user_id, user_data)
+    lang = get_user_language(user_id)
 
+    # Кнопки городов (в одну колонку)
     for city in user_cities:
         cached_weather = get_cached_weather(city, weather_cache)
         current_time = int(time.time())
 
         if not cached_weather or (current_time - cached_weather.get('updated_at', 0)) > 3600:
-            weather_data = get_weather_data(city, weather_cache)
+            weather_data = get_weather_data(city, weather_cache, lang)
             if weather_data:
                 temp_str = f"+{weather_data['temp']}" if weather_data['temp'] > 0 else f"{weather_data['temp']}"
                 # Получаем эмодзи времени суток
                 time_emoji = get_time_of_day_emoji(weather_data.get('timezone', 0))
-                button_text = f"{weather_data['emoji']} {city} {time_emoji} {temp_str}°C 💨{weather_data['wind_speed']}м/с"
+                wind_unit = get_text('meters_per_second', lang)
+                button_text = f"{weather_data['emoji']} {city} {time_emoji} {temp_str}°C 💨{weather_data['wind_speed']}{wind_unit}"
             else:
                 button_text = city
         else:
             temp_str = f"+{cached_weather['temp']}" if cached_weather['temp'] > 0 else f"{cached_weather['temp']}"
             # Получаем эмодзи времени суток из кеша
             time_emoji = get_time_of_day_emoji(cached_weather.get('timezone', 0))
-            button_text = f"{cached_weather['emoji']} {city} {time_emoji} {temp_str}°C 💨{cached_weather['wind_speed']}м/с"
+            wind_unit = get_text('meters_per_second', lang)
+            button_text = f"{cached_weather['emoji']} {city} {time_emoji} {temp_str}°C 💨{cached_weather['wind_speed']}{wind_unit}"
 
-        markup.add(types.InlineKeyboardButton(text=button_text, callback_data=f"city_{city}"))
+        markup.row(types.InlineKeyboardButton(text=button_text, callback_data=f"city_{city}"))
 
-    # Добавляем кнопку "Обновить", только если есть города
+    # Добавляем кнопки "Обновить" и переключения языка
     if user_cities:
-        markup.add(types.InlineKeyboardButton(text="🔄 Обновить", callback_data="refresh"))
+        refresh_button = types.InlineKeyboardButton(
+            text=get_text('refresh', lang),
+            callback_data="refresh"
+        )
+        lang_button = types.InlineKeyboardButton(
+            text="RU" if lang == 'en' else "EN",
+            callback_data="toggle_lang"
+        )
+        markup.row(refresh_button, lang_button)
+    else:
+        # Если нет городов, только кнопка языка
+        lang_button = types.InlineKeyboardButton(
+            text="RU" if lang == 'en' else "EN",
+            callback_data="toggle_lang"
+        )
+        markup.row(lang_button)
 
     return markup
 
@@ -399,10 +459,11 @@ def update_message(chat_id, message_id, text, markup=None, parse_mode='Markdown'
 
 def send_welcome_message(chat_id, user_data, weather_cache, message_id=None, force_new_message=False):
     markup = create_cities_keyboard(chat_id, user_data, weather_cache)
-    
+    lang = get_user_language(chat_id)
+
     user_cities = get_user_cities(chat_id, user_data)
     cities_weather_text = []
-    
+
     for city in user_cities:
         cached_weather = get_cached_weather(city, weather_cache)
         if cached_weather:
@@ -411,8 +472,11 @@ def send_welcome_message(chat_id, user_data, weather_cache, message_id=None, for
             cities_weather_text.append(city_text)
         else:
             cities_weather_text.append(city)
-    
-    welcome_text = "\n".join(cities_weather_text) + "\n\nОтправь мне название населенного пункта и я скажу какая там погода и температура, дам советы по одежде.\n\n💡 Отправляй прогнозы в любой чат: введи @MeteoblueBot + город в любом чате Телеграм" if user_cities else "Отправь мне название населенного пункта и я скажу какая там погода и температура, дам советы по одежде.\n\n💡 Отправляй прогнозы в любой чат: введи @MeteoblueBot + город в любом чате Телеграм"
+
+    if user_cities:
+        welcome_text = "\n".join(cities_weather_text) + "\n\n" + get_text('welcome_with_cities', lang)
+    else:
+        welcome_text = get_text('welcome_without_cities', lang)
     
     if force_new_message:
         # Сначала удаляем предыдущее сообщение
@@ -439,17 +503,17 @@ def send_welcome_message(chat_id, user_data, weather_cache, message_id=None, for
 
 def send_reminder_message(chat_id):
     """Отправляет напоминание пользователям без городов"""
+    lang = get_user_language(chat_id)
     reminder_text = (
-        "🌤️ Привет! Пора узнать погоду на сегодня!\n\n"
-        "Отправьте мне название города, чтобы получить актуальную информацию о погоде "
-        "и рекомендации по одежде.\n\n"
-        "Просто напишите название любого населенного пункта, и я расскажу:\n"
-        "• Текущую температуру\n"
-        "• Погодные условия\n"
-        "• Что лучше надеть\n\n"
-        "Попробуйте прямо сейчас! 😊"
+        f"{get_text('reminder_title', lang)}\n\n"
+        f"{get_text('reminder_text', lang)}\n\n"
+        f"{get_text('reminder_features', lang)}\n"
+        f"{get_text('reminder_temp', lang)}\n"
+        f"{get_text('reminder_conditions', lang)}\n"
+        f"{get_text('reminder_advice', lang)}\n\n"
+        f"{get_text('reminder_cta', lang)}"
     )
-    
+
     try:
         sent_msg = bot.send_message(chat_id, reminder_text)
         last_messages[chat_id] = {
@@ -1048,24 +1112,27 @@ def check_users(message):
         bot.send_message(message.chat.id, "Произошла ошибка при проверке пользователей.")
 
 def get_and_send_weather(chat_id, city, user_data, weather_cache, message_id=None, force_new_message=False):
-    url = f'https://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&lang=ru&appid={OPENWEATHER_API_KEY}'
-    
+    lang = get_user_language(chat_id)
+    api_lang = get_weather_api_lang(lang)
+    url = f'https://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&lang={api_lang}&appid={OPENWEATHER_API_KEY}'
+
     try:
         weather_data = requests.get(url).json()
-        
+
         if weather_data.get('cod') == '404':
+            error_text = get_text('city_not_found', lang)
             if force_new_message and message_id:
                 try:
                     bot.delete_message(chat_id, message_id)
                 except Exception as e:
                     logger.warning(f"Не удалось удалить предыдущее сообщение: {e}")
-                
-                error_msg = send_new_message(chat_id, 'Город не найден. Проверьте написание.')
+
+                error_msg = send_new_message(chat_id, error_text)
             else:
                 msg_info = last_messages.get(chat_id, {})
                 msg_id = message_id if message_id else msg_info.get('message_id')
-                error_msg = update_message(chat_id, msg_id, 'Город не найден. Проверьте написание.')
-            
+                error_msg = update_message(chat_id, msg_id, error_text)
+
             if error_msg and hasattr(error_msg, 'message_id'):
                 last_messages[chat_id] = {
                     'message_id': error_msg.message_id,
@@ -1104,13 +1171,20 @@ def get_and_send_weather(chat_id, city, user_data, weather_cache, message_id=Non
         # Получаем локальное время города
         local_formatted_time = format_local_date_time(timezone_offset)
 
+        # Переводы для UI элементов
+        temp_label = get_text('temp', lang)
+        feels_like_label = get_text('feels_like', lang)
+        wind_label = get_text('wind_speed', lang)
+        wind_unit = get_text('meters_per_second', lang)
+        update_time_label = get_text('update_time', lang)
+
         weather_message = (
             f'{weather_emoji} {city} {weather_description_cap}\n'
-            f'🌡️ t° {temp_str}°C\n'
-            f'🌡️ t°ощущ. {temp_feels_str}°C\n'
-            f'💨 Скорость ветра | {wind_speed} м/с\n'
+            f'{temp_label} {temp_str}°C\n'
+            f'{feels_like_label} {temp_feels_str}°C\n'
+            f'{wind_label} {wind_speed} {wind_unit}\n'
             f'{clothes_advice}\n'
-            f'⏱️ Время обновления: {local_formatted_time}'
+            f'{update_time_label} {local_formatted_time}'
         )
 
         current_time = int(time.time())
@@ -1126,16 +1200,16 @@ def get_and_send_weather(chat_id, city, user_data, weather_cache, message_id=Non
         
         markup = types.InlineKeyboardMarkup(row_width=2)
         user_cities = get_user_cities(chat_id, user_data)
-        
+
         if city in user_cities:
             markup.add(
-                types.InlineKeyboardButton("Удалить город", callback_data=f"remove_{city}"),
-                types.InlineKeyboardButton("Назад", callback_data="back")
+                types.InlineKeyboardButton(get_text('remove_city', lang), callback_data=f"remove_{city}"),
+                types.InlineKeyboardButton(get_text('back', lang), callback_data="back")
             )
         else:
             markup.add(
-                types.InlineKeyboardButton("Добавить город", callback_data=f"add_{city}"),
-                types.InlineKeyboardButton("Назад", callback_data="back")
+                types.InlineKeyboardButton(get_text('add_city', lang), callback_data=f"add_{city}"),
+                types.InlineKeyboardButton(get_text('back', lang), callback_data="back")
             )
         
         if force_new_message:
@@ -1164,26 +1238,21 @@ def get_and_send_weather(chat_id, city, user_data, weather_cache, message_id=Non
     
     except Exception as e:
         logger.error(f'Ошибка при получении погоды: {e}')
-        
+        lang = get_user_language(chat_id)
+        error_text = get_text('weather_error', lang)
+
         if force_new_message and message_id:
             try:
                 bot.delete_message(chat_id, message_id)
             except Exception as e:
                 logger.warning(f"Не удалось удалить предыдущее сообщение: {e}")
-            
-            error_msg = send_new_message(
-                chat_id, 
-                'Произошла ошибка при получении данных о погоде. Попробуйте позже.'
-            )
+
+            error_msg = send_new_message(chat_id, error_text)
         else:
             msg_info = last_messages.get(chat_id, {})
             msg_id = message_id if message_id else msg_info.get('message_id')
-            
-            error_msg = update_message(
-                chat_id, 
-                msg_id, 
-                'Произошла ошибка при получении данных о погоде. Попробуйте позже.'
-            )
+
+            error_msg = update_message(chat_id, msg_id, error_text)
         
         if error_msg and hasattr(error_msg, 'message_id'):
             last_messages[chat_id] = {
@@ -1202,19 +1271,29 @@ def callback_handler(call):
         if call.data == "back":
             send_welcome_message(call.message.chat.id, user_data, weather_cache, call.message.message_id)
         
+        elif call.data == "toggle_lang":
+            # Переключаем язык пользователя
+            current_lang = get_user_language(call.message.chat.id)
+            new_lang = 'en' if current_lang == 'ru' else 'ru'
+            set_user_language(call.message.chat.id, new_lang)
+
+            # Обновляем сообщение с новым языком
+            send_welcome_message(call.message.chat.id, user_data, weather_cache, call.message.message_id, force_new_message=True)
+
         elif call.data == "refresh":
             # Отслеживаем нажатие кнопки "Обновить"
             update_refresh_log(call.message.chat.id)
-            
+
             # Обновляем данные о погоде для всех городов пользователя
+            lang = get_user_language(call.message.chat.id)
             user_cities = get_user_cities(call.message.chat.id, user_data)
             for city in user_cities:
-                get_weather_data(city, weather_cache)
+                get_weather_data(city, weather_cache, lang)
                 time.sleep(0.5)  # Небольшая задержка между запросами
-            
+
             # Отправляем новое сообщение, но сначала удаляем предыдущее
             send_welcome_message(call.message.chat.id, user_data, weather_cache, call.message.message_id, force_new_message=True)
-        
+
         elif call.data.startswith("add_"):
             city = call.data[4:]
             if add_user_city(call.message.chat.id, city, user_data):
@@ -1243,20 +1322,22 @@ def callback_handler(call):
 @bot.message_handler(func=lambda message: True)
 def handle_all_messages(message):
     try:
+        lang = get_user_language(message.chat.id)
         if message.text.startswith('/'):
-            bot.send_message(message.chat.id, "Неизвестная команда. Попробуйте /start")
+            bot.send_message(message.chat.id, get_text('unknown_command', lang))
         else:
             user_data = load_user_data()
             weather_cache = load_weather_cache()
             get_and_send_weather(message.chat.id, message.text, user_data, weather_cache, last_messages.get(message.chat.id, {}).get('message_id'), force_new_message=False)
-        
+
         try:
             bot.delete_message(message.chat.id, message.message_id)
         except Exception as e:
             logger.warning(f"Не удалось удалить сообщение пользователя: {e}")
     except Exception as e:
         logger.error(f"Ошибка обработки сообщения: {e}")
-        bot.send_message(message.chat.id, "Произошла ошибка. Попробуйте позже.")
+        lang = get_user_language(message.chat.id)
+        bot.send_message(message.chat.id, get_text('general_error', lang))
 
 @bot.inline_handler(func=lambda query: True)
 def handle_inline_query(query):
@@ -1440,13 +1521,16 @@ def update_all_weather_info():
 if __name__ == '__main__':
     if not os.path.exists(USER_DATA_FILE):
         save_user_data({})
-    
+
     if not os.path.exists(WEATHER_CACHE_FILE):
         save_weather_cache({})
-    
+
     if not os.path.exists(ALL_USERS_FILE):
         save_all_users({})
-    
+
+    if not os.path.exists(USER_LANGUAGES_FILE):
+        save_user_languages({})
+
     # Добавляем пользователей из списка в базу данных
     added_users = add_additional_users_to_all_users()
     
