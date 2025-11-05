@@ -988,9 +988,7 @@ def language_command(message):
         markup = types.InlineKeyboardMarkup(row_width=2)
         buttons = [
             types.InlineKeyboardButton("🇷🇺 Русский", callback_data="lang_ru"),
-            types.InlineKeyboardButton("🇬🇧 English", callback_data="lang_en"),
-            types.InlineKeyboardButton("🇪🇸 Español", callback_data="lang_es"),
-            types.InlineKeyboardButton("🇩🇪 Deutsch", callback_data="lang_de")
+            types.InlineKeyboardButton("🇬🇧 English", callback_data="lang_en")
         ]
         markup.add(*buttons)
 
@@ -1195,13 +1193,13 @@ def get_and_send_weather(chat_id, city, user_data, weather_cache, user_languages
         
         if city in user_cities:
             markup.add(
-                types.InlineKeyboardButton("Удалить город", callback_data=f"remove_{city}"),
-                types.InlineKeyboardButton("Назад", callback_data="back")
+                types.InlineKeyboardButton(t('remove_city_button', language), callback_data=f"remove_{city}"),
+                types.InlineKeyboardButton(t('back_button', language), callback_data="back")
             )
         else:
             markup.add(
-                types.InlineKeyboardButton("Добавить город", callback_data=f"add_{city}"),
-                types.InlineKeyboardButton("Назад", callback_data="back")
+                types.InlineKeyboardButton(t('add_city_button', language), callback_data=f"add_{city}"),
+                types.InlineKeyboardButton(t('back_button', language), callback_data="back")
             )
         
         if force_new_message:
@@ -1266,9 +1264,7 @@ def callback_handler(call):
             markup = types.InlineKeyboardMarkup(row_width=2)
             buttons = [
                 types.InlineKeyboardButton("🇷🇺 Русский", callback_data="lang_ru"),
-                types.InlineKeyboardButton("🇬🇧 English", callback_data="lang_en"),
-                types.InlineKeyboardButton("🇪🇸 Español", callback_data="lang_es"),
-                types.InlineKeyboardButton("🇩🇪 Deutsch", callback_data="lang_de")
+                types.InlineKeyboardButton("🇬🇧 English", callback_data="lang_en")
             ]
             markup.add(*buttons)
             selection_text = t('language_selection', language)

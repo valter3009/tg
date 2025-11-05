@@ -10,7 +10,7 @@ def get_wind_description(wind_speed, language='ru'):
 
     Args:
         wind_speed (float): Скорость ветра в м/с
-        language (str): Код языка ('ru', 'en', 'es', 'de')
+        language (str): Код языка ('ru', 'en')
 
     Returns:
         tuple: (название ветра, диапазон скорости, описание)
@@ -128,7 +128,7 @@ def get_clothing_advice(temp, weather_condition, season=None, time_of_day=None, 
                                     Если None, определяется автоматически.
         wind_speed (float, optional): Скорость ветра в м/с. По умолчанию 0.
         timezone_offset (int, optional): Смещение часового пояса в секундах от UTC.
-        language (str, optional): Код языка ('ru', 'en', 'es', 'de'). По умолчанию 'ru'.
+        language (str, optional): Код языка ('ru', 'en'). По умолчанию 'ru'.
 
     Returns:
         str: Комбинированный совет по одежде и информация о ветре
@@ -170,19 +170,19 @@ def get_clothing_advice(temp, weather_condition, season=None, time_of_day=None, 
         temp_range = "выше +40"
     
     # Определяем основное погодное условие
-    if any(word in weather_condition for word in ['ясно', 'чистое небо', 'безоблачно']):
+    if any(word in weather_condition for word in ['ясно', 'чистое небо', 'безоблачно', 'clear', 'sunny']):
         condition = "ясно"
-    elif any(word in weather_condition for word in ['облачно с прояснениями', 'переменная облачность']):
+    elif any(word in weather_condition for word in ['облачно с прояснениями', 'переменная облачность', 'partly cloudy', 'few clouds', 'scattered clouds']):
         condition = "облачно"
-    elif any(word in weather_condition for word in ['пасмурно', 'морось']):
+    elif any(word in weather_condition for word in ['пасмурно', 'морось', 'overcast', 'drizzle']):
         condition = "пасмурно"
-    elif any(word in weather_condition for word in ['дождь', 'ливень']):
+    elif any(word in weather_condition for word in ['дождь', 'ливень', 'rain', 'shower']):
         condition = "дождь"
-    elif any(word in weather_condition for word in ['гроза']):
+    elif any(word in weather_condition for word in ['гроза', 'thunderstorm', 'thunder']):
         condition = "гроза"
-    elif any(word in weather_condition for word in ['снег', 'снегопад']):
+    elif any(word in weather_condition for word in ['снег', 'снегопад', 'snow']):
         condition = "снег"
-    elif any(word in weather_condition for word in ['туман', 'мгла', 'дымка']):
+    elif any(word in weather_condition for word in ['туман', 'мгла', 'дымка', 'fog', 'mist', 'haze']):
         condition = "туман"
     else:
         condition = "облачно"  # Значение по умолчанию
@@ -209,7 +209,7 @@ def get_clothing_advice(temp, weather_condition, season=None, time_of_day=None, 
                 temp_range = "+21 до +30"  # Максимальная реалистичная температура для весны/осени
     
     # Получаем совет по одежде из базы советов
-    advice = get_specific_advice(temp_range, condition, season, time_of_day)
+    advice = get_specific_advice(temp_range, condition, season, time_of_day, temp, language)
 
     # Получаем информацию о ветре на нужном языке
     wind_name, wind_range, wind_description = get_wind_description(wind_speed, language)
@@ -223,19 +223,25 @@ def get_clothing_advice(temp, weather_condition, season=None, time_of_day=None, 
 
     return full_advice
 
-def get_specific_advice(temp_range, condition, season, time_of_day):
+def get_specific_advice(temp_range, condition, season, time_of_day, temp=0, language='ru'):
     """
     Возвращает конкретный совет по одежде для указанной комбинации параметров
-    
+
     Args:
         temp_range (str): Диапазон температуры
         condition (str): Погодное условие
         season (str): Время года
         time_of_day (str): Время суток
-        
+        temp (float): Температура в градусах Цельсия
+        language (str): Код языка ('ru', 'en')
+
     Returns:
         str: Совет по одежде
     """
+    # Для английского языка используем генератор советов
+    if language == 'en':
+        return generate_english_advice(temp, condition, season, time_of_day)
+
     # Создаем словарь со всеми советами для реалистичных комбинаций
     advice_dict = {
         # ЗИМА
@@ -1759,3 +1765,68 @@ def get_combination_advice(temp, weather_description, wind_speed):
         str: Комбинированный совет по одежде
     """
     return get_clothing_advice(temp, weather_description, None, None, wind_speed)
+def generate_english_advice(temp, condition, season, time_of_day):
+    """
+    Генерирует английские советы по одежде на основе температуры и условий
+    
+    Args:
+        temp (float): Температура в градусах Цельсия
+        condition (str): Погодное условие
+        season (str): Время года
+        time_of_day (str): Время суток
+        
+    Returns:
+        str: Совет по одежде на английском языке
+    """
+    # Определяем базовую одежду по температуре
+    if temp < -30:
+        base_clothing = "thermal underwear, thick sweater, heavy down jacket, fur hat, scarf, mittens, and insulated boots"
+        warning = "Extreme cold! Limit time outdoors."
+    elif temp < -20:
+        base_clothing = "thermal underwear, sweater, down jacket, warm hat, scarf, gloves, and winter boots"
+        warning = "Very cold weather. Dress in layers."
+    elif temp < -10:
+        base_clothing = "thermal underwear, sweater, winter jacket, hat, scarf, and warm boots"
+        warning = "Cold outside. Keep extremities warm."
+    elif temp < 0:
+        base_clothing = "warm sweater, winter jacket, hat, and gloves"
+        warning = "Below freezing. Wear layers."
+    elif temp < 10:
+        base_clothing = "sweater or hoodie, jacket, and light gloves"
+        warning = "Cool weather. A jacket is recommended."
+    elif temp < 15:
+        base_clothing = "light sweater or long-sleeve shirt, and a light jacket"
+        warning = "Mild weather. Dress comfortably."
+    elif temp < 20:
+        base_clothing = "long-sleeve shirt or light sweater"
+        warning = "Pleasant temperature. Light layers work well."
+    elif temp < 25:
+        base_clothing = "t-shirt or short-sleeve shirt"
+        warning = "Comfortable weather. Light clothing recommended."
+    elif temp < 30:
+        base_clothing = "light t-shirt and shorts"
+        warning = "Warm weather. Stay hydrated."
+    elif temp < 35:
+        base_clothing = "minimal light clothing, sunhat, and sunglasses"
+        warning = "Hot weather. Avoid direct sun."
+    else:
+        base_clothing = "lightest possible clothing, wide-brimmed hat, and sunglasses"
+        warning = "Extreme heat! Stay in shade, drink plenty of water."
+    
+    # Добавляем рекомендации по погодным условиям
+    condition_advice = ""
+    if condition == "дождь":
+        condition_advice = " Take an umbrella and wear waterproof jacket or raincoat."
+    elif condition == "снег":
+        condition_advice = " Expect snow. Wear waterproof boots and warm outerwear."
+    elif condition == "гроза":
+        condition_advice = " Thunderstorm expected. Take an umbrella and avoid open areas."
+    elif condition == "туман":
+        condition_advice = " Foggy conditions. Be careful and dress for dampness."
+    elif condition == "ясно" and temp > 25:
+        condition_advice = " Sunny weather. Use sunscreen and wear a hat."
+    
+    # Собираем итоговый совет
+    advice = f"Wear: {base_clothing}. {warning}{condition_advice}"
+    
+    return advice

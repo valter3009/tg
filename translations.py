@@ -1,18 +1,18 @@
 """
 Система локализации для бота GidMeteo
-Поддерживаемые языки: русский (ru), английский (en), испанский (es), немецкий (de)
+Поддерживаемые языки: русский (ru), английский (en)
 """
 
 # Языки по умолчанию
 DEFAULT_LANGUAGE = 'ru'
-SUPPORTED_LANGUAGES = ['ru', 'en', 'es', 'de']
+SUPPORTED_LANGUAGES = ['ru', 'en']
 
 # Переводы интерфейса бота
 BOT_TRANSLATIONS = {
     'ru': {
         'refresh_button': '🔄 Обновить',
-        'add_city': 'Добавить город',
-        'remove_city': 'Удалить город',
+        'add_city_button': 'Добавить город',
+        'remove_city_button': 'Удалить город',
         'back_button': 'Назад',
         'welcome_text': 'Отправь мне название населенного пункта и я скажу какая там погода и температура, дам советы по одежде.\n\n💡 Отправляй прогнозы в любой чат: введи @MeteoblueBot + город в любом чате Телеграм',
         'welcome_text_with_cities': '{cities}\n\nОтправь мне название населенного пункта и я скажу какая там погода и температура, дам советы по одежде.\n\n💡 Отправляй прогнозы в любой чат: введи @MeteoblueBot + город в любом чате Телеграм',
@@ -29,8 +29,8 @@ BOT_TRANSLATIONS = {
     },
     'en': {
         'refresh_button': '🔄 Refresh',
-        'add_city': 'Add city',
-        'remove_city': 'Remove city',
+        'add_city_button': 'Add city',
+        'remove_city_button': 'Remove city',
         'back_button': 'Back',
         'welcome_text': 'Send me the name of a city and I will tell you the weather and temperature there, and give you clothing advice.\n\n💡 Send forecasts to any chat: enter @MeteoblueBot + city in any Telegram chat',
         'welcome_text_with_cities': '{cities}\n\nSend me the name of a city and I will tell you the weather and temperature there, and give you clothing advice.\n\n💡 Send forecasts to any chat: enter @MeteoblueBot + city in any Telegram chat',

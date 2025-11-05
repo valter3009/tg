@@ -445,7 +445,7 @@ def get_wind_description(wind_speed, language='ru'):
 
     Args:
         wind_speed (float): Скорость ветра в м/с
-        language (str): Код языка ('ru', 'en', 'es', 'de')
+        language (str): Код языка ('ru', 'en')
 
     Returns:
         tuple: (название ветра, диапазон скорости, описание)
@@ -466,6 +466,4 @@ def get_wind_description(wind_speed, language='ru'):
 CLOTHING_ADVICE_PREFIX = {
     'ru': 'Ветер:',
     'en': 'Wind:',
-    'es': 'Viento:',
-    'de': 'Wind:',
 }
