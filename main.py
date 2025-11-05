@@ -622,7 +622,7 @@ def auto_update_users():
                 total_sent = 0
 
                 # Времена обновлений по локальному времени
-                update_hours = [7, 12, 18, 22]
+                update_hours = [0, 6, 12, 18]
 
                 # Обрабатываем всех активных пользователей
                 for user_id_str, user_info in all_users.items():
@@ -1112,12 +1112,14 @@ def get_and_send_weather(chat_id, city, user_data, weather_cache, message_id=Non
             f'{clothes_advice}\n'
             f'⏱️ Время обновления: {local_formatted_time}'
         )
-        
+
+        current_time = int(time.time())
         cache_data = {
             'temp': temperature,
             'emoji': weather_emoji,
             'description': weather_description,
             'wind_speed': wind_speed,
+            'timezone': timezone_offset,
             'updated_at': current_time
         }
         update_cached_weather(city, cache_data, weather_cache)
@@ -1462,7 +1464,7 @@ if __name__ == '__main__':
     logger.info("Бот GidMeteo запущен")
     print("Бот GidMeteo запущен. Нажмите Ctrl+C для остановки.")
     print("Отслеживание активности включено. Данные сохраняются в файл:", ACTIVITY_LOG_FILE)
-    print("Автоматические обновления будут отправляться каждые 4 часа (00:01, 04:01, 08:01, 12:01, 16:01, 20:01)")
+    print("Автоматические обновления будут отправляться 4 раза в день (00:00, 06:00, 12:00, 18:00 по местному времени первого города пользователя)")
     print(f"Добавлено {added_users} новых пользователей из дополнительного списка")
     print("Доступные команды для администратора:")
     print("  /stats - подробный отчет активности")
