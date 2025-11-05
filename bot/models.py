@@ -19,6 +19,7 @@ class User(Base):
     last_name = Column(String(255), nullable=True)
     timezone = Column(String(50), default='UTC', nullable=False)  # Часовой пояс пользователя
     is_active = Column(Boolean, default=True, nullable=False)
+    last_weather_message_id = Column(Integer, nullable=True)  # ID последнего сообщения с погодой
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     source = Column(String(50), nullable=True)  # 'start_command' или 'additional_list'
