@@ -17,6 +17,7 @@ class User(Base):
     username = Column(String(255), nullable=True)
     first_name = Column(String(255), nullable=True)
     last_name = Column(String(255), nullable=True)
+    language = Column(String(10), default='ru', nullable=False)  # Язык пользователя: ru или en
     timezone = Column(String(50), default='UTC', nullable=False)  # Часовой пояс пользователя
     is_active = Column(Boolean, default=True, nullable=False)
     last_weather_message_id = Column(Integer, nullable=True)  # ID последнего сообщения с погодой

@@ -22,6 +22,7 @@ from bot.services.analytics import AnalyticsService
 from bot.services.timezone import TimezoneService
 from bot.utils.helpers import get_or_create_user, add_city_to_user, get_user_cities, format_temperature
 from bot.utils.clothes_advice import get_clothing_advice
+from bot.localization import get_text, get_language_from_user
 
 # Настройка логирования
 logging.basicConfig(
@@ -76,7 +77,8 @@ def handle_start(message):
         )
 
         if not user:
-            bot.send_message(message.chat.id, "Ошибка при регистрации пользователя. Попробуйте позже.")
+            lang = 'ru'  # По умолчанию русский для новых пользователей
+            bot.send_message(message.chat.id, get_text(lang, 'error_registration'))
             return
 
         # Логируем активность
@@ -89,7 +91,7 @@ def handle_start(message):
 
     except Exception as e:
         logger.error(f"Ошибка в handle_start: {e}")
-        bot.send_message(message.chat.id, "Произошла ошибка. Попробуйте позже.")
+        bot.send_message(message.chat.id, get_text('ru', 'error_occurred'))
 
 
 @bot.message_handler(commands=['stats'])
@@ -222,13 +224,16 @@ def handle_text(message):
                 message.from_user.last_name
             )
 
+        # Получаем язык пользователя
+        lang = get_language_from_user(user)
+
         # Получаем погоду
         weather = WeatherService.get_weather(db, city_name)
 
         if not weather:
             bot.send_message(
                 message.chat.id,
-                f"❌ Город '{city_name}' не найден. Проверьте правильность написания."
+                get_text(lang, 'city_not_found', city=city_name)
             )
             db.close()
             return
@@ -246,19 +251,20 @@ def handle_text(message):
 
         # Форматируем ответ с местным временем города
         temp_str = format_temperature(weather['temp'])
+        wind_label = "м/с" if lang == 'ru' else "m/s"
         response = (
             f"{weather['emoji']} *{city_name}*\n"
-            f"🕐 Местное время: {formatted_time}\n\n"
-            f"🌡️ Температура: {temp_str}°C\n"
+            f"{get_text(lang, 'local_time')} {formatted_time}\n\n"
+            f"{get_text(lang, 'temperature')} {temp_str}°C\n"
             f"☁️ {weather['description'].capitalize()}\n"
-            f"💨 Ветер: {weather['wind_speed']} м/с\n\n"
+            f"{get_text(lang, 'wind')} {weather['wind_speed']} {wind_label}\n\n"
             f"{advice}"
         )
 
         # Отправляем ответ с кнопкой добавления
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(
-            "➕ Добавить в избранное",
+            get_text(lang, 'btn_add_favorite'),
             callback_data=f"add_{city_name}"
         ))
 
@@ -276,7 +282,8 @@ def handle_text(message):
 
     except Exception as e:
         logger.error(f"Ошибка в handle_text: {e}")
-        bot.send_message(message.chat.id, "Произошла ошибка. Попробуйте еще раз.")
+        lang = 'ru'
+        bot.send_message(message.chat.id, get_text(lang, 'error_occurred'))
 
 
 # =======================
@@ -291,22 +298,59 @@ def handle_refresh(call):
         user = db.query(User).filter(User.telegram_id == call.from_user.id).first()
 
         if not user:
-            bot.answer_callback_query(call.id, "Ошибка. Начните с /start")
+            lang = get_language_from_user(user) if user else 'ru'
+            bot.answer_callback_query(call.id, get_text(lang, 'error_start'))
             db.close()
             return
 
         # Логируем активность
         AnalyticsService.log_activity(db, call.from_user.id, 'refresh')
 
+        lang = get_language_from_user(user)
+
         # Обновляем сообщение
         send_welcome_message(call.message.chat.id, db, user, call.message.message_id)
 
-        bot.answer_callback_query(call.id, "✅ Обновлено")
+        bot.answer_callback_query(call.id, get_text(lang, 'updated'))
         db.close()
 
     except Exception as e:
         logger.error(f"Ошибка в handle_refresh: {e}")
-        bot.answer_callback_query(call.id, "Ошибка при обновлении")
+        lang = get_language_from_user(user) if user else 'ru'
+        bot.answer_callback_query(call.id, get_text(lang, 'error_refresh'))
+
+
+@bot.callback_query_handler(func=lambda call: call.data in ['lang_en', 'lang_ru'])
+def handle_language_switch(call):
+    """Обработчик переключения языка"""
+    try:
+        db = get_db()
+        user = db.query(User).filter(User.telegram_id == call.from_user.id).first()
+
+        if not user:
+            bot.answer_callback_query(call.id, "Error. Start with /start")
+            db.close()
+            return
+
+        # Определяем новый язык
+        new_lang = 'en' if call.data == 'lang_en' else 'ru'
+
+        # Обновляем язык пользователя
+        user.language = new_lang
+        db.commit()
+
+        # Логируем активность
+        AnalyticsService.log_activity(db, call.from_user.id, 'language_switch', new_lang)
+
+        # Обновляем сообщение с новым языком
+        send_welcome_message(call.message.chat.id, db, user, call.message.message_id)
+
+        bot.answer_callback_query(call.id, get_text(new_lang, 'language_switched'))
+        db.close()
+
+    except Exception as e:
+        logger.error(f"Ошибка в handle_language_switch: {e}")
+        bot.answer_callback_query(call.id, "Error")
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('city_'))
@@ -319,9 +363,12 @@ def handle_city_click(call):
         user = db.query(User).filter(User.telegram_id == call.from_user.id).first()
 
         if not user:
-            bot.answer_callback_query(call.id, "Ошибка. Начните с /start")
+            bot.answer_callback_query(call.id, get_text('ru', 'error_start'))
             db.close()
             return
+
+        # Получаем язык пользователя
+        lang = get_language_from_user(user)
 
         # Логируем активность
         AnalyticsService.log_activity(db, call.from_user.id, 'city_click', city_name)
@@ -330,7 +377,7 @@ def handle_city_click(call):
         weather = WeatherService.get_weather(db, city_name, use_cache=False)  # Принудительно обновляем
 
         if not weather:
-            bot.answer_callback_query(call.id, "❌ Ошибка при получении погоды")
+            bot.answer_callback_query(call.id, get_text(lang, 'error_getting_weather'))
             db.close()
             return
 
@@ -347,20 +394,21 @@ def handle_city_click(call):
 
         # Форматируем ответ с местным временем города
         temp_str = format_temperature(weather['temp'])
+        wind_label = "м/с" if lang == 'ru' else "m/s"
         response = (
             f"{weather['emoji']} *{city_name}*\n"
-            f"🕐 Местное время: {formatted_time}\n\n"
-            f"🌡️ Температура: {temp_str}°C\n"
+            f"{get_text(lang, 'local_time')} {formatted_time}\n\n"
+            f"{get_text(lang, 'temperature')} {temp_str}°C\n"
             f"☁️ {weather['description'].capitalize()}\n"
-            f"💨 Ветер: {weather['wind_speed']} м/с\n\n"
+            f"{get_text(lang, 'wind')} {weather['wind_speed']} {wind_label}\n\n"
             f"{advice}"
         )
 
         # Добавляем кнопки "Назад" и "Удалить город"
         markup = types.InlineKeyboardMarkup(row_width=2)
         markup.add(
-            types.InlineKeyboardButton("◀️ Назад", callback_data="refresh"),
-            types.InlineKeyboardButton("🗑️ Удалить город", callback_data=f"delete_{city_name}")
+            types.InlineKeyboardButton(get_text(lang, 'btn_back'), callback_data="refresh"),
+            types.InlineKeyboardButton(get_text(lang, 'btn_delete_city'), callback_data=f"delete_{city_name}")
         )
 
         # Редактируем сообщение вместо отправки нового
@@ -376,13 +424,13 @@ def handle_city_click(call):
             # Если не удалось отредактировать, отправляем новое
             bot.send_message(call.message.chat.id, response, reply_markup=markup, parse_mode='Markdown')
 
-        bot.answer_callback_query(call.id, "✅ Погода обновлена")
+        bot.answer_callback_query(call.id, get_text(lang, 'weather_updated'))
 
         db.close()
 
     except Exception as e:
         logger.error(f"Ошибка в handle_city_click: {e}")
-        bot.answer_callback_query(call.id, "Ошибка")
+        bot.answer_callback_query(call.id, "Error")
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('add_'))
@@ -566,11 +614,14 @@ def delete_message_safe(chat_id, message_id):
 def send_welcome_message(chat_id, db, user, message_id=None):
     """Отправляет приветственное сообщение с городами пользователя"""
     try:
+        # Получаем язык пользователя
+        lang = get_language_from_user(user)
+
         # Получаем города пользователя
         cities = get_user_cities(db, user)
 
         # Создаем клавиатуру
-        markup = types.InlineKeyboardMarkup(row_width=1)
+        markup = types.InlineKeyboardMarkup(row_width=2)
 
         cities_weather_text = []
 
@@ -585,8 +636,9 @@ def send_welcome_message(chat_id, db, user, message_id=None):
 
                 temp_str = format_temperature(weather['temp'])
                 wind_speed = weather['wind_speed']
-                button_text = f"{weather['emoji']} {city.name} {temp_str}°C 💨 {wind_speed} м/с {time_emoji}"
-                cities_weather_text.append(f"{weather['emoji']} {city.name} {temp_str}°C 💨 {wind_speed} м/с {time_emoji}")
+                wind_label = "м/с" if lang == 'ru' else "m/s"
+                button_text = f"{weather['emoji']} {city.name} {temp_str}°C 💨 {wind_speed} {wind_label} {time_emoji}"
+                cities_weather_text.append(f"{weather['emoji']} {city.name} {temp_str}°C 💨 {wind_speed} {wind_label} {time_emoji}")
             else:
                 button_text = city.name
                 cities_weather_text.append(city.name)
@@ -596,24 +648,24 @@ def send_welcome_message(chat_id, db, user, message_id=None):
                 callback_data=f"city_{city.name}"
             ))
 
-        # Добавляем кнопку обновления
+        # Добавляем кнопки обновления и переключения языка
         if cities:
-            markup.add(types.InlineKeyboardButton(text="🔄 Обновить", callback_data="refresh"))
+            # Определяем, какую кнопку языка показать
+            if lang == 'ru':
+                lang_button = types.InlineKeyboardButton(text="EN", callback_data="lang_en")
+            else:
+                lang_button = types.InlineKeyboardButton(text="RU", callback_data="lang_ru")
+
+            markup.row(
+                types.InlineKeyboardButton(text=get_text(lang, 'btn_refresh'), callback_data="refresh"),
+                lang_button
+            )
 
         # Формируем текст сообщения
         if cities_weather_text:
-            welcome_text = (
-                "\n".join(cities_weather_text) +
-                "\n\nОтправь мне название населенного пункта и я скажу какая там погода и температура, "
-                "дам советы по одежде.\n\n"
-                "💡 Отправляй прогнозы в любой чат: введи @MeteoblueBot + город в любом чате Телеграм"
-            )
+            welcome_text = "\n".join(cities_weather_text) + get_text(lang, 'welcome_with_cities')
         else:
-            welcome_text = (
-                "Отправь мне название населенного пункта и я скажу какая там погода и температура, "
-                "дам советы по одежде.\n\n"
-                "💡 Отправляй прогнозы в любой чат: введи @MeteoblueBot + город в любом чате Телеграм"
-            )
+            welcome_text = get_text(lang, 'welcome_text')
 
         # Отправляем или обновляем сообщение
         if message_id:
