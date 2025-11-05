@@ -206,9 +206,6 @@ def handle_migrate(message):
 def handle_text(message):
     """Обработчик текстовых сообщений (город)"""
     try:
-        # Удаляем сообщение пользователя через 1 секунду
-        threading.Timer(1.0, lambda: delete_message_safe(message.chat.id, message.message_id)).start()
-
         db = get_db()
         city_name = message.text.strip()
 
@@ -231,10 +228,14 @@ def handle_text(message):
         weather = WeatherService.get_weather(db, city_name)
 
         if not weather:
-            bot.send_message(
+            # Удаляем сообщение пользователя
+            delete_message_safe(message.chat.id, message.message_id)
+            # Отправляем ошибку и удаляем через 3 секунды
+            error_msg = bot.send_message(
                 message.chat.id,
                 get_text(lang, 'city_not_found', city=city_name)
             )
+            threading.Timer(3.0, lambda: delete_message_safe(message.chat.id, error_msg.message_id)).start()
             db.close()
             return
 
@@ -268,7 +269,14 @@ def handle_text(message):
             callback_data=f"add_{city_name}"
         ))
 
-        bot.send_message(message.chat.id, response, reply_markup=markup, parse_mode='Markdown')
+        # Удаляем сообщение пользователя
+        delete_message_safe(message.chat.id, message.message_id)
+
+        # Отправляем ответ
+        sent_msg = bot.send_message(message.chat.id, response, reply_markup=markup, parse_mode='Markdown')
+
+        # Сохраняем ID отправленного сообщения для последующего редактирования
+        last_messages[message.chat.id] = {'message_id': sent_msg.message_id, 'timestamp': time.time()}
 
         # Если у пользователя нет timezone, пытаемся определить
         if user.timezone == 'UTC':
@@ -283,7 +291,10 @@ def handle_text(message):
     except Exception as e:
         logger.error(f"Ошибка в handle_text: {e}")
         lang = 'ru'
-        bot.send_message(message.chat.id, get_text(lang, 'error_occurred'))
+        # Удаляем сообщение пользователя
+        delete_message_safe(message.chat.id, message.message_id)
+        error_msg = bot.send_message(message.chat.id, get_text(lang, 'error_occurred'))
+        threading.Timer(3.0, lambda: delete_message_safe(message.chat.id, error_msg.message_id)).start()
 
 
 # =======================
@@ -298,26 +309,26 @@ def handle_refresh(call):
         user = db.query(User).filter(User.telegram_id == call.from_user.id).first()
 
         if not user:
-            lang = get_language_from_user(user) if user else 'ru'
-            bot.answer_callback_query(call.id, get_text(lang, 'error_start'))
+            bot.answer_callback_query(call.id, get_text('ru', 'error_start'))
             db.close()
             return
 
-        # Логируем активность
-        AnalyticsService.log_activity(db, call.from_user.id, 'refresh')
-
         lang = get_language_from_user(user)
+
+        # Быстро отвечаем пользователю
+        bot.answer_callback_query(call.id, get_text(lang, 'updated'))
 
         # Обновляем сообщение
         send_welcome_message(call.message.chat.id, db, user, call.message.message_id)
 
-        bot.answer_callback_query(call.id, get_text(lang, 'updated'))
+        # Логируем активность в фоне (не блокируем)
+        AnalyticsService.log_activity(db, call.from_user.id, 'refresh')
+
         db.close()
 
     except Exception as e:
         logger.error(f"Ошибка в handle_refresh: {e}")
-        lang = get_language_from_user(user) if user else 'ru'
-        bot.answer_callback_query(call.id, get_text(lang, 'error_refresh'))
+        bot.answer_callback_query(call.id, get_text('ru', 'error_refresh'))
 
 
 @bot.callback_query_handler(func=lambda call: call.data in ['lang_en', 'lang_ru'])
@@ -335,17 +346,19 @@ def handle_language_switch(call):
         # Определяем новый язык
         new_lang = 'en' if call.data == 'lang_en' else 'ru'
 
+        # Быстро отвечаем пользователю
+        bot.answer_callback_query(call.id, get_text(new_lang, 'language_switched'))
+
         # Обновляем язык пользователя
         user.language = new_lang
         db.commit()
 
-        # Логируем активность
-        AnalyticsService.log_activity(db, call.from_user.id, 'language_switch', new_lang)
-
         # Обновляем сообщение с новым языком
         send_welcome_message(call.message.chat.id, db, user, call.message.message_id)
 
-        bot.answer_callback_query(call.id, get_text(new_lang, 'language_switched'))
+        # Логируем активность в фоне
+        AnalyticsService.log_activity(db, call.from_user.id, 'language_switch', new_lang)
+
         db.close()
 
     except Exception as e:
@@ -370,16 +383,18 @@ def handle_city_click(call):
         # Получаем язык пользователя
         lang = get_language_from_user(user)
 
-        # Логируем активность
-        AnalyticsService.log_activity(db, call.from_user.id, 'city_click', city_name)
+        # Быстро отвечаем пользователю
+        bot.answer_callback_query(call.id, get_text(lang, 'weather_updated'))
 
-        # Получаем погоду
-        weather = WeatherService.get_weather(db, city_name, use_cache=False)  # Принудительно обновляем
+        # Получаем погоду (используем кэш для скорости)
+        weather = WeatherService.get_weather(db, city_name, use_cache=True)
 
         if not weather:
-            bot.answer_callback_query(call.id, get_text(lang, 'error_getting_weather'))
-            db.close()
-            return
+            # Пробуем без кэша
+            weather = WeatherService.get_weather(db, city_name, use_cache=False)
+            if not weather:
+                db.close()
+                return
 
         # Получаем местное время города
         local_time, timezone_name, formatted_time = TimezoneService.format_city_time(city_name)
@@ -420,11 +435,13 @@ def handle_city_click(call):
                 reply_markup=markup,
                 parse_mode='Markdown'
             )
-        except:
-            # Если не удалось отредактировать, отправляем новое
-            bot.send_message(call.message.chat.id, response, reply_markup=markup, parse_mode='Markdown')
+        except telebot.apihelper.ApiTelegramException as e:
+            # Игнорируем ошибку, если сообщение не изменилось
+            if "message is not modified" not in str(e):
+                logger.warning(f"Не удалось отредактировать сообщение: {e}")
 
-        bot.answer_callback_query(call.id, get_text(lang, 'weather_updated'))
+        # Логируем активность в фоне
+        AnalyticsService.log_activity(db, call.from_user.id, 'city_click', city_name)
 
         db.close()
 
@@ -621,7 +638,7 @@ def send_welcome_message(chat_id, db, user, message_id=None):
         cities = get_user_cities(db, user)
 
         # Создаем клавиатуру
-        markup = types.InlineKeyboardMarkup(row_width=2)
+        markup = types.InlineKeyboardMarkup(row_width=1)
 
         cities_weather_text = []
 
@@ -648,18 +665,22 @@ def send_welcome_message(chat_id, db, user, message_id=None):
                 callback_data=f"city_{city.name}"
             ))
 
-        # Добавляем кнопки обновления и переключения языка
-        if cities:
-            # Определяем, какую кнопку языка показать
-            if lang == 'ru':
-                lang_button = types.InlineKeyboardButton(text="EN", callback_data="lang_en")
-            else:
-                lang_button = types.InlineKeyboardButton(text="RU", callback_data="lang_ru")
+        # Добавляем кнопки обновления и переключения языка ВСЕГДА
+        # Определяем, какую кнопку языка показать
+        if lang == 'ru':
+            lang_button = types.InlineKeyboardButton(text="EN", callback_data="lang_en")
+        else:
+            lang_button = types.InlineKeyboardButton(text="RU", callback_data="lang_ru")
 
+        # Добавляем кнопку обновления только если есть города
+        if cities:
             markup.row(
                 types.InlineKeyboardButton(text=get_text(lang, 'btn_refresh'), callback_data="refresh"),
                 lang_button
             )
+        else:
+            # Если городов нет, показываем только кнопку языка
+            markup.row(lang_button)
 
         # Формируем текст сообщения
         if cities_weather_text:
@@ -676,10 +697,12 @@ def send_welcome_message(chat_id, db, user, message_id=None):
                     message_id=message_id,
                     reply_markup=markup
                 )
-            except telebot.apihelper.ApiTelegramException:
-                # Сообщение не найдено, отправляем новое
-                sent_msg = bot.send_message(chat_id, welcome_text, reply_markup=markup)
-                last_messages[chat_id] = {'message_id': sent_msg.message_id, 'timestamp': time.time()}
+            except telebot.apihelper.ApiTelegramException as e:
+                # Если сообщение не изменилось, игнорируем ошибку
+                if "message is not modified" not in str(e):
+                    # Сообщение не найдено, отправляем новое
+                    sent_msg = bot.send_message(chat_id, welcome_text, reply_markup=markup)
+                    last_messages[chat_id] = {'message_id': sent_msg.message_id, 'timestamp': time.time()}
         else:
             sent_msg = bot.send_message(chat_id, welcome_text, reply_markup=markup)
             last_messages[chat_id] = {'message_id': sent_msg.message_id, 'timestamp': time.time()}
@@ -725,6 +748,14 @@ def main():
         # Инициализация базы данных
         logger.info("Инициализация базы данных...")
         init_db()
+
+        # Автоматическая миграция схемы: добавление поля language
+        try:
+            logger.info("Проверка необходимости миграции схемы...")
+            from migrate_add_language import migrate_add_language
+            migrate_add_language()
+        except Exception as e:
+            logger.warning(f"Миграция схемы: {e}")
 
         # Автоматическая миграция данных при первом запуске
         try:
