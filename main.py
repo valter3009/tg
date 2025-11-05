@@ -16,7 +16,7 @@ import pandas as pd
 from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 from openpyxl.styles import Font, Alignment
-from clothes_advice import get_clothing_advice, get_local_time_str
+from clothes_advice import get_clothing_advice, get_local_time_str, get_time_of_day
 from dotenv import load_dotenv
 
 # Загрузка переменных окружения
@@ -217,9 +217,30 @@ def remove_user_city(user_id, city, user_data):
         return True
     return False
 
+def get_time_of_day_emoji(timezone_offset):
+    """
+    Возвращает эмодзи времени суток на основе локального времени
+
+    Args:
+        timezone_offset (int): Смещение часового пояса в секундах от UTC
+
+    Returns:
+        str: Эмодзи времени суток
+    """
+    time_of_day = get_time_of_day(timezone_offset)
+
+    if time_of_day == 'утро':
+        return '🌅'  # рассвет
+    elif time_of_day == 'день':
+        return '☀️'  # солнце
+    elif time_of_day == 'вечер':
+        return '🌆'  # закат
+    else:  # ночь
+        return '🌙'  # луна
+
 def get_weather_emoji(description):
     description = description.lower()
-    
+
     if any(word in description for word in ['ясно', 'чистое небо', 'безоблачно']):
         return '☀️'
     elif any(word in description for word in ['облачно с прояснениями', 'переменная облачность']):
@@ -274,6 +295,22 @@ def get_weather_data(city, weather_cache):
 def format_date_time(timestamp):
     return datetime.fromtimestamp(timestamp).strftime('%d.%m.%Y %H:%M:%S')
 
+def format_local_date_time(timezone_offset):
+    """
+    Возвращает локальную дату и время города
+
+    Args:
+        timezone_offset (int): Смещение часового пояса в секундах от UTC
+
+    Returns:
+        str: Дата и время в формате DD.MM.YYYY HH:MM:SS
+    """
+    from datetime import datetime, timezone, timedelta
+
+    utc_time = datetime.now(timezone.utc)
+    local_time = utc_time + timedelta(seconds=timezone_offset)
+    return local_time.strftime('%d.%m.%Y %H:%M:%S')
+
 def update_weather_cache(weather_cache, user_data):
     all_cities = set()
     
@@ -300,16 +337,16 @@ def create_cities_keyboard(user_id, user_data, weather_cache):
             weather_data = get_weather_data(city, weather_cache)
             if weather_data:
                 temp_str = f"+{weather_data['temp']}" if weather_data['temp'] > 0 else f"{weather_data['temp']}"
-                # Получаем локальное время города
-                local_time = get_local_time_str(weather_data.get('timezone', 0))
-                button_text = f"{weather_data['emoji']} {city} 🕐{local_time} {temp_str}°C 💨{weather_data['wind_speed']}м/с"
+                # Получаем эмодзи времени суток
+                time_emoji = get_time_of_day_emoji(weather_data.get('timezone', 0))
+                button_text = f"{weather_data['emoji']} {city} {time_emoji} {temp_str}°C 💨{weather_data['wind_speed']}м/с"
             else:
                 button_text = city
         else:
             temp_str = f"+{cached_weather['temp']}" if cached_weather['temp'] > 0 else f"{cached_weather['temp']}"
-            # Получаем локальное время города из кеша
-            local_time = get_local_time_str(cached_weather.get('timezone', 0))
-            button_text = f"{cached_weather['emoji']} {city} 🕐{local_time} {temp_str}°C 💨{cached_weather['wind_speed']}м/с"
+            # Получаем эмодзи времени суток из кеша
+            time_emoji = get_time_of_day_emoji(cached_weather.get('timezone', 0))
+            button_text = f"{cached_weather['emoji']} {city} {time_emoji} {temp_str}°C 💨{cached_weather['wind_speed']}м/с"
 
         markup.add(types.InlineKeyboardButton(text=button_text, callback_data=f"city_{city}"))
 
@@ -1059,21 +1096,21 @@ def get_and_send_weather(chat_id, city, user_data, weather_cache, message_id=Non
         weather_emoji = get_weather_emoji(weather_description)
         # Используем обновленную функцию с учетом времени года, времени суток и часового пояса города
         clothes_advice = get_clothing_advice(temperature, weather_description, season, None, wind_speed, timezone_offset)
-        
+
         temp_str = f"+{temperature}" if temperature > 0 else f"{temperature}"
         temp_feels_str = f"+{temperature_feels}" if temperature_feels > 0 else f"{temperature_feels}"
         weather_description_cap = weather_description[0].upper() + weather_description[1:]
-        
-        current_time = int(time.time())
-        formatted_time = format_date_time(current_time)
-        
+
+        # Получаем локальное время города
+        local_formatted_time = format_local_date_time(timezone_offset)
+
         weather_message = (
             f'{weather_emoji} {city} {weather_description_cap}\n'
             f'🌡️ t° {temp_str}°C\n'
             f'🌡️ t°ощущ. {temp_feels_str}°C\n'
             f'💨 Скорость ветра | {wind_speed} м/с\n'
             f'{clothes_advice}\n'
-            f'⏱️ Время обновления: {formatted_time}'
+            f'⏱️ Время обновления: {local_formatted_time}'
         )
         
         cache_data = {
@@ -1277,17 +1314,18 @@ def handle_inline_query(query):
             # Формируем советы по одежде с учетом времени года и часового пояса города
             moscow_clothes_advice = get_clothing_advice(float(moscow_temp.replace("+", "")), moscow_description, season, None, moscow_wind, moscow_timezone)
             spb_clothes_advice = get_clothing_advice(float(spb_temp.replace("+", "")), spb_description, season, None, spb_wind, spb_timezone)
-            
-            current_time = int(time.time())
-            formatted_time = format_date_time(current_time)
-            
+
+            # Получаем локальное время для каждого города
+            moscow_local_time = format_local_date_time(moscow_timezone)
+            spb_local_time = format_local_date_time(spb_timezone)
+
             results = [
                 types.InlineQueryResultArticle(
                     id="1",
                     title="Москва",
                     description=f"{moscow_temp}°C, {moscow_description}",
                     input_message_content=types.InputTextMessageContent(
-                        message_text=f"{moscow_emoji} Москва {moscow_description}\n🌡️ t° {moscow_temp}°C\n🌡️ t°ощущ. {moscow_temp_feels}°C\n💨 Скорость ветра | {moscow_wind} м/с\n {moscow_clothes_advice}\n⏱️ Время обновления: {formatted_time}"
+                        message_text=f"{moscow_emoji} Москва {moscow_description}\n🌡️ t° {moscow_temp}°C\n🌡️ t°ощущ. {moscow_temp_feels}°C\n💨 Скорость ветра | {moscow_wind} м/с\n {moscow_clothes_advice}\n⏱️ Время обновления: {moscow_local_time}"
                     )
                 ),
                 types.InlineQueryResultArticle(
@@ -1295,7 +1333,7 @@ def handle_inline_query(query):
                     title="Санкт-Петербург",
                     description=f"{spb_temp}°C, {spb_description}",
                     input_message_content=types.InputTextMessageContent(
-                        message_text=f"{spb_emoji} Санкт-Петербург {spb_description}\n🌡️ t° {spb_temp}°C\n🌡️ t°ощущ. {spb_temp_feels}°C\n💨 Скорость ветра | {spb_wind} м/с\n {spb_clothes_advice}\n⏱️ Время обновления: {formatted_time}"
+                        message_text=f"{spb_emoji} Санкт-Петербург {spb_description}\n🌡️ t° {spb_temp}°C\n🌡️ t°ощущ. {spb_temp_feels}°C\n💨 Скорость ветра | {spb_wind} м/с\n {spb_clothes_advice}\n⏱️ Время обновления: {spb_local_time}"
                     )
                 )
             ]
@@ -1334,14 +1372,14 @@ def handle_inline_query(query):
 
         weather_emoji = get_weather_emoji(weather_description)
         clothes_advice = get_clothing_advice(temperature, weather_description, season, None, wind_speed, timezone_offset)
-        
+
         temp_str = f"+{temperature}" if temperature > 0 else f"{temperature}"
         temp_feels_str = f"+{temperature_feels}" if temperature_feels > 0 else f"{temperature_feels}"
         weather_description_cap = weather_description[0].upper() + weather_description[1:]
-        
-        current_time = int(time.time())
-        formatted_time = format_date_time(current_time)
-        
+
+        # Получаем локальное время города
+        local_formatted_time = format_local_date_time(timezone_offset)
+
         # Формируем сообщение в точном соответствии с примером
         message_text = (
             f"{weather_emoji} {city} {weather_description_cap}\n"
@@ -1349,7 +1387,7 @@ def handle_inline_query(query):
             f"🌡️ t°ощущ. {temp_feels_str}°C\n"
             f"💨 Скорость ветра | {wind_speed} м/с\n"
             f"{clothes_advice}\n"
-            f"⏱️ Время обновления: {formatted_time}"
+            f"⏱️ Время обновления: {local_formatted_time}"
         )
 
         result = types.InlineQueryResultArticle(
