@@ -16,7 +16,7 @@ import pandas as pd
 from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 from openpyxl.styles import Font, Alignment
-from clothes_advice import get_clothing_advice
+from clothes_advice import get_clothing_advice, get_local_time_str
 from dotenv import load_dotenv
 
 # Загрузка переменных окружения
@@ -239,32 +239,34 @@ def get_weather_emoji(description):
 
 def get_weather_data(city, weather_cache):
     url = f'https://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&lang=ru&appid={OPENWEATHER_API_KEY}'
-    
+
     try:
         response = requests.get(url)
         response.raise_for_status()
         weather_data = response.json()
-        
+
         if weather_data.get('cod') == '404':
             return None
-            
+
         temperature = round(weather_data['main']['temp'], 1)
         weather_description = weather_data['weather'][0]['description']
         wind_speed = int(round(weather_data['wind']['speed']))
-        
+        timezone_offset = weather_data.get('timezone', 0)  # Смещение часового пояса в секундах
+
         weather_emoji = get_weather_emoji(weather_description)
-        
+
         result = {
             'temp': temperature,
             'emoji': weather_emoji,
             'description': weather_description,
             'wind_speed': wind_speed,
+            'timezone': timezone_offset,
             'updated_at': int(time.time())
         }
-        
+
         update_cached_weather(city, result, weather_cache)
         return result
-    
+
     except Exception as e:
         logger.error(f'Ошибка при получении погоды для {city}: {e}')
         return None
@@ -289,28 +291,32 @@ def update_weather_cache(weather_cache, user_data):
 def create_cities_keyboard(user_id, user_data, weather_cache):
     markup = types.InlineKeyboardMarkup(row_width=1)
     user_cities = get_user_cities(user_id, user_data)
-    
+
     for city in user_cities:
         cached_weather = get_cached_weather(city, weather_cache)
         current_time = int(time.time())
-        
+
         if not cached_weather or (current_time - cached_weather.get('updated_at', 0)) > 3600:
             weather_data = get_weather_data(city, weather_cache)
             if weather_data:
                 temp_str = f"+{weather_data['temp']}" if weather_data['temp'] > 0 else f"{weather_data['temp']}"
-                button_text = f"{weather_data['emoji']} {city} {temp_str}°C 💨{weather_data['wind_speed']}м/с"
+                # Получаем локальное время города
+                local_time = get_local_time_str(weather_data.get('timezone', 0))
+                button_text = f"{weather_data['emoji']} {city} 🕐{local_time} {temp_str}°C 💨{weather_data['wind_speed']}м/с"
             else:
                 button_text = city
         else:
             temp_str = f"+{cached_weather['temp']}" if cached_weather['temp'] > 0 else f"{cached_weather['temp']}"
-            button_text = f"{cached_weather['emoji']} {city} {temp_str}°C 💨{cached_weather['wind_speed']}м/с"
-            
+            # Получаем локальное время города из кеша
+            local_time = get_local_time_str(cached_weather.get('timezone', 0))
+            button_text = f"{cached_weather['emoji']} {city} 🕐{local_time} {temp_str}°C 💨{cached_weather['wind_speed']}м/с"
+
         markup.add(types.InlineKeyboardButton(text=button_text, callback_data=f"city_{city}"))
-    
+
     # Добавляем кнопку "Обновить", только если есть города
     if user_cities:
         markup.add(types.InlineKeyboardButton(text="🔄 Обновить", callback_data="refresh"))
-    
+
     return markup
 
 def send_new_message(chat_id, text, markup=None, parse_mode='Markdown'):
@@ -552,19 +558,24 @@ def update_auto_updates_log(sent_count, with_cities_count, without_cities_count,
         activity_logger.error(f"Ошибка при обновлении лога автоматических обновлений: {e}")
 
 def auto_update_users():
-    """Автоматически обновляет сообщения для всех пользователей каждые 4 часа"""
+    """Автоматически обновляет сообщения для всех пользователей 4 раза в сутки по локальному времени первого города"""
+    # Словарь для отслеживания последних отправок каждому пользователю
+    last_sent = {}  # {user_id: last_update_hour}
+
     while True:
         try:
-            now = datetime.now()
-            # Проверяем, наступило ли время обновления (каждые 4 часа: 00:01, 04:01, 08:01, 12:01, 16:01, 20:01)
-            if now.minute == 1 and now.hour % 4 == 0:
+            from datetime import datetime, timezone, timedelta
+
+            # Текущее время UTC
+            now_utc = datetime.now(timezone.utc)
+            current_minute = now_utc.minute
+
+            # Проверяем только в первые 3 минуты каждого часа
+            if current_minute <= 2:
                 user_data = load_user_data()
                 weather_cache = load_weather_cache()
                 all_users = load_all_users()
-                
-                # Обновляем кэш погоды перед отправкой сообщений
-                update_weather_cache(weather_cache, user_data)
-                
+
                 # Счетчики для подробной статистики
                 total_attempts = 0
                 sent_with_cities = 0
@@ -572,35 +583,66 @@ def auto_update_users():
                 blocked_count = 0
                 error_count = 0
                 total_sent = 0
-                
+
+                # Времена обновлений по локальному времени
+                update_hours = [7, 12, 18, 22]
+
                 # Обрабатываем всех активных пользователей
                 for user_id_str, user_info in all_users.items():
                     if not user_info.get('active', True):
                         continue
-                        
-                    total_attempts += 1
-                    
+
                     try:
                         user_id = int(user_id_str)
                         user_cities = get_user_cities(user_id, user_data)
-                        
+
+                        # Определяем timezone для пользователя
                         if user_cities:
-                            # Пользователь с городами - отправляем обновление погоды
-                            msg_info = last_messages.get(user_id, {})
-                            message_id = msg_info.get('message_id')
-                            
-                            send_welcome_message(user_id, user_data, weather_cache, message_id, force_new_message=True)
-                            sent_with_cities += 1
-                            total_sent += 1
+                            # Получаем timezone первого города
+                            first_city = user_cities[0]
+                            weather_data = get_cached_weather(first_city, weather_cache)
+                            if not weather_data:
+                                weather_data = get_weather_data(first_city, weather_cache)
+
+                            user_timezone = weather_data.get('timezone', 10800) if weather_data else 10800  # По умолчанию Москва UTC+3
                         else:
-                            # Пользователь без городов - отправляем напоминание
-                            if send_reminder_message(user_id):
-                                sent_without_cities += 1
+                            # Если нет городов, используем Московское время
+                            user_timezone = 10800  # Москва UTC+3
+
+                        # Вычисляем локальное время пользователя
+                        local_time = now_utc + timedelta(seconds=user_timezone)
+                        local_hour = local_time.hour
+
+                        # Проверяем, нужно ли отправлять обновление
+                        should_update = local_hour in update_hours
+                        already_sent = last_sent.get(user_id) == local_hour
+
+                        if should_update and not already_sent:
+                            total_attempts += 1
+
+                            if user_cities:
+                                # Обновляем кэш погоды перед отправкой
+                                update_weather_cache(weather_cache, user_data)
+
+                                # Пользователь с городами - отправляем обновление погоды
+                                msg_info = last_messages.get(user_id, {})
+                                message_id = msg_info.get('message_id')
+
+                                send_welcome_message(user_id, user_data, weather_cache, message_id, force_new_message=True)
+                                sent_with_cities += 1
                                 total_sent += 1
-                        
-                        # Небольшая задержка между отправками
-                        time.sleep(0.1)
-                        
+                            else:
+                                # Пользователь без городов - отправляем напоминание
+                                if send_reminder_message(user_id):
+                                    sent_without_cities += 1
+                                    total_sent += 1
+
+                            # Запоминаем, что отправили обновление в этот час
+                            last_sent[user_id] = local_hour
+
+                            # Небольшая задержка между отправками
+                            time.sleep(0.1)
+
                     except telebot.apihelper.ApiTelegramException as e:
                         if "bot was blocked by the user" in str(e).lower():
                             # Пользователь заблокировал бота
@@ -613,27 +655,27 @@ def auto_update_users():
                     except Exception as e:
                         error_count += 1
                         logger.error(f"Ошибка при отправке автообновления пользователю {user_id_str}: {e}")
-                
+
                 # Логируем подробную статистику
-                if total_attempts > 0:
+                if total_sent > 0:
                     update_auto_updates_log(total_sent, sent_with_cities, sent_without_cities, blocked_count, error_count, total_attempts)
-                    
+
                     # Подробный лог
-                    success_rate = (total_sent / total_attempts) * 100
-                    logger.info(f"Автоматическое обновление в {now.strftime('%H:%M:%S')}:")
+                    success_rate = (total_sent / total_attempts) * 100 if total_attempts > 0 else 0
+                    logger.info(f"Автоматическое обновление в {now_utc.strftime('%H:%M:%S')} UTC:")
                     logger.info(f"  - Всего попыток: {total_attempts}")
                     logger.info(f"  - Успешно отправлено: {total_sent} ({success_rate:.1f}%)")
                     logger.info(f"  - С городами: {sent_with_cities}")
                     logger.info(f"  - Без городов: {sent_without_cities}")
                     logger.info(f"  - Заблокировали бота: {blocked_count}")
                     logger.info(f"  - Ошибки отправки: {error_count}")
-                
-                # Ждем 1 минуту, чтобы избежать повторного срабатывания
+
+                # Ждем до следующей минуты
                 time.sleep(60)
-            
-            # Проверяем каждые 30 секунд
-            time.sleep(30)
-            
+            else:
+                # Если не время проверки, ждем 30 секунд
+                time.sleep(30)
+
         except Exception as e:
             logger.error(f"Ошибка в auto_update_users: {e}")
             time.sleep(300)  # 5 минут в случае ошибки
@@ -998,12 +1040,12 @@ def get_and_send_weather(chat_id, city, user_data, weather_cache, message_id=Non
         temperature_feels = round(weather_data['main']['feels_like'], 2)
         weather_description = weather_data['weather'][0]['description']
         wind_speed = weather_data['wind']['speed']
-        
-        # Определение текущего времени года и времени суток
+        timezone_offset = weather_data.get('timezone', 0)  # Смещение часового пояса в секундах
+
+        # Определение текущего времени года
         from datetime import datetime
         current_date = datetime.now()
-        
-        # Определяем время года
+
         month = current_date.month
         if month in [12, 1, 2]:
             season = 'зима'
@@ -1013,21 +1055,10 @@ def get_and_send_weather(chat_id, city, user_data, weather_cache, message_id=Non
             season = 'лето'
         else:  # 9, 10, 11
             season = 'осень'
-        
-        # Определяем время суток
-        hour = current_date.hour
-        if 6 <= hour < 12:
-            time_of_day = 'утро'
-        elif 12 <= hour < 18:
-            time_of_day = 'день'
-        elif 18 <= hour < 24:
-            time_of_day = 'вечер'
-        else:  # 0 <= hour < 6
-            time_of_day = 'ночь'
-        
+
         weather_emoji = get_weather_emoji(weather_description)
-        # Используем обновленную функцию с учетом времени года и времени суток
-        clothes_advice = get_clothing_advice(temperature, weather_description, season, time_of_day, wind_speed)
+        # Используем обновленную функцию с учетом времени года, времени суток и часового пояса города
+        clothes_advice = get_clothing_advice(temperature, weather_description, season, None, wind_speed, timezone_offset)
         
         temp_str = f"+{temperature}" if temperature > 0 else f"{temperature}"
         temp_feels_str = f"+{temperature_feels}" if temperature_feels > 0 else f"{temperature_feels}"
@@ -1225,11 +1256,10 @@ def handle_inline_query(query):
                 spb_wind = spb_weather['wind_speed']
                 spb_emoji = spb_weather['emoji']
             
-            # Определение текущего времени года и времени суток
+            # Определение текущего времени года
             from datetime import datetime
             current_date = datetime.now()
-            
-            # Определяем время года
+
             month = current_date.month
             if month in [12, 1, 2]:
                 season = 'зима'
@@ -1239,21 +1269,14 @@ def handle_inline_query(query):
                 season = 'лето'
             else:  # 9, 10, 11
                 season = 'осень'
-            
-            # Определяем время суток
-            hour = current_date.hour
-            if 6 <= hour < 12:
-                time_of_day = 'утро'
-            elif 12 <= hour < 18:
-                time_of_day = 'день'
-            elif 18 <= hour < 24:
-                time_of_day = 'вечер'
-            else:  # 0 <= hour < 6
-                time_of_day = 'ночь'
-            
-            # Формируем советы по одежде с учетом времени года и времени суток
-            moscow_clothes_advice = get_clothing_advice(float(moscow_temp.replace("+", "")), moscow_description, season, time_of_day, moscow_wind)
-            spb_clothes_advice = get_clothing_advice(float(spb_temp.replace("+", "")), spb_description, season, time_of_day, spb_wind)
+
+            # Получаем timezone для городов
+            moscow_timezone = moscow_weather.get('timezone', 10800) if moscow_weather else 10800  # Москва UTC+3
+            spb_timezone = spb_weather.get('timezone', 10800) if spb_weather else 10800  # СПБ UTC+3
+
+            # Формируем советы по одежде с учетом времени года и часового пояса города
+            moscow_clothes_advice = get_clothing_advice(float(moscow_temp.replace("+", "")), moscow_description, season, None, moscow_wind, moscow_timezone)
+            spb_clothes_advice = get_clothing_advice(float(spb_temp.replace("+", "")), spb_description, season, None, spb_wind, spb_timezone)
             
             current_time = int(time.time())
             formatted_time = format_date_time(current_time)
@@ -1293,12 +1316,12 @@ def handle_inline_query(query):
         temperature_feels = round(weather_data['main']['feels_like'], 2)
         weather_description = weather_data['weather'][0]['description']
         wind_speed = weather_data['wind']['speed']
-        
-        # Определение текущего времени года и времени суток
+        timezone_offset = weather_data.get('timezone', 0)  # Смещение часового пояса в секундах
+
+        # Определение текущего времени года
         from datetime import datetime
         current_date = datetime.now()
-        
-        # Определяем время года
+
         month = current_date.month
         if month in [12, 1, 2]:
             season = 'зима'
@@ -1308,20 +1331,9 @@ def handle_inline_query(query):
             season = 'лето'
         else:  # 9, 10, 11
             season = 'осень'
-        
-        # Определяем время суток
-        hour = current_date.hour
-        if 6 <= hour < 12:
-            time_of_day = 'утро'
-        elif 12 <= hour < 18:
-            time_of_day = 'день'
-        elif 18 <= hour < 24:
-            time_of_day = 'вечер'
-        else:  # 0 <= hour < 6
-            time_of_day = 'ночь'
-        
+
         weather_emoji = get_weather_emoji(weather_description)
-        clothes_advice = get_clothing_advice(temperature, weather_description, season, time_of_day, wind_speed)
+        clothes_advice = get_clothing_advice(temperature, weather_description, season, None, wind_speed, timezone_offset)
         
         temp_str = f"+{temperature}" if temperature > 0 else f"{temperature}"
         temp_feels_str = f"+{temperature_feels}" if temperature_feels > 0 else f"{temperature_feels}"
