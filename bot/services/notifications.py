@@ -63,7 +63,30 @@ class NotificationService:
 
             message = "🌤️ Обновление погоды:\n\n" + "\n".join(weather_messages)
 
-            self.bot.send_message(user.telegram_id, message)
+            # Пытаемся отредактировать предыдущее сообщение, если оно есть
+            if user.last_weather_message_id:
+                try:
+                    self.bot.edit_message_text(
+                        chat_id=user.telegram_id,
+                        message_id=user.last_weather_message_id,
+                        text=message
+                    )
+                    logger.debug(f"Отредактировано сообщение {user.last_weather_message_id} для пользователя {user.telegram_id}")
+                except telebot.apihelper.ApiTelegramException as e:
+                    # Если сообщение было удалено или недоступно, отправляем новое
+                    if "message to edit not found" in str(e).lower() or "message can't be edited" in str(e).lower():
+                        logger.info(f"Предыдущее сообщение не найдено, отправляем новое для {user.telegram_id}")
+                        sent_message = self.bot.send_message(user.telegram_id, message)
+                        user.last_weather_message_id = sent_message.message_id
+                        db.commit()
+                    else:
+                        raise
+            else:
+                # Отправляем новое сообщение и сохраняем его ID
+                sent_message = self.bot.send_message(user.telegram_id, message)
+                user.last_weather_message_id = sent_message.message_id
+                db.commit()
+                logger.debug(f"Отправлено новое сообщение {sent_message.message_id} для пользователя {user.telegram_id}")
 
             # Логируем активность
             AnalyticsService.log_activity(db, user.telegram_id, 'auto_update')
