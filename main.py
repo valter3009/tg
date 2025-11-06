@@ -848,7 +848,7 @@ def generate_activity_report():
             total_refresh_clicks = df_refresh['Count'].sum() if not df_refresh.empty else 0
             total_city_clicks = df_cities['Count'].sum() if not df_cities.empty else 0
             total_start_cmds = df_start['Count'].sum() if not df_start.empty else 0
-            total_auto_updates = df_auto_updates['Users Count'].sum() if not df_auto_updates.empty else 0
+            total_auto_updates = df_auto_updates['Messages Sent'].sum() if not df_auto_updates.empty and 'Messages Sent' in df_auto_updates.columns else 0
             
             # Загружаем данные о всех пользователях
             all_users = load_all_users()
@@ -1192,17 +1192,28 @@ def get_and_send_weather(chat_id, city, user_data, weather_cache, user_languages
         
         markup = types.InlineKeyboardMarkup(row_width=2)
         user_cities = get_user_cities(chat_id, user_data)
-        
+
         if city in user_cities:
             markup.add(
-                types.InlineKeyboardButton("Удалить город", callback_data=f"remove_{city}"),
-                types.InlineKeyboardButton("Назад", callback_data="back")
+                types.InlineKeyboardButton(t('remove_city', language), callback_data=f"remove_{city}"),
+                types.InlineKeyboardButton(t('back_button', language), callback_data="back")
             )
         else:
             markup.add(
-                types.InlineKeyboardButton("Добавить город", callback_data=f"add_{city}"),
-                types.InlineKeyboardButton("Назад", callback_data="back")
+                types.InlineKeyboardButton(t('add_city', language), callback_data=f"add_{city}"),
+                types.InlineKeyboardButton(t('back_button', language), callback_data="back")
             )
+
+        # Добавляем кнопку переключения языка с флагами
+        # Включаем название города в callback для переключения языка в карточке города
+        if language == 'ru':
+            lang_button_text = "🇬🇧 EN"
+            lang_callback = f"lang_en_{city}"
+        else:
+            lang_button_text = "🇷🇺 RU"
+            lang_callback = f"lang_ru_{city}"
+
+        markup.add(types.InlineKeyboardButton(lang_button_text, callback_data=lang_callback))
         
         if force_new_message:
             # Сначала удаляем предыдущее сообщение
@@ -1281,21 +1292,29 @@ def callback_handler(call):
 
         # Обработка выбора языка
         elif call.data.startswith("lang_"):
-            lang_code = call.data[5:]
+            # Проверяем, есть ли город в callback (формат: lang_en_Москва или просто lang_en)
+            parts = call.data.split('_', 2)  # Разделяем максимум на 3 части
+            lang_code = parts[1] if len(parts) > 1 else 'ru'
+            city_from_callback = parts[2] if len(parts) > 2 else None
+
             if lang_code in SUPPORTED_LANGUAGES:
                 user_languages = set_user_language(call.message.chat.id, lang_code, user_languages)
                 save_user_languages(user_languages)
 
                 language = lang_code
-                bot.edit_message_text(
-                    t('language_changed', language),
-                    call.message.chat.id,
-                    call.message.message_id
-                )
 
-                # Обновляем приветственное сообщение с новым языком
-                time.sleep(1)
-                send_welcome_message(call.message.chat.id, user_data, weather_cache, user_languages)
+                if city_from_callback:
+                    # Пользователь в карточке города - обновляем карточку с новым языком
+                    get_and_send_weather(call.message.chat.id, city_from_callback, user_data, weather_cache, user_languages, call.message.message_id, force_new_message=False)
+                else:
+                    # Пользователь в главном меню - обновляем приветственное сообщение
+                    bot.edit_message_text(
+                        t('language_changed', language),
+                        call.message.chat.id,
+                        call.message.message_id
+                    )
+                    time.sleep(1)
+                    send_welcome_message(call.message.chat.id, user_data, weather_cache, user_languages)
 
         elif call.data == "back":
             send_welcome_message(call.message.chat.id, user_data, weather_cache, user_languages, call.message.message_id)
