@@ -1,11 +1,11 @@
 """
 Система локализации для бота GidMeteo
-Поддерживаемые языки: русский (ru), английский (en), испанский (es), немецкий (de)
+Поддерживаемые языки: русский (ru), английский (en)
 """
 
 # Языки по умолчанию
 DEFAULT_LANGUAGE = 'ru'
-SUPPORTED_LANGUAGES = ['ru', 'en', 'es', 'de']
+SUPPORTED_LANGUAGES = ['ru', 'en']
 
 # Переводы интерфейса бота
 BOT_TRANSLATIONS = {

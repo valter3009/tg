@@ -382,9 +382,15 @@ def create_cities_keyboard(user_id, user_data, weather_cache, user_languages):
         refresh_text = t('refresh_button', language)
         markup.add(types.InlineKeyboardButton(text=refresh_text, callback_data="refresh"))
 
-    # Добавляем кнопку выбора языка
-    language_text = "🌐 " + t('language_selection', language).split(' / ')[0]
-    markup.add(types.InlineKeyboardButton(text=language_text, callback_data="select_language"))
+    # Добавляем кнопку переключения языка EN/RU
+    if language == 'ru':
+        lang_button_text = "🇬🇧 EN"
+        lang_callback = "lang_en"
+    else:
+        lang_button_text = "🇷🇺 RU"
+        lang_callback = "lang_ru"
+
+    markup.add(types.InlineKeyboardButton(text=lang_button_text, callback_data=lang_callback))
 
     return markup
 
@@ -1271,27 +1277,8 @@ def callback_handler(call):
     user_languages = load_user_languages()
 
     try:
-        # Обработка открытия меню выбора языка
-        if call.data == "select_language":
-            language = get_user_language(call.message.chat.id, user_languages)
-            markup = types.InlineKeyboardMarkup(row_width=2)
-            buttons = [
-                types.InlineKeyboardButton("🇷🇺 Русский", callback_data="lang_ru"),
-                types.InlineKeyboardButton("🇬🇧 English", callback_data="lang_en"),
-                types.InlineKeyboardButton("🇪🇸 Español", callback_data="lang_es"),
-                types.InlineKeyboardButton("🇩🇪 Deutsch", callback_data="lang_de")
-            ]
-            markup.add(*buttons)
-            selection_text = t('language_selection', language)
-            bot.edit_message_text(
-                selection_text,
-                call.message.chat.id,
-                call.message.message_id,
-                reply_markup=markup
-            )
-
         # Обработка выбора языка
-        elif call.data.startswith("lang_"):
+        if call.data.startswith("lang_"):
             # Проверяем, есть ли город в callback (формат: lang_en_Москва или просто lang_en)
             parts = call.data.split('_', 2)  # Разделяем максимум на 3 части
             lang_code = parts[1] if len(parts) > 1 else 'ru'
